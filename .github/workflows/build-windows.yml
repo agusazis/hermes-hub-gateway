@@ -38,4 +38,3 @@ jobs:
           releaseBody: "Automated native Windows desktop binary release for Hermes Hub Gateway."
           releaseDraft: false
           prerelease: false
-          args: "--no-bundle"
