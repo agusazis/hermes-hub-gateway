@@ -17,8 +17,55 @@ fn get_system_config() -> config::GlobalConfig {
 
 #[tauri::command]
 fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
+    // ATURAN TEGAS: Server Hermes Evaluator dan Server Mnemosyne WAJIB satu host IP yang sama!
+    let eval_host = cfg.default_hermes_evaluator_url.split(':').nth(1).unwrap_or("").trim_start_matches('/');
+    let mnemo_host = cfg.default_mnemosyne_url.split(':').nth(1).unwrap_or("").trim_start_matches('/');
+    
+    if !eval_host.is_empty() && !mnemo_host.is_empty() && eval_host != mnemo_host {
+        return Err(format!(
+            "Pelanggaran Integritas Arsitektur: Host Hermes Evaluator ('{}') dan Host Mnemosyne ('{}') tidak sama! Otak dan Memori wajib berada di server fisik/VM yang sama.",
+            eval_host, mnemo_host
+        ));
+    }
+
     config::save_config(&cfg);
     Ok(())
+}
+
+#[tauri::command]
+fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_json::Value, String> {
+    let cfg = config::load_config();
+    let ws = cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned().unwrap_or_else(|| cfg.workspaces[0].clone());
+    let skill_dir = PathBuf::from(&ws.internal_skills_path).join(&skill_name);
+
+    let skill_file = skill_dir.join("SKILL.md");
+    let content = if skill_file.exists() {
+        std::fs::read_to_string(&skill_file).unwrap_or_else(|_| "Gagal membaca berkas SKILL.md".to_string())
+    } else {
+        format!(
+            "# Skill: {}\n\n> [!] Berkas SKILL.md lokal sedang dalam antrean sinkronisasi dari repositori Git.",
+            skill_name
+        )
+    };
+
+    let mut references = Vec::new();
+    let ref_dir = skill_dir.join("references");
+    if ref_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(ref_dir) {
+            for e in entries.flatten() {
+                if let Some(n) = e.file_name().to_str() {
+                    references.push(n.to_string());
+                }
+            }
+        }
+    }
+
+    Ok(serde_json::json!({
+        "name": skill_name,
+        "content": content,
+        "references": references,
+        "path": skill_dir.to_string_lossy().to_string()
+    }))
 }
 
 #[tauri::command]
@@ -141,7 +188,6 @@ async fn main() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Background daemon: Jangan terminate aplikasi saat window ditutup (X), minimize ke tray
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.hide();
@@ -150,6 +196,7 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![
             get_system_config,
             save_system_config,
+            get_skill_detail,
             create_workspace_declarative,
             trigger_manual_sync
         ])
