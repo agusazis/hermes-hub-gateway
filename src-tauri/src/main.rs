@@ -1,9 +1,9 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, Emitter};
+use std::path::PathBuf;
 
 mod watcher;
 mod mcp_bridge;
@@ -11,21 +11,65 @@ mod vault;
 mod config;
 
 #[tauri::command]
-fn get_system_status() -> serde_json::Value {
-    serde_json::json!({
-        "status": "online",
-        "hermes_server": "172.168.1.202:9125",
-        "mnemosyne_server": "172.168.1.202:8080",
-        "active_workspace": "simgos2",
-        "total_skills": 12
-    })
+fn get_system_config() -> config::GlobalConfig {
+    config::load_config()
+}
+
+#[tauri::command]
+fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
+    config::save_config(&cfg);
+    Ok(())
+}
+
+#[tauri::command]
+fn create_workspace_declarative(name: String, target_path: String) -> Result<config::Workspace, String> {
+    let mut cfg = config::load_config();
+    let id = name.to_lowercase().replace(' ', "-");
+
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
+    let internal_skills_path = home
+        .join(".hermes-hub")
+        .join("workspaces")
+        .join(&id)
+        .join("skills");
+
+    let _ = std::fs::create_dir_all(&internal_skills_path);
+
+    let ws = config::Workspace {
+        id: id.clone(),
+        name,
+        target_path: target_path.clone(),
+        internal_skills_path: internal_skills_path.to_string_lossy().to_string(),
+        hermes_evaluator_url: cfg.default_hermes_evaluator_url.clone(),
+        mnemosyne_url: cfg.default_mnemosyne_url.clone(),
+        git_target: None,
+    };
+
+    // Buat AGENTS.md deklaratif di folder project target
+    let target_dir = PathBuf::from(&target_path);
+    if target_dir.exists() {
+        let _ = config::generate_declarative_agents_md(&target_dir, &ws);
+    }
+
+    cfg.workspaces.push(ws.clone());
+    cfg.active_workspace_id = id;
+    config::save_config(&cfg);
+
+    Ok(ws)
 }
 
 #[tauri::command]
 fn trigger_manual_sync() -> serde_json::Value {
+    let cfg = config::load_config();
+    let ws = cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned().unwrap_or_else(|| cfg.workspaces[0].clone());
+    
+    tauri::async_runtime::spawn(async move {
+        watcher::sync_rules_from_git(&ws).await;
+    });
+
     serde_json::json!({
         "success": true,
-        "message": "Aturan dan SOP sudah versi terbaru (Up-to-Date)."
+        "message": "Sinkronisasi aturan dan SOP dari GitLab/GitHub berhasil dijalankan."
     })
 }
 
@@ -94,7 +138,12 @@ async fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_system_status, trigger_manual_sync])
+        .invoke_handler(tauri::generate_handler![
+            get_system_config,
+            save_system_config,
+            create_workspace_declarative,
+            trigger_manual_sync
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
 }
