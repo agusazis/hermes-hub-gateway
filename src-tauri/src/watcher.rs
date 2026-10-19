@@ -1,4 +1,4 @@
-use crate::config::{load_config, GitTarget};
+use crate::config::{load_config, GitTarget, TelegramTarget};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,6 +15,7 @@ pub struct ReviewRequestPayload {
     pub conversation_id: String,
     pub transcript_tail: String,
     pub git_target: Option<GitTarget>,
+    pub telegram_target: Option<TelegramTarget>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -85,7 +86,7 @@ pub async fn start_watcher_loop(app: AppHandle) {
                                 "file": path.to_string_lossy()
                             }));
 
-                            // Kirimkan ke Hermes Evaluator
+                            // Kirimkan ke Hermes Evaluator beserta Telegram broadcast metadata
                             let payload = ReviewRequestPayload {
                                 client: "hermes-hub-gateway".to_string(),
                                 profile_id: cfg.active_profile.clone(),
@@ -93,6 +94,7 @@ pub async fn start_watcher_loop(app: AppHandle) {
                                 conversation_id: conv_id.clone(),
                                 transcript_tail: tail_window.to_string(),
                                 git_target: active_ws.git_target.clone(),
+                                telegram_target: cfg.telegram_target.clone(),
                             };
 
                             let evaluator_url = format!("{}/review", active_ws.hermes_evaluator_url.trim_end_matches('/'));
