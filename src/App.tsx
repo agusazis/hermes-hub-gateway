@@ -6,7 +6,7 @@ import {
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
   BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2, Bell, Send, MessageSquare, Bell, Send, MessageSquare,
-  GitFork, Key, Globe, FolderTree
+  GitFork, Key, Globe, FolderTree, Play, CheckCircle
 } from 'lucide-react';
 
 interface GitTarget {
