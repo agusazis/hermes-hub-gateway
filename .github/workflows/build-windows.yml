@@ -37,8 +37,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.4.4
-          releaseName: "Hermes Hub Gateway v0.4.4"
-          releaseBody: "Release v0.4.4: Zero-Crash Resilient UI Fix & Production SOP Blueprint. Fixes WebView2 blank white screen crash, enables 3-mode Theme Selector (Dark/Light/System) in Header & Settings, delivers complete technical SKILL.md SOP specifications for RSUD workflows, and shows transparent backup file paths in Downloads."
+          tagName: v0.4.5
+          releaseName: "Hermes Hub Gateway v0.4.5"
+          releaseBody: "Release v0.4.5: One-Key Organization Provisioning & Global App-Wide Theme Suite. Delivers instant hospital team setup via Organization ID (RSUD-JUSUF-SK), comprehensive Light/Dark/System theme propagation across Sidebar/Header/Main panels, verified RSUD technical SOP documentation in SKILL.md, and explicit Downloads directory guidance."
           releaseDraft: false
           prerelease: false
