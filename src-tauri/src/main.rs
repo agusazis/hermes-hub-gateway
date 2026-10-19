@@ -150,6 +150,49 @@ fn trigger_manual_sync() -> serde_json::Value {
     })
 }
 
+#[tauri::command]
+async fn test_telegram_broadcast(bot_token: String, chat_id: String, topic_id: Option<String>) -> Result<serde_json::Value, String> {
+    if bot_token.trim().is_empty() || chat_id.trim().is_empty() {
+        return Err("Bot Token dan Target Chat ID wajib diisi.".to_string());
+    }
+
+    let clean_token = bot_token.trim();
+    let url = format!("https://api.telegram.org/bot{}/sendMessage", clean_token);
+
+    let mut body = serde_json::json!({
+        "chat_id": chat_id.trim(),
+        "text": "🐴 [Hermes Hub Gateway] Uji koneksi notifikasi bot Telegram RSUD dr. H. Jusuf SK berhasil terhubung! Status: READY.",
+        "parse_mode": "HTML"
+    });
+
+    if let Some(t_id) = topic_id {
+        if !t_id.trim().is_empty() {
+            if let Ok(topic_num) = t_id.trim().parse::<i64>() {
+                body["message_thread_id"] = serde_json::json!(topic_num);
+            }
+        }
+    }
+
+    let client = reqwest::Client::new();
+    let res = client.post(&url)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("Koneksi jaringan ke Telegram gagal: {}", e))?;
+
+    let status = res.status();
+    let resp_text = res.text().await.unwrap_or_default();
+
+    if status.is_success() {
+        Ok(serde_json::json!({
+            "success": true,
+            "message": format!("✓ Pesan Telegram berhasil dikirim ke Chat ID {}!", chat_id)
+        }))
+    } else {
+        Err(format!("Telegram API Error (HTTP {}): {}", status.as_u16(), resp_text))
+    }
+}
+
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
@@ -235,7 +278,8 @@ async fn main() {
             save_system_config,
             get_skill_detail,
             create_workspace_declarative,
-            trigger_manual_sync
+            trigger_manual_sync,
+            test_telegram_broadcast
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
