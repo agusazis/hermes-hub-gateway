@@ -5,8 +5,18 @@ import {
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
-  BookOpen, User, Calendar, ExternalLink, X, FileText
+  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight,
+  GitFork, Key, Globe, FolderTree
 } from 'lucide-react';
+
+interface GitTarget {
+  provider: string;
+  base_url: string;
+  project_id: string;
+  repo_url: string;
+  target_branch: string;
+  auth_token: string;
+}
 
 interface McpServerEntry {
   name: string;
@@ -24,6 +34,7 @@ interface Workspace {
   internal_skills_path: string;
   hermes_evaluator_url: string;
   mnemosyne_url: string;
+  git_target?: GitTarget;
 }
 
 interface GlobalConfig {
@@ -35,12 +46,13 @@ interface GlobalConfig {
   mcp_servers: McpServerEntry[];
 }
 
-interface SkillMeta {
+interface SkillHierarchyItem {
   name: string;
   category: string;
   author: string;
   created_at: string;
   desc: string;
+  references: string[];
 }
 
 export default function App() {
@@ -58,7 +70,15 @@ export default function App() {
         target_path: 'D:\\7. Project\\SIMGOSv2\\New - php82\\simgos2',
         internal_skills_path: 'C:\\Users\\user\\.hermes-hub\\workspaces\\simgos2\\skills',
         hermes_evaluator_url: 'http://172.168.1.202:9125',
-        mnemosyne_url: 'http://172.168.1.202:8080'
+        mnemosyne_url: 'http://172.168.1.202:8080',
+        git_target: {
+          provider: 'gitlab',
+          base_url: 'http://172.168.1.33',
+          project_id: '84',
+          repo_url: 'http://172.168.1.33/simrs/ai-agents.git',
+          target_branch: 'main',
+          auth_token: ''
+        }
       }
     ],
     mcp_servers: [
@@ -97,18 +117,68 @@ export default function App() {
     ]
   });
 
-  const [skillsList] = useState<SkillMeta[]>([
-    { name: 'simgos2-bpjs-vclaim', category: 'simgos2', author: 'agus', created_at: '2026-10-18', desc: 'Integrasi BPJS VClaim 2.0, generate signature HMAC-SHA256, dan pembuatan SEP RSUD Jusuf SK' },
-    { name: 'simgos2-frontend-extjs', category: 'simgos2', author: 'ardi', created_at: '2026-10-17', desc: 'Standar penamaan Store, Controller, dan View Ext JS 4/6 Classic tanpa memory leak' },
-    { name: 'simgos2-core-blueprint', category: 'simgos2', author: 'agus', created_at: '2026-10-15', desc: 'Arsitektur modul backend PHP 8.2 Simgos2, router RESTful, dan audit log transaksi' },
-    { name: 'simgos2-db-audit', category: 'simgos2', author: 'agus', created_at: '2026-10-16', desc: 'Proteksi transaksi stok farmasi dan lock baris pesanan resep pasien' },
-    { name: 'git-upstream-sync', category: 'devops', author: 'ardi', created_at: '2026-10-14', desc: 'Prosedur sinkronisasi branch fitur ke remote upstream GitLab SIMRS' },
-    { name: 'server-devops', category: 'devops', author: 'agus', created_at: '2026-10-12', desc: 'Manajemen isolasi VM AlmaLinux 9, Nginx upstream socket, dan PHP-FPM pool' },
-    { name: 'synology-dsm-operations', category: 'devops', author: 'agus', created_at: '2026-10-19', desc: 'Audit retensi GFS 7-Daily/4-Weekly/12-Monthly di Synology NAS RSUD' }
+  // Hirarki Skills: Parent SKILL.md dengan Child References
+  const [skillsHierarchy] = useState<SkillHierarchyItem[]>([
+    {
+      name: 'simgos2-bpjs-vclaim',
+      category: 'simgos2',
+      author: 'agus',
+      created_at: '2026-10-18',
+      desc: 'Integrasi BPJS VClaim 2.0, generate signature HMAC-SHA256, dan pembuatan SEP RSUD Jusuf SK',
+      references: ['vclaim-v2-spec.md', 'bpjs-error-codes.json', 'sep-create-payload.sample']
+    },
+    {
+      name: 'simgos2-frontend-extjs',
+      category: 'simgos2',
+      author: 'ardi',
+      created_at: '2026-10-17',
+      desc: 'Standar penamaan Store, Controller, dan View Ext JS 4/6 Classic tanpa memory leak',
+      references: ['extjs-store-lifecycle.md', 'grid-paging-best-practice.md']
+    },
+    {
+      name: 'simgos2-core-blueprint',
+      category: 'simgos2',
+      author: 'agus',
+      created_at: '2026-10-15',
+      desc: 'Arsitektur modul backend PHP 8.2 Simgos2, router RESTful, dan audit log transaksi',
+      references: ['router-dispatch-contract.md', 'database-transaction-wrapper.md']
+    },
+    {
+      name: 'simgos2-db-audit',
+      category: 'simgos2',
+      author: 'agus',
+      created_at: '2026-10-16',
+      desc: 'Proteksi transaksi stok farmasi dan lock baris pesanan resep pasien',
+      references: ['mariadb-isolation-levels.md', 'stock-fifo-rules.md']
+    },
+    {
+      name: 'git-upstream-sync',
+      category: 'devops',
+      author: 'ardi',
+      created_at: '2026-10-14',
+      desc: 'Prosedur sinkronisasi branch fitur ke remote upstream GitLab SIMRS',
+      references: ['squash-merge-checklist.md']
+    },
+    {
+      name: 'server-devops',
+      category: 'devops',
+      author: 'agus',
+      created_at: '2026-10-12',
+      desc: 'Manajemen isolasi VM AlmaLinux 9, Nginx upstream socket, dan PHP-FPM pool',
+      references: ['nginx-timeout-tuning.conf', 'php-fpm-memory-limit.ini']
+    },
+    {
+      name: 'synology-dsm-operations',
+      category: 'devops',
+      author: 'agus',
+      created_at: '2026-10-19',
+      desc: 'Audit retensi GFS 7-Daily/4-Weekly/12-Monthly di Synology NAS RSUD',
+      references: ['gfs-retention-schedule.md', 'google-sheets-audit-api.md']
+    }
   ]);
 
   const [selectedSkill, setSelectedSkill] = useState<{ name: string; content: string; references: string[]; author: string; created_at: string } | null>(null);
-  const [loadingSkill, setLoadingSkill] = useState(false);
+  const [selectedRefFile, setSelectedRefFile] = useState<string | null>(null);
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -129,7 +199,7 @@ export default function App() {
     { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
     { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
     { time: new Date().toLocaleTimeString(), event: 'Server Integrity Check: Hermes & Mnemosyne host verified identical (172.168.1.202).' },
-    { time: new Date().toLocaleTimeString(), event: 'Background daemon active in system tray (close window to minimize).' }
+    { time: new Date().toLocaleTimeString(), event: 'Single Instance IPC Daemon active (re-launching brings app to focus).' }
   ]);
 
   // Load Real Config from Rust
@@ -169,8 +239,7 @@ export default function App() {
     };
   }, []);
 
-  const handleOpenSkill = async (s: SkillMeta) => {
-    setLoadingSkill(true);
+  const handleOpenSkill = async (s: SkillHierarchyItem) => {
     try {
       const res: any = await invoke('get_skill_detail', {
         workspaceId: config.active_workspace_id,
@@ -179,20 +248,20 @@ export default function App() {
       setSelectedSkill({
         name: s.name,
         content: res.content,
-        references: res.references || [],
+        references: s.references,
         author: s.author,
         created_at: s.created_at
       });
+      setSelectedRefFile(null);
     } catch (err) {
       setSelectedSkill({
         name: s.name,
         content: `# Skill: ${s.name}\n\nDeskripsi: ${s.desc}\n\n> File SKILL.md lokal sedang dalam sinkronisasi dari GitLab.`,
-        references: [],
+        references: s.references,
         author: s.author,
         created_at: s.created_at
       });
-    } finally {
-      setLoadingSkill(false);
+      setSelectedRefFile(null);
     }
   };
 
@@ -270,7 +339,7 @@ export default function App() {
     setErrorMessage('');
     try {
       await invoke('save_system_config', { cfg: config });
-      setSyncMessage('Pengaturan server gateway berhasil disimpan!');
+      setSyncMessage('Pengaturan server gateway dan repositori berhasil disimpan!');
       setTimeout(() => setSyncMessage(''), 3000);
     } catch (err: any) {
       setErrorMessage(String(err));
@@ -325,7 +394,7 @@ export default function App() {
                 activeTab === 'skills' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Shield className="w-4 h-4" /> Skills Registry & Reader
+              <Shield className="w-4 h-4" /> Skills Hierarchy & Reader
             </button>
             <button 
               onClick={() => setActiveTab('logs')}
@@ -341,7 +410,7 @@ export default function App() {
                 activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Settings className="w-4 h-4" /> Settings & Gateway
+              <Settings className="w-4 h-4" /> Settings & Repos
             </button>
           </nav>
         </div>
@@ -367,17 +436,17 @@ export default function App() {
               {activeTab === 'dashboard' && 'System Status & Overview'}
               {activeTab === 'workspaces' && 'Isolated Workspaces Manager'}
               {activeTab === 'mcp_hub' && 'Unified MCP Servers Hub (Gudang Terpusat MCP)'}
-              {activeTab === 'skills' && 'Knowledge & Skills Registry & Interactive Reader'}
+              {activeTab === 'skills' && 'Knowledge & Skills Hierarchy (Parent & References)'}
               {activeTab === 'logs' && 'Continuous Evolution Live Logs'}
-              {activeTab === 'settings' && 'Gateway & Server Configuration'}
+              {activeTab === 'settings' && 'Gateway & Git Repository Configuration'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for RSUD dr. H. Jusuf SK.'}
               {activeTab === 'workspaces' && 'Kelola folder koding terisolasi tanpa mengotori project dengan folder .agents fisik.'}
               {activeTab === 'mcp_hub' && 'Konfigurasi server MCP eksternal (Database, Synology, MikroTik, Grafana) yang diekspos ke IDE.'}
-              {activeTab === 'skills' && 'Baca SOP, verifikasi relevansi aturan, dan lihat programmer pencetus (author provenance).'}
+              {activeTab === 'skills' && 'Struktur hirarki berkas: SOP Parent (SKILL.md) dan referensi pendukung (references/).'}
               {activeTab === 'logs' && 'Telemetri evaluasi real-time antara IDE watcher dan server evaluator.'}
-              {activeTab === 'settings' && 'Konfigurasi endpoint Hermes evaluator, Mnemosyne DB, dan validasi server tunggal.'}
+              {activeTab === 'settings' && 'Pengaturan koneksi repositori skills Git (GitLab/GitHub) dan endpoint server terpusat.'}
             </p>
           </div>
 
@@ -448,13 +517,13 @@ export default function App() {
             {/* Architecture Card */}
             <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Strict Server Host Integrity Enforcement</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Resilient Desktop & Single-Instance IPC Active</h3>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                  ONE-HOST SYNCED
+                  IPC GUARD ENABLED
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Hermes Evaluator (Otak Ekstraksi SOP) dan Mnemosyne Shared Memory (Pusat Memori) <b>wajib berada di server fisik/VM yang sama</b> ({config.default_hermes_evaluator_url.split(':').slice(0, 2).join(':')}). Arsitektur ini mencegah split-brain atau desinkronisasi aturan antar programmer.
+                Aplikasi ini dilengkapi <b>Single-Instance Inter-Process Communication</b>. Menutup jendela dengan tanda (X) menjaga watcher tetap aktif di background system tray. Mengklik kembali shortcut aplikasi di desktop tidak akan macet atau membutuhkan <i>End Task</i>, melainkan langsung membawa jendela aktif ke layar depan.
               </p>
             </div>
           </div>
@@ -653,34 +722,65 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: SKILLS REGISTRY & INTERACTIVE READER */}
+        {/* TAB 4: SKILLS HIERARCHY & READER */}
         {activeTab === 'skills' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Klik kartu skill untuk membaca isi SOP, atribusi pencetus, dan file referensi:</span>
-              <span className="text-xs text-cyan-400 font-mono">Total {skillsList.length} SOP Terverifikasi</span>
+              <div className="space-y-0.5">
+                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
+                  <FolderTree className="w-4 h-4 text-cyan-400" /> Hirarki Skills: Parent & File Referensi Pendukung
+                </span>
+                <p className="text-[11px] text-slate-400">Setiap skill induk (SKILL.md) dapat memiliki berkas referensi child di subdirektori <code>references/</code>.</p>
+              </div>
+              <span className="text-xs text-cyan-400 font-mono">Workspace: {config.active_workspace_id}</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {skillsList.map((s) => (
-                <div 
-                  key={s.name} 
-                  onClick={() => handleOpenSkill(s)}
-                  className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2 hover:border-cyan-500/50 cursor-pointer transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-cyan-300 font-mono group-hover:text-cyan-200 transition-colors">{s.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1 text-[10px] bg-slate-800/80 text-cyan-400 px-2 py-0.5 rounded-md border border-slate-700">
-                        <User className="w-3 h-3" /> {s.author}
-                      </span>
-                      <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700">{s.category}</span>
+            <div className="space-y-3">
+              {skillsHierarchy.map((s) => (
+                <div key={s.name} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3">
+                  {/* Skill Parent Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-cyan-300 font-mono">{s.name}</span>
+                        <span className="flex items-center gap-1 text-[10px] bg-slate-800 text-cyan-400 px-2 py-0.5 rounded-md border border-slate-700">
+                          <User className="w-3 h-3" /> Author: @{s.author}
+                        </span>
+                        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700">
+                          {s.category}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">{s.desc}</p>
                     </div>
+
+                    <button
+                      onClick={() => handleOpenSkill(s)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs font-semibold transition-all"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" /> Baca SKILL.md
+                    </button>
                   </div>
-                  <p className="text-xs text-slate-400 leading-normal line-clamp-2">{s.desc}</p>
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-500 font-mono">
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {s.created_at}</span>
-                    <span className="text-cyan-400 flex items-center gap-1 group-hover:underline"><BookOpen className="w-3 h-3" /> Baca SOP</span>
+
+                  {/* Child References Sub-tree */}
+                  <div className="pl-4 border-l-2 border-slate-800 space-y-1.5">
+                    <div className="text-[10px] font-mono uppercase text-slate-500 flex items-center gap-1">
+                      <ChevronRight className="w-3 h-3" /> references/ ({s.references.length} berkas pendukung)
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {s.references.map((ref) => (
+                        <div 
+                          key={ref}
+                          onClick={() => {
+                            handleOpenSkill(s);
+                            setSelectedRefFile(ref);
+                          }}
+                          className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-md text-[11px] font-mono text-slate-300 hover:text-cyan-300 cursor-pointer flex items-center gap-1.5 transition-colors"
+                        >
+                          <FileText className="w-3 h-3 text-cyan-400" />
+                          <span>{ref}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -695,7 +795,9 @@ export default function App() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2.5">
                         <FileText className="w-5 h-5 text-cyan-400" />
-                        <h3 className="font-bold text-base text-white font-mono">{selectedSkill.name}</h3>
+                        <h3 className="font-bold text-base text-white font-mono">
+                          {selectedRefFile ? `${selectedSkill.name} / references / ${selectedRefFile}` : `${selectedSkill.name} (SKILL.md)`}
+                        </h3>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-slate-400">
                         <span className="flex items-center gap-1 text-cyan-300">
@@ -720,29 +822,21 @@ export default function App() {
                     <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
                       <div className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Provenance & Audit Header</div>
                       <div className="text-slate-400 leading-relaxed">
-                        Skill ini diekstrak secara otomatis oleh Hermes Evaluator dari turn percakapan programmer <b>@{selectedSkill.author}</b>. Aturan ini telah disahkan dan di-commit ke Git target tanpa mengubah source code project target secara fisik.
+                        Aturan ini diekstrak secara otomatis oleh Hermes Evaluator dari interaksi koding programmer <b>@{selectedSkill.author}</b> dan disinkronkan langsung dari repositori GitLab kantor.
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Isi Berkas SKILL.md</div>
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        {selectedRefFile ? `Isi Berkas Referensi: ${selectedRefFile}` : 'Isi Berkas SKILL.md Utama'}
+                      </div>
                       <pre className="p-4 bg-slate-900 border border-slate-800 rounded-xl whitespace-pre-wrap leading-relaxed text-slate-200">
-                        {selectedSkill.content}
+                        {selectedRefFile 
+                          ? `# Referensi Spesifikasi Teknis: ${selectedRefFile}\n\nBerkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transaksi yang disuplai secara on-demand ke konteks IDE.`
+                          : selectedSkill.content
+                        }
                       </pre>
                     </div>
-
-                    {selectedSkill.references && selectedSkill.references.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">File Referensi Pendukung (references/)</div>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedSkill.references.map((r) => (
-                            <span key={r} className="px-2.5 py-1 bg-slate-800 border border-slate-700 rounded-lg text-cyan-300 text-xs flex items-center gap-1.5">
-                              <ExternalLink className="w-3 h-3" /> {r}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Modal Footer */}
@@ -779,9 +873,107 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 6: SETTINGS */}
+        {/* TAB 6: SETTINGS & REPOSITORIES */}
         {activeTab === 'settings' && (
-          <div className="max-w-xl space-y-5">
+          <div className="max-w-2xl space-y-5">
+            {/* Git Target Repository Config */}
+            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-cyan-400" /> Repositori Penyimpanan Skills (GitLab / GitHub)
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-mono">
+                  CENTRAL REPO
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Provider Git</label>
+                  <select 
+                    value={activeWs?.git_target?.provider || 'gitlab'}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (updated.workspaces[0].git_target) {
+                        updated.workspaces[0].git_target.provider = e.target.value;
+                        setConfig(updated);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  >
+                    <option value="gitlab">GitLab (Self-Hosted RSUD)</option>
+                    <option value="github">GitHub</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Project ID / Repo Identifier</label>
+                  <input 
+                    type="text" 
+                    value={activeWs?.git_target?.project_id || '84'}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (updated.workspaces[0].git_target) {
+                        updated.workspaces[0].git_target.project_id = e.target.value;
+                        setConfig(updated);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5 col-span-2">
+                  <label className="text-xs text-slate-400 font-medium">URL Repositori Remote Git</label>
+                  <input 
+                    type="text" 
+                    value={activeWs?.git_target?.repo_url || 'http://172.168.1.33/simrs/ai-agents.git'}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (updated.workspaces[0].git_target) {
+                        updated.workspaces[0].git_target.repo_url = e.target.value;
+                        setConfig(updated);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Branch Target</label>
+                  <input 
+                    type="text" 
+                    value={activeWs?.git_target?.target_branch || 'main'}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (updated.workspaces[0].git_target) {
+                        updated.workspaces[0].git_target.target_branch = e.target.value;
+                        setConfig(updated);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Personal Access Token (PAT)</label>
+                  <input 
+                    type="password" 
+                    placeholder="glpat-••••••••••••••••"
+                    value={activeWs?.git_target?.auth_token || ''}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (updated.workspaces[0].git_target) {
+                        updated.workspaces[0].git_target.auth_token = e.target.value;
+                        setConfig(updated);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Gateway Servers Config */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Konfigurasi Gateway Server</h3>
               
@@ -823,7 +1015,7 @@ export default function App() {
                   onClick={handleSaveSettings}
                   className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                 >
-                  Simpan Konfigurasi
+                  Simpan Seluruh Konfigurasi
                 </button>
               </div>
             </div>
