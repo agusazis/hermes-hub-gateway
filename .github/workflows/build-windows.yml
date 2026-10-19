@@ -3,11 +3,12 @@ name: Build Hermes Hub Gateway (Windows)
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'package.json'
+      - 'index.html'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 concurrency:
@@ -16,8 +17,6 @@ concurrency:
 
 jobs:
   build-tauri:
-    # Hanya jalankan build biner jika commit message mengandung keyword build/release ATAU via manual trigger (workflow_dispatch)
-    # Jika commit hanya perubahan biasa (misal fix typo, docs, config minor), skip build kompilasi berat
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build]') || contains(github.event.head_commit.message, '[release]')
     permissions:
       contents: write
@@ -42,11 +41,10 @@ jobs:
       - name: Build Tauri Desktop Application
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SKIP_DEPS_CHECK: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\\n          TAURI_SKIP_DEPS_CHECK: \"true\"
         with:
-          tagName: v0.1.0
-          releaseName: "Hermes Hub Gateway v0.1.0"
-          releaseBody: "Automated native Windows desktop binary release for Hermes Hub Gateway."
+          tagName: v0.2.0
+          releaseName: \"Hermes Hub Gateway v0.2.0\"
+          releaseBody: \"Release v0.2.0: Single-Instance IPC (no end-task freeze), tray context menu, skills hierarchy reader, and central git repo settings.\"
           releaseDraft: false
           prerelease: false
