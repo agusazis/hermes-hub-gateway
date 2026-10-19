@@ -193,6 +193,49 @@ async fn test_telegram_broadcast(bot_token: String, chat_id: String, topic_id: O
     }
 }
 
+#[tauri::command]
+fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, String> {
+    let cfg = config::load_config();
+    let ws = cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned().unwrap_or_else(|| cfg.workspaces[0].clone());
+    let internal_path = PathBuf::from(&ws.internal_skills_path);
+
+    let mut result = Vec::new();
+
+    if internal_path.exists() {
+        if let Ok(entries) = std::fs::read_dir(&internal_path) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    let skill_name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default().to_string();
+                    let ref_dir = path.join("references");
+                    let mut references = Vec::new();
+                    if ref_dir.exists() {
+                        if let Ok(ref_entries) = std::fs::read_dir(ref_dir) {
+                            for re in ref_entries.flatten() {
+                                if let Some(rn) = re.file_name().to_str() {
+                                    references.push(rn.to_string());
+                                }
+                            }
+                        }
+                    }
+
+                    result.push(serde_json::json!({
+                        "name": skill_name,
+                        "workspace_id": ws.id,
+                        "category": "simgos2",
+                        "author": "agus",
+                        "created_at": "2026-10-18",
+                        "desc": format!("Aturan koding otomatis tersinkron dari repository {}", ws.name),
+                        "references": references
+                    }));
+                }
+            }
+        }
+    }
+
+    Ok(result)
+}
+
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
@@ -261,6 +304,11 @@ async fn main() {
 
             let handle_clone = app_handle.clone();
             tauri::async_runtime::spawn(async move {
+                                // Auto-sync rules dari Git repositori saat startup
+                let initial_cfg = config::load_config();
+                if let Some(active_ws) = initial_cfg.workspaces.iter().find(|w| w.id == initial_cfg.active_workspace_id) {
+                    watcher::sync_rules_from_git(active_ws).await;
+                }
                 watcher::start_watcher_loop(handle_clone).await;
             });
 
@@ -282,7 +330,8 @@ async fn main() {
             get_skill_detail,
             create_workspace_declarative,
             trigger_manual_sync,
-            test_telegram_broadcast
+            test_telegram_broadcast,
+            get_skills_hierarchy
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
