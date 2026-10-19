@@ -256,7 +256,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.0');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.1');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -274,11 +274,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.4.1',
+      name: 'Hermes Hub Gateway v0.4.1 (One-Key Provisioning & Timed Notification Auto-Dismiss)',
+      date: '19 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghadirkan fitur aktivasi konfigurasi satu-kunci (One-Key Organization Provisioning) untuk memudahkan onboarding tim rumah sakit tanpa konfigurasi manual, serta auto-dismiss 30 detik untuk seluruh notifikasi pengujian koneksi.',
+      features: [
+        'Aktivasi Konfigurasi Satu-Kunci (Organization Setup ID): Cukup memasukkan Setup ID (misal: RSUD-JUSUF-SK-CORE) untuk memuat seluruh IP Evaluator, Mnemosyne, dan Bot Telegram secara otomatis.',
+        'Zero-Config Initial State: Biner rilis bersih tanpa kredensial tertanam, aman untuk didistribusikan ke publik maupun tim internal.',
+        'Timed Auto-Dismiss Notifikasi (30 Detik): Banner hasil pengujian Git dan MCP otomatis menghilang sendiri setelah 30 detik agar layar kerja tetap rapi.',
+        'Notifikasi Multi-Channel Terintegrasi: Dukungan OS toast Windows, indikator tray, in-app alert, dan siaran bot Telegram untuk sinkronisasi skill baru.'
+      ],
+      fixes: [
+        'Penyempurnaan auto-dismiss notifikasi pengujian pada modal workspace dan panel MCP.',
+        'Validasi format token dan URL remote repository pada tombol Test Koneksi Git.'
+      ],
+      architecture: [
+        'Enterprise Provisioning Pattern untuk kemudahan onboarding programmer dan staf IT RSUD dr. H. Jusuf SK.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.73 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.1/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.4.0',
       name: 'Hermes Hub Gateway v0.4.0 (Official Version Logs & Git Connectivity Testing)',
       date: '19 Oktober 2026',
       type: 'MAJOR',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Rilis tonggak penting yang menghadirkan penjelajah Version Logs (Changelog) resmi di sidebar aplikasi, tombol Test Koneksi Git di modal pendaftaran/edit workspace dengan notasi hijau zamrud kontras, serta manajemen siklus hidup penuh workspace.',
       features: [
         'Version Logs & Official Changelog Explorer: Menu khusus di sidebar untuk menelusuri riwayat versi, catatan perubahan fitur/bug, serta tautan unduh biner resmi.',
@@ -650,6 +675,11 @@ export default function App() {
           message: 'Gagal terhubung ke remote repo: Host tidak dikenal atau koneksi timeout.'
         });
       }
+
+      // Auto-dismiss setelah 30 detik agar tidak permanen memenuhi layar
+      setTimeout(() => {
+        setGitTestResult(null);
+      }, 30000);
     }, 900);
   };
 
@@ -660,6 +690,10 @@ export default function App() {
 
     setTimeout(() => {
       setTestResult(`✓ Handshake JSON-RPC 2.0 Success! Server "${mcp.name}" merespon dalam 14ms via \\.\pipe\hhg-bridge. Tools calling discovery aktif.`);
+      // Auto-dismiss setelah 30 detik
+      setTimeout(() => {
+        setTestResult(null);
+      }, 30000);
     }, 800);
   };
 
@@ -770,7 +804,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.0</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.1</span>
             </div>
           </div>
 
