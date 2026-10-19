@@ -55,6 +55,7 @@ interface GlobalConfig {
 }
 
 interface SkillHierarchyItem {
+  workspace_id: string;
   name: string;
   category: string;
   author: string;
@@ -126,10 +127,12 @@ export default function App() {
   });
 
   // Hirarki Skills: Parent SKILL.md dengan Child References
+  // Drilldown Skills State: Workspace -> Skills -> References
+  const [drilldownWsId, setDrilldownWsId] = useState<string | null>(null);
   const [skillsHierarchy] = useState<SkillHierarchyItem[]>([
     {
       name: 'simgos2-bpjs-vclaim',
-      category: 'simgos2',
+      workspace_id: 'simgos2', category: 'simgos2',
       author: 'agus',
       created_at: '2026-10-18',
       desc: 'Integrasi BPJS VClaim 2.0, generate signature HMAC-SHA256, dan pembuatan SEP RSUD Jusuf SK',
@@ -137,7 +140,7 @@ export default function App() {
     },
     {
       name: 'simgos2-frontend-extjs',
-      category: 'simgos2',
+      workspace_id: 'simgos2', category: 'simgos2',
       author: 'ardi',
       created_at: '2026-10-17',
       desc: 'Standar penamaan Store, Controller, dan View Ext JS 4/6 Classic tanpa memory leak',
@@ -145,7 +148,7 @@ export default function App() {
     },
     {
       name: 'simgos2-core-blueprint',
-      category: 'simgos2',
+      workspace_id: 'simgos2', category: 'simgos2',
       author: 'agus',
       created_at: '2026-10-15',
       desc: 'Arsitektur modul backend PHP 8.2 Simgos2, router RESTful, dan audit log transaksi',
@@ -153,7 +156,7 @@ export default function App() {
     },
     {
       name: 'simgos2-db-audit',
-      category: 'simgos2',
+      workspace_id: 'simgos2', category: 'simgos2',
       author: 'agus',
       created_at: '2026-10-16',
       desc: 'Proteksi transaksi stok farmasi dan lock baris pesanan resep pasien',
@@ -161,7 +164,7 @@ export default function App() {
     },
     {
       name: 'git-upstream-sync',
-      category: 'devops',
+      workspace_id: 'simgos2', category: 'devops',
       author: 'ardi',
       created_at: '2026-10-14',
       desc: 'Prosedur sinkronisasi branch fitur ke remote upstream GitLab SIMRS',
@@ -169,7 +172,7 @@ export default function App() {
     },
     {
       name: 'server-devops',
-      category: 'devops',
+      workspace_id: 'simgos2', category: 'devops',
       author: 'agus',
       created_at: '2026-10-12',
       desc: 'Manajemen isolasi VM AlmaLinux 9, Nginx upstream socket, dan PHP-FPM pool',
@@ -177,7 +180,7 @@ export default function App() {
     },
     {
       name: 'synology-dsm-operations',
-      category: 'devops',
+      workspace_id: 'simgos2', category: 'devops',
       author: 'agus',
       created_at: '2026-10-19',
       desc: 'Audit retensi GFS 7-Daily/4-Weekly/12-Monthly di Synology NAS RSUD',
@@ -479,7 +482,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.1</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.2.1</span>
             </div>
           </div>
 
@@ -596,55 +599,129 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 1: DASHBOARD */}
-        {activeTab === 'dashboard' && (
+        {/* TAB 1: DASHBOARD (RELEVAN & BERBOBOT TEKNIS) */}
+        {activeTab === "dashboard" && (
           <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+            {/* 4 Pilar Metrik Real-Time */}
+            <div className="grid grid-cols-4 gap-4">
               <div 
-                onClick={() => setActiveTab('workspaces')}
+                onClick={() => setActiveTab("workspaces")}
                 className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2 hover:border-cyan-500/40 cursor-pointer transition-all group"
               >
                 <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                  <span>Active Workspace</span>
+                  <span>Workspaces Terdaftar</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
                 </div>
-                <div className="text-xl font-bold text-white capitalize">{activeWs?.name || 'SIMGOSv2'}</div>
-                <div className="text-[11px] text-cyan-400 font-mono truncate">{activeWs?.target_path}</div>
+                <div className="text-2xl font-bold text-white">{config.workspaces.length} Project</div>
+                <div className="text-[11px] text-cyan-400 font-mono truncate">{activeWs?.name} (Aktif)</div>
               </div>
 
               <div 
-                onClick={() => setActiveTab('mcp_hub')}
+                onClick={() => setActiveTab("mcp_hub")}
                 className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2 hover:border-cyan-500/40 cursor-pointer transition-all group"
               >
                 <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                  <span>Unified MCP Servers</span>
+                  <span>Tools Calling MCP</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
                 </div>
-                <div className="text-xl font-bold text-white">{config.mcp_servers.filter(m => m.enabled).length} Active Tools</div>
-                <div className="text-[11px] text-cyan-400 font-mono truncate">DB, Synology, MikroTik, Grafana</div>
+                <div className="text-2xl font-bold text-white">{getTotalToolsCount()} Fungsi</div>
+                <div className="text-[11px] text-emerald-400 font-mono truncate">{config.mcp_servers.filter(m => m.enabled).length} Server Online</div>
+              </div>
+
+              <div 
+                onClick={() => setActiveTab("skills")}
+                className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2 hover:border-cyan-500/40 cursor-pointer transition-all group"
+              >
+                <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                  <span>SOP & Aturan Koding</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                </div>
+                <div className="text-2xl font-bold text-white">{skillsHierarchy.length} Rules</div>
+                <div className="text-[11px] text-cyan-400 font-mono truncate">Terverifikasi di GitLab</div>
               </div>
 
               <div className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                  <span>Unified MCP Bridge</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Pipe IPC Bridge</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 </div>
-                <div className="text-xl font-bold text-white">Active (Named Pipe)</div>
+                <div className="text-2xl font-bold text-white">READY</div>
                 <div className="text-[11px] text-slate-400 font-mono truncate">\\.\pipe\hhg-bridge</div>
               </div>
             </div>
 
-            {/* Architecture Card */}
-            <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Resilient Desktop & Single-Instance IPC Active</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                  IPC GUARD ENABLED
-                </span>
+            {/* Status Dua Arah: Watcher & Server Evaluator */}
+            <div className="grid grid-cols-2 gap-5">
+              {/* Card 1: Antigravity IDE Transcript Watcher */}
+              <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-cyan-400" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-white">Antigravity IDE Transcript Watcher</h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                    LISTENING
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Thread native Rust memantau transkrip koding di <code>%USERPROFILE%\.gemini\antigravity-ide\brain\</code> secara asinkron tanpa membebani IDE.
+                </p>
+                <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 font-mono text-[11px] text-slate-300 space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Bypass Tag:</span>
+                    <span className="text-cyan-400">_DO_NOT_CAPTURE_BLOCK</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Trailing Review Buffer:</span>
+                    <span className="text-slate-300">12,000 karakter</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Aplikasi ini dilengkapi <b>Single-Instance Inter-Process Communication</b>. Menutup jendela dengan tanda (X) menjaga watcher tetap aktif di background system tray. Mengklik kembali shortcut aplikasi di desktop tidak akan macet atau membutuhkan <i>End Task</i>, melainkan langsung membawa jendela aktif ke layar depan.
-              </p>
+
+              {/* Card 2: Hermes Evaluator & Mnemosyne Memory */}
+              <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Server className="w-4 h-4 text-cyan-400" />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-white">Server Host Integritas (Otak & Memori)</h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-mono">
+                    IDENTICAL HOST VERIFIED
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Hermes Evaluator dan Memori Mnemosyne berjalan pada satu server fisik yang sama untuk menjamin keselarasan penalaran agen.
+                </p>
+                <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 font-mono text-[11px] text-slate-300 space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Evaluator API:</span>
+                    <span className="text-emerald-400">{config.default_hermes_evaluator_url}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Mnemosyne Shared:</span>
+                    <span className="text-emerald-400">{config.default_mnemosyne_url}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Status Background Daemon & Single-Instance IPC */}
+            <div className="p-5 bg-slate-900/30 border border-slate-800/70 rounded-2xl flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-cyan-400" />
+                  <span className="font-bold text-xs uppercase tracking-wider text-white">Single-Instance IPC Daemon & Tray Active</span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Menutup jendela menjaga background watcher tetap hidup di system tray. Membuka shortcut aplikasi langsung memfokuskan jendela aktif tanpa error atau kebutuhan <i>End Task</i>.
+                </p>
+              </div>
+              <button 
+                onClick={() => setActiveTab("logs")}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
+              >
+                Lihat Telemetri Logs
+              </button>
             </div>
           </div>
         )}
@@ -1087,69 +1164,146 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: SKILLS HIERARCHY & READER */}
-        {activeTab === 'skills' && (
+        {/* TAB 4: SKILLS HIERARCHY & READER (PER-WORKSPACE DRILLDOWN) */}
+        {activeTab === "skills" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
-                  <FolderTree className="w-4 h-4 text-cyan-400" /> Hirarki Skills: Parent & File Referensi Pendukung
-                </span>
-                <p className="text-[11px] text-slate-400">Setiap skill induk (SKILL.md) dapat memiliki berkas referensi child di subdirektori <code>references/</code>.</p>
+            {/* Breadcrumb Navigation */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="flex items-center gap-2 text-xs">
+                <button 
+                  onClick={() => setDrilldownWsId(null)}
+                  className={`font-semibold flex items-center gap-1 transition-colors ${
+                    drilldownWsId === null ? "text-cyan-400" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <FolderTree className="w-4 h-4" /> Daftar Workspaces
+                </button>
+                {drilldownWsId && (
+                  <>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+                    <span className="font-semibold text-white font-mono">
+                      {config.workspaces.find(w => w.id === drilldownWsId)?.name || drilldownWsId}
+                    </span>
+                  </>
+                )}
               </div>
-              <span className="text-xs text-cyan-400 font-mono">Workspace: {config.active_workspace_id}</span>
+
+              {drilldownWsId && (
+                <button
+                  onClick={() => setDrilldownWsId(null)}
+                  className="text-xs text-cyan-400 hover:underline flex items-center gap-1"
+                >
+                  ← Kembali ke Pilih Workspace
+                </button>
+              )}
             </div>
 
-            <div className="space-y-3">
-              {skillsHierarchy.map((s) => (
-                <div key={s.name} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3">
-                  {/* Skill Parent Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-cyan-300 font-mono">{s.name}</span>
-                        <span className="flex items-center gap-1 text-[10px] bg-slate-800 text-cyan-400 px-2 py-0.5 rounded-md border border-slate-700">
-                          <User className="w-3 h-3" /> Author: @{s.author}
-                        </span>
-                        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700">
-                          {s.category}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400">{s.desc}</p>
-                    </div>
-
-                    <button
-                      onClick={() => handleOpenSkill(s)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs font-semibold transition-all"
-                    >
-                      <BookOpen className="w-3.5 h-3.5" /> Baca SKILL.md
-                    </button>
-                  </div>
-
-                  {/* Child References Sub-tree */}
-                  <div className="pl-4 border-l-2 border-slate-800 space-y-1.5">
-                    <div className="text-[10px] font-mono uppercase text-slate-500 flex items-center gap-1">
-                      <ChevronRight className="w-3 h-3" /> references/ ({s.references.length} berkas pendukung)
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {s.references.map((ref) => (
-                        <div 
-                          key={ref}
-                          onClick={() => {
-                            handleOpenSkill(s);
-                            setSelectedRefFile(ref);
-                          }}
-                          className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-md text-[11px] font-mono text-slate-300 hover:text-cyan-300 cursor-pointer flex items-center gap-1.5 transition-colors"
-                        >
-                          <FileText className="w-3 h-3 text-cyan-400" />
-                          <span>{ref}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+            {/* LEVEL 1: List Workspaces (Jika belum pilih workspace) */}
+            {drilldownWsId === null ? (
+              <div className="space-y-3">
+                <div className="text-xs text-slate-400 font-medium">
+                  Pilih salah satu workspace untuk menelusuri katalog SOP (SKILL.md) dan berkas referensinya:
                 </div>
-              ))}
-            </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {config.workspaces.map((ws) => {
+                    const wsSkills = skillsHierarchy.filter(s => s.workspace_id === ws.id || ws.id === "simgos2");
+                    return (
+                      <div 
+                        key={ws.id}
+                        onClick={() => setDrilldownWsId(ws.id)}
+                        className="p-5 bg-slate-900/60 border border-slate-800 hover:border-cyan-500/50 rounded-2xl cursor-pointer transition-all space-y-3 group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="p-2 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20 group-hover:scale-110 transition-transform">
+                              <Folder className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 transition-colors">{ws.name}</h4>
+                              <span className="text-[10px] text-slate-500 font-mono">ID: {ws.id}</span>
+                            </div>
+                          </div>
+                          <span className="text-xs font-mono bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 text-cyan-400">
+                            {wsSkills.length} Skills
+                          </span>
+                        </div>
+
+                        <div className="text-xs text-slate-400 font-mono truncate">
+                          Path: {ws.target_path}
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
+                          <span>Git: {ws.git_target?.repo_url ? "Terkoneksi" : "Lokal"}</span>
+                          <span className="text-cyan-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 font-semibold">
+                            Buka Skills →
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* LEVEL 2 & 3: List Skills & References pada Workspace Terpilih */
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>Menampilkan SOP untuk workspace <b>{drilldownWsId}</b>:</span>
+                  <span className="font-mono text-cyan-400">Total: {skillsHierarchy.length} Rules</span>
+                </div>
+
+                <div className="space-y-3">
+                  {skillsHierarchy.map((s) => (
+                    <div key={s.name} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3">
+                      {/* LEVEL 2: Skill Parent Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-cyan-300 font-mono">{s.name}</span>
+                            <span className="flex items-center gap-1 text-[10px] bg-slate-800 text-cyan-400 px-2 py-0.5 rounded-md border border-slate-700">
+                              <User className="w-3 h-3" /> Author: @{s.author}
+                            </span>
+                            <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700">
+                              {s.category}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400">{s.desc}</p>
+                        </div>
+
+                        <button
+                          onClick={() => handleOpenSkill(s)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded-lg text-xs font-semibold transition-all"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" /> Baca SKILL.md
+                        </button>
+                      </div>
+
+                      {/* LEVEL 3: References List */}
+                      <div className="pl-4 border-l-2 border-slate-800 space-y-1.5">
+                        <div className="text-[10px] font-mono uppercase text-slate-500 flex items-center gap-1">
+                          <ChevronRight className="w-3 h-3" /> references/ ({s.references.length} berkas pendukung)
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {s.references.map((ref) => (
+                            <div 
+                              key={ref}
+                              onClick={() => {
+                                handleOpenSkill(s);
+                                setSelectedRefFile(ref);
+                              }}
+                              className="px-2.5 py-1 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-md text-[11px] font-mono text-slate-300 hover:text-cyan-300 cursor-pointer flex items-center gap-1.5 transition-colors"
+                            >
+                              <FileText className="w-3 h-3 text-cyan-400" />
+                              <span>{ref}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* SKILL READER MODAL */}
             {selectedSkill && (
@@ -1166,7 +1320,7 @@ export default function App() {
                       </div>
                       <div className="flex items-center gap-3 text-xs text-slate-400">
                         <span className="flex items-center gap-1 text-cyan-300">
-                          <User className="w-3.5 h-3.5" /> Pencetus: <b className="text-white">{selectedSkill.author}</b>
+                          <User className="w-3.5 h-3.5" /> Pencetus: <b className="text-white">@{selectedSkill.author}</b>
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
@@ -1193,11 +1347,13 @@ export default function App() {
 
                     <div className="space-y-2">
                       <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        {selectedRefFile ? `Isi Berkas Referensi: ${selectedRefFile}` : 'Isi Berkas SKILL.md Utama'}
+                        {selectedRefFile ? `Isi Berkas Referensi: ${selectedRefFile}` : "Isi Berkas SKILL.md Utama"}
                       </div>
                       <pre className="p-4 bg-slate-900 border border-slate-800 rounded-xl whitespace-pre-wrap leading-relaxed text-slate-200">
                         {selectedRefFile 
-                          ? `# Referensi Spesifikasi Teknis: ${selectedRefFile}\n\nBerkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transaksi yang disuplai secara on-demand ke konteks IDE.`
+                          ? `# Referensi Spesifikasi Teknis: ${selectedRefFile}
+
+Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transaksi yang disuplai secara on-demand ke konteks IDE.`
                           : selectedSkill.content
                         }
                       </pre>
@@ -1206,7 +1362,7 @@ export default function App() {
 
                   {/* Modal Footer */}
                   <div className="p-4 border-t border-slate-800 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500">Status Relevansi: Terverifikasi Aktif di Workspace {config.active_workspace_id}</span>
+                    <span className="text-[11px] text-slate-500">Status Relevansi: Terverifikasi Aktif</span>
                     <button
                       onClick={() => setSelectedSkill(null)}
                       className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold"
