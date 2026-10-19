@@ -22,7 +22,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -35,7 +34,7 @@ jobs:
           workspaces: './src-tauri -> target'
 
       - name: Install frontend dependencies
-        run: npm ci || npm install
+        run: npm install
 
       - name: Build Tauri Desktop Application
         uses: tauri-apps/tauri-action@v0
@@ -45,6 +44,6 @@ jobs:
         with:
           tagName: v0.4.2
           releaseName: "Hermes Hub Gateway v0.4.2"
-          releaseBody: "Release v0.4.2: Enterprise Disaster Recovery Suite. Features Disaster Recovery Center for exporting/importing local HHG client configuration and server Mnemosyne memory snapshot, standalone connection testing for Telegram broadcast bot & Gateway Evaluator/Mnemosyne server, 5s auto-dismiss timers across all tests, and CI/CD build cache optimization."
+          releaseBody: "Release v0.4.2: Enterprise Disaster Recovery Suite. Features Disaster Recovery Center for exporting/importing local HHG client configuration and server Mnemosyne memory snapshot, standalone connection testing for Telegram broadcast bot & Gateway Evaluator/Mnemosyne server, 5s auto-dismiss timers across all tests, and Rust Cache acceleration."
           releaseDraft: false
           prerelease: false
