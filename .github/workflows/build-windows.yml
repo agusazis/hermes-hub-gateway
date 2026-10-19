@@ -37,8 +37,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.4.0
-          releaseName: "Hermes Hub Gateway v0.4.0"
-          releaseBody: "Release v0.4.0: Major Milestone Release. Featuring Official Version Logs (Changelog) Explorer in sidebar, Test Koneksi Git in Workspace Modal with vivid emerald green feedback, Full Workspace Lifecycle Management (Edit & Delete), Unified IDE MCP Connection Helper with one-click copy, and clean isolated per-workspace Git architecture."
+          tagName: v0.4.1
+          releaseName: "Hermes Hub Gateway v0.4.1"
+          releaseBody: "Release v0.4.1: Official Production Release with Enterprise Features. Includes One-Key Organization Setup (Provisioning ID), Official Version Logs (Changelog) Explorer in sidebar, Git Connection Testing with 30s auto-dismiss timers, Full Workspace Management (Edit/Delete), and Unified IDE MCP Named Pipe bridge."
           releaseDraft: false
           prerelease: false
