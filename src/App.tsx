@@ -263,7 +263,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.1');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.2');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -281,11 +281,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.4.2',
+      name: 'Hermes Hub Gateway v0.4.2 (Disaster Recovery & Settings Connectivity Suite)',
+      date: '19 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghadirkan Pusat Pencadangan & Pemulihan Bencana (Disaster Recovery Center) untuk konfigurasi klien HHG dan memori server Mnemosyne, tombol uji koneksi mandiri untuk Telegram dan Gateway Server, serta penyesuaian auto-dismiss 5 detik.',
+      features: [
+        'Pusat Cadangan & Pemulihan Bencana: Export/Import konfigurasi lokal HHG (workspaces, git, mcp) jika ganti perangkat.',
+        'Pencadangan Memori Server Mnemosyne: Backup snapshot ingatan agen (episodes & triples) dan pemulihan ke server baru.',
+        'Test Kirim Pesan Telegram: Tombol uji kirim pesan siaran untuk memverifikasi keabsahan Bot Token & Group ID.',
+        'Test Koneksi Server Gateway: Tombol uji keterjangkauan port Evaluator (:9125) dan Memori Mnemosyne (:8080) pada satu host server.'
+      ],
+      fixes: [
+        'Optimalisasi Durasi Notifikasi: Seluruh banner hasil pengujian (MCP, Git, Telegram, Gateway, DR) kini otomatis menghilang dalam 5 detik agar layar tetap rapi.',
+        'Percepatan Build CI/CD: Pengaktifan Rust Cache dan NPM Cache untuk kompilasi rilis yang jauh lebih cepat.'
+      ],
+      architecture: [
+        'Double Disaster Recovery Shield yang melindungi data konfigurasi lokal dan integritas basis pengetahuan agen di server.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.48 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.2/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.75 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.2/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.4.1',
       name: 'Hermes Hub Gateway v0.4.1 (One-Key Provisioning & Timed Notification Auto-Dismiss)',
       date: '19 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan fitur aktivasi konfigurasi satu-kunci (One-Key Organization Provisioning) untuk memudahkan onboarding tim rumah sakit tanpa konfigurasi manual, serta auto-dismiss 30 detik untuk seluruh notifikasi pengujian koneksi.',
       features: [
         'Aktivasi Konfigurasi Satu-Kunci (Organization Setup ID): Cukup memasukkan Setup ID (misal: RSUD-JUSUF-SK-CORE) untuk memuat seluruh IP Evaluator, Mnemosyne, dan Bot Telegram secara otomatis.',
@@ -973,7 +998,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.1</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.2</span>
             </div>
           </div>
 
