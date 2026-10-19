@@ -123,8 +123,6 @@ fn trigger_manual_sync() -> serde_json::Value {
 async fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            // Saat instance kedua diluncurkan (misal user klik lagi icon di desktop):
-            // Jangan exit diam-diam! Bawa jendela instance utama yang sedang jalan di tray ke layar depan!
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.unminimize();
@@ -139,7 +137,14 @@ async fn main() {
             let quit_i = MenuItem::with_id(app, "quit", "Stop & Keluar Aplikasi", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &sync_i, &quit_i])?;
 
-            let _tray = TrayIconBuilder::new()
+            // Bind icon eksplisit dari default_window_icon agar tidak blank di system tray Windows
+            let tray_builder = if let Some(icon) = app.default_window_icon() {
+                TrayIconBuilder::new().icon(icon.clone())
+            } else {
+                TrayIconBuilder::new()
+            };
+
+            let _tray = tray_builder
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .tooltip("Hermes Hub Gateway (Active Background)")
