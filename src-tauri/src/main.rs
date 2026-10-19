@@ -121,22 +121,16 @@ fn trigger_manual_sync() -> serde_json::Value {
 
 #[tokio::main]
 async fn main() {
-    #[cfg(windows)]
-    {
-        use windows::core::w;
-        use windows::Win32::Foundation::GetLastError;
-        use windows::Win32::System::Threading::CreateMutexW;
-
-        unsafe {
-            let _ = CreateMutexW(None, true, w!("Global\\HermesHubGateway_SingleInstance"));
-            if GetLastError().0 == 183 {
-                eprintln!("[!] Hermes Hub Gateway already running. Exiting duplicate instance.");
-                std::process::exit(0);
-            }
-        }
-    }
-
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // Saat instance kedua diluncurkan (misal user klik lagi icon di desktop):
+            // Jangan exit diam-diam! Bawa jendela instance utama yang sedang jalan di tray ke layar depan!
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .setup(|app| {
             let app_handle = app.handle().clone();
 
@@ -167,7 +161,6 @@ async fn main() {
                 })
                 .on_tray_icon_event(|tray, event| {
                     match event {
-                        // Klik Ganda (Double Click) membuka UI Dashboard
                         TrayIconEvent::DoubleClick { button: MouseButton::Left, .. } => {
                             let app = tray.app_handle();
                             if let Some(window) = app.get_webview_window("main") {
@@ -176,7 +169,6 @@ async fn main() {
                                 let _ = window.set_focus();
                             }
                         }
-                        // Klik Tunggal (Single Click) juga langsung buka/fokus jendela
                         TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } => {
                             let app = tray.app_handle();
                             if let Some(window) = app.get_webview_window("main") {
