@@ -28,11 +28,6 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
-      - name: Rust Cache Action
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
       - name: Install frontend dependencies
         run: npm install
 
@@ -44,6 +39,6 @@ jobs:
         with:
           tagName: v0.4.2
           releaseName: "Hermes Hub Gateway v0.4.2"
-          releaseBody: "Release v0.4.2: Enterprise Disaster Recovery Suite. Features Disaster Recovery Center for exporting/importing local HHG client configuration and server Mnemosyne memory snapshot, standalone connection testing for Telegram broadcast bot & Gateway Evaluator/Mnemosyne server, 5s auto-dismiss timers across all tests, and Rust Cache acceleration."
+          releaseBody: "Release v0.4.2: Enterprise Disaster Recovery Suite."
           releaseDraft: false
           prerelease: false
