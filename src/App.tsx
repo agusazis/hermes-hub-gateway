@@ -210,6 +210,9 @@ export default function App() {
   
   // MCP Testing & Tool Calling Discovery state
   const [selectedMcpName, setSelectedMcpName] = useState<string>('database-simrs-readonly');
+  const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
+  const [logFilterQuery, setLogFilterQuery] = useState<string>('');
+  const [wsSearchQuery, setWsSearchQuery] = useState<string>('');
   const [testingMcpIndex, setTestingMcpIndex] = useState<number | null>(null);
   const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>({
     "database-simrs-readonly": [
@@ -728,11 +731,19 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: WORKSPACES */}
-        {activeTab === 'workspaces' && (
+        {/* TAB 2: WORKSPACES (UNIFORM SPLIT-PANE HIERARCHY) */}
+        {activeTab === "workspaces" && (
           <div className="space-y-4">
+            {/* Top Toolbar */}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-medium">Terdaftar {config.workspaces.length} Workspace Aktif</span>
+              <div className="space-y-0.5">
+                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
+                  <FolderKanban className="w-4 h-4 text-cyan-400" /> Isolated Workspaces Manager
+                </span>
+                <p className="text-[11px] text-slate-400">
+                  Total <b>{config.workspaces.length} workspace</b> terdaftar dengan isolasi direktori dan repo mandiri.
+                </p>
+              </div>
               <button 
                 onClick={() => setShowAddWsModal(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
@@ -741,8 +752,9 @@ export default function App() {
               </button>
             </div>
 
+            {/* Modal Tambah Workspace Baru */}
             {showAddWsModal && (
-              <form onSubmit={handleCreateWorkspace} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4">
+              <form onSubmit={handleCreateWorkspace} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4 shadow-xl">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">Pendaftaran Workspace Baru (Zero-Pollution & Isolated Git Repo)</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -851,29 +863,164 @@ export default function App() {
                   >
                     Generate AGENTS.md & Simpan Workspace
                   </button>
-                </div></form>
+                </div>
+              </form>
             )}
 
-            <div className="space-y-3">
-              {config.workspaces.map((ws) => (
-                <div key={ws.id} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-white">{ws.name}</span>
-                      {ws.id === config.active_workspace_id && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                          ACTIVE
-                        </span>
-                      )}
-                    </div>
-                    <div className="font-mono text-xs text-slate-400">{ws.target_path}</div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs text-cyan-400 font-semibold">Zero-Pollution (AGENTS.md)</span>
-                    <div className="text-[10px] text-slate-500">Evaluator: {ws.hermes_evaluator_url}</div>
-                  </div>
+            {/* Split-Pane Hierarchy: Panel Kiri (Daftar Workspaces) + Panel Kanan (Detail Struktur Project) */}
+            <div className="grid grid-cols-12 gap-5 min-h-[520px]">
+              {/* Panel Kiri (Col 4): List Workspaces */}
+              <div className="col-span-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px]">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                  <input 
+                    type="text" 
+                    placeholder="Cari workspace..." 
+                    value={wsSearchQuery}
+                    onChange={(e) => setWsSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50"
+                  />
                 </div>
-              ))}
+
+                <div className="text-[10px] font-mono uppercase text-slate-500 px-1 flex items-center justify-between">
+                  <span>Daftar Workspaces ({config.workspaces.length})</span>
+                  <span>Status</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                  {config.workspaces
+                    .filter(w => w.name.toLowerCase().includes(wsSearchQuery.toLowerCase()) || w.target_path.toLowerCase().includes(wsSearchQuery.toLowerCase()))
+                    .map((ws) => {
+                      const isSelected = config.active_workspace_id === ws.id;
+                      return (
+                        <div 
+                          key={ws.id}
+                          onClick={() => {
+                            const updated = { ...config, active_workspace_id: ws.id };
+                            setConfig(updated);
+                            invoke("save_system_config", { cfg: updated });
+                          }}
+                          className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                            isSelected 
+                              ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
+                              : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`font-mono text-xs font-bold truncate ${isSelected ? "text-cyan-300" : "text-slate-200"}`}>
+                              {ws.name}
+                            </span>
+                            {isSelected ? (
+                              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                                ACTIVE
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
+                                SWITCH
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate font-mono">
+                            {ws.target_path}
+                          </div>
+                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/60 text-[10px] text-slate-500">
+                            <span>ID: {ws.id}</span>
+                            <span>{ws.git_target?.repo_url ? "Git Remote" : "Lokal"}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Panel Kanan (Col 8): Detail Konfigurasi & Berkas Hirarki Workspace */}
+              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                {(() => {
+                  const currentWs = config.workspaces.find(w => w.id === config.active_workspace_id) || config.workspaces[0];
+                  if (!currentWs) return null;
+
+                  return (
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      {/* Workspace Header */}
+                      <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2.5">
+                            <h3 className="font-bold text-base text-white font-mono">{currentWs.name}</h3>
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-semibold">
+                              ZERO-POLLUTION ACTIVE
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-300 font-mono">
+                            Path: <code>{currentWs.target_path}</code>
+                          </div>
+                          <div className="text-[11px] text-slate-500 font-mono">
+                            Evaluator: {currentWs.hermes_evaluator_url} • Memori: {currentWs.mnemosyne_url}
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={() => {
+                            setDrilldownWsId(currentWs.id);
+                            setActiveTab("skills");
+                          }}
+                          className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" /> Buka SOP Workspace
+                        </button>
+                      </div>
+
+                      {/* Repositori Git Binding Card */}
+                      <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <GitBranch className="w-3.5 h-3.5" /> Koneksi Git Terisolasi
+                          </span>
+                          <span className="font-mono text-[11px] text-slate-400">
+                            Branch: <b>{currentWs.git_target?.target_branch || "main"}</b>
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-slate-500 uppercase">Remote Repo:</span>
+                            <div className="font-mono text-slate-300 truncate">
+                              {currentWs.git_target?.repo_url || "Belum dikonfigurasi"}
+                            </div>
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-slate-500 uppercase">Provider & Project ID:</span>
+                            <div className="font-mono text-slate-300">
+                              {currentWs.git_target?.provider || "gitlab"} (ID: {currentWs.git_target?.project_id || "-"})
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Kontrak Deklaratif AGENTS.md */}
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-cyan-400" /> Kontrak Deklaratif AGENTS.md (Root Project)
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">D:\...\AGENTS.md</span>
+                        </div>
+                        <pre className="p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-[11px] text-slate-300 whitespace-pre-wrap max-h-[190px] overflow-y-auto leading-relaxed">
+{`# Autonomous AI Developer Instructions - RSUD dr. H. Jusuf SK
+> [!IMPORTANT]
+> Zero-Pollution Architecture Enforcement:
+> Proyek ini dikelola secara terpusat oleh Hermes Hub Gateway (HHG).
+> DILARANG membuat folder .agents/, folder skills/, atau skrip watcher di dalam project ini.
+
+## 1. Unified MCP Hub
+- Seluruh kemampuan tools koding diakses via Named Pipe: \\.\pipe\hhg-bridge
+
+## 2. Dynamic Skill Retrieval
+- Panggil hermes_get_skill(name: "...") untuk memuat SOP workspace ${currentWs.name}.`}
+                        </pre>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </div>
         )}
@@ -1488,23 +1635,135 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
           </div>
         )}
 
-        {/* TAB 5: EVOLUTION LOGS */}
-        {activeTab === 'logs' && (
-          <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 text-slate-400">
-              <span>WAKTU</span>
-              <span>LIVE TELEMETRI WATCHER & EVALUATOR</span>
+        {/* TAB 5: EVOLUTION LOGS (UNIFORM SPLIT-PANE HIERARCHY) */}
+        {activeTab === "logs" && (
+          <div className="space-y-4">
+            {/* Top Toolbar */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
+                  <Terminal className="w-4 h-4 text-cyan-400" /> Watcher Telemetry & Evolution Logs
+                </span>
+                <p className="text-[11px] text-slate-400">
+                  Total <b>{logs.length} event telemetri</b> transkrip koding tercatat secara real-time.
+                </p>
+              </div>
+              <button 
+                onClick={() => setLogs([])}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-semibold border border-slate-800 transition-colors"
+              >
+                Bersihkan Log
+              </button>
             </div>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {logs.map((l, i) => (
-                <div key={i} className="flex items-start gap-4 text-slate-300">
-                  <span className="text-cyan-400 whitespace-nowrap">{l.time}</span>
-                  <span className="leading-relaxed">{l.event}</span>
+
+            {/* Split-Pane: Panel Kiri (Daftar Event Logs) + Panel Kanan (Detail Payload JSON & Trace) */}
+            <div className="grid grid-cols-12 gap-5 min-h-[520px]">
+              {/* Panel Kiri (Col 4): List Event Logs */}
+              <div className="col-span-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px]">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                  <input 
+                    type="text" 
+                    placeholder="Filter event log..." 
+                    value={logFilterQuery}
+                    onChange={(e) => setLogFilterQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50"
+                  />
                 </div>
-              ))}
+
+                <div className="text-[10px] font-mono uppercase text-slate-500 px-1 flex items-center justify-between">
+                  <span>Daftar Event</span>
+                  <span>Waktu</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                  {logs
+                    .filter(l => l.conv.toLowerCase().includes(logFilterQuery.toLowerCase()) || l.file.toLowerCase().includes(logFilterQuery.toLowerCase()))
+                    .map((item, idx) => {
+                      const isSelected = selectedLogIndex === idx;
+                      const isLesson = item.status.includes("Lesson") || item.status.includes("learned");
+
+                      return (
+                        <div 
+                          key={idx}
+                          onClick={() => setSelectedLogIndex(idx)}
+                          className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                            isSelected 
+                              ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
+                              : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`font-mono text-xs font-bold truncate ${isLesson ? "text-emerald-400" : isSelected ? "text-cyan-300" : "text-slate-300"}`}>
+                              {item.status}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-500">
+                              {item.time}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate">
+                            Conv: {item.conv}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Panel Kanan (Col 8): Detail Payload & Trace Inspection */}
+              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                {(() => {
+                  const currentLog = logs[selectedLogIndex] || logs[0];
+                  if (!currentLog) return (
+                    <div className="p-12 text-center text-xs text-slate-500 font-mono">
+                      Belum ada transkrip event yang terekam. Antigravity IDE Watcher sedang siaga.
+                    </div>
+                  );
+
+                  return (
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-base text-white font-mono">{currentLog.status}</h3>
+                            <span className="px-2 py-0.5 rounded-md bg-slate-800 text-cyan-400 border border-slate-700 text-[10px] font-mono">
+                              {currentLog.time}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 font-mono truncate">
+                            Berkas: {currentLog.file}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 flex-1 flex flex-col">
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                          <span>Inspection Trace JSON</span>
+                          <span className="text-[10px] text-slate-500 font-mono">Conversation ID: {currentLog.conv}</span>
+                        </div>
+                        <pre className="flex-1 p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-[11px] text-cyan-300 whitespace-pre-wrap leading-relaxed overflow-y-auto">
+{JSON.stringify({
+  event_timestamp: currentLog.time,
+  status: currentLog.status,
+  conversation_id: currentLog.conv,
+  target_file: currentLog.file,
+  watcher_trigger: "Brain transcript length increase detected",
+  evaluator_endpoint: config.default_hermes_evaluator_url + "/review",
+  zero_pollution_enforced: true,
+  auto_git_sync: true
+}, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </div>
         )}
+
+        
+
 
         {/* TAB 6: SETTINGS & REPOSITORIES */}
         {activeTab === 'settings' && (
