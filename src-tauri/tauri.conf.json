@@ -17,8 +17,7 @@
         "height": 640,
         "resizable": true,
         "fullscreen": false,
-        "visible": true,
-        "icon": "icons/icon.ico"
+        "visible": true
       }
     ],
     "security": {
