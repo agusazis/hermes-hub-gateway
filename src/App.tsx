@@ -5,7 +5,7 @@ import {
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
-  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2,
+  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2, Bell, Send, MessageSquare, Bell, Send, MessageSquare,
   GitFork, Key, Globe, FolderTree
 } from 'lucide-react';
 
@@ -16,6 +16,13 @@ interface GitTarget {
   repo_url: string;
   target_branch: string;
   auth_token: string;
+}
+
+interface TelegramTarget {
+  bot_token: string;
+  chat_id: string;
+  topic_id?: string;
+  enabled: boolean;
 }
 
 interface McpServerEntry {
@@ -42,6 +49,7 @@ interface GlobalConfig {
   default_hermes_evaluator_url: string;
   default_mnemosyne_url: string;
   active_workspace_id: string;
+  telegram_target?: TelegramTarget;
   workspaces: Workspace[];
   mcp_servers: McpServerEntry[];
 }
@@ -1015,7 +1023,193 @@ export default function App() {
 
             {/* Gateway Servers Config */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Konfigurasi Gateway Server</h3>
+              {/* Global Central Telegram Notification Config */}
+            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                    <Send className="w-4 h-4 text-cyan-400" /> Notifikasi Terpusat Telegram (Global Broadcast Bot)
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Bot khusus kantor untuk mengirimkan notifikasi penambahan/pembaruan skills baru ke grup tim RSUD.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = { ...config };
+                    if (!updated.telegram_target) {
+                      updated.telegram_target = { bot_token: '', chat_id: '', topic_id: '', enabled: true };
+                    } else {
+                      updated.telegram_target.enabled = !updated.telegram_target.enabled;
+                    }
+                    setConfig(updated);
+                  }}
+                  className={config.telegram_target?.enabled ? "px-3 py-1 rounded-full text-[10px] font-mono border transition-all bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "px-3 py-1 rounded-full text-[10px] font-mono border transition-all bg-slate-800 text-slate-400 border-slate-700"}
+                >
+                  {config.telegram_target?.enabled ? 'BROADCAST AKTIF' : 'NONAKTIF'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5 col-span-2">
+                  <label className="text-xs text-slate-400 font-medium">Bot Token Telegram (Kantor / Sistem)</label>
+                  <input 
+                    type="password" 
+                    placeholder="Contoh: 7829104523:AAFnJ39..."
+                    value={config.telegram_target?.bot_token || ''}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (!updated.telegram_target) {
+                        updated.telegram_target = { bot_token: e.target.value, chat_id: '', topic_id: '', enabled: true };
+                      } else {
+                        updated.telegram_target.bot_token = e.target.value;
+                      }
+                      setConfig(updated);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                  <span className="text-[10px] text-slate-500 block">
+                    * Token bot ini otomatis dikirim ke Hermes Evaluator pada saat handshake review transkrip.
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Target Chat / Group ID</label>
+                  <input 
+                    type="text" 
+                    placeholder="Contoh: -10023456789 atau @channel"
+                    value={config.telegram_target?.chat_id || ''}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (!updated.telegram_target) {
+                        updated.telegram_target = { bot_token: '', chat_id: e.target.value, topic_id: '', enabled: true };
+                      } else {
+                        updated.telegram_target.chat_id = e.target.value;
+                      }
+                      setConfig(updated);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Topic / Thread ID (Opsional)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Contoh: 84 (kosongkan jika grup biasa)"
+                    value={config.telegram_target?.topic_id || ''}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (!updated.telegram_target) {
+                        updated.telegram_target = { bot_token: '', chat_id: '', topic_id: e.target.value, enabled: true };
+                      } else {
+                        updated.telegram_target.topic_id = e.target.value;
+                      }
+                      setConfig(updated);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Global Central Telegram Notification Config */}
+            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                    <Send className="w-4 h-4 text-cyan-400" /> Notifikasi Terpusat Telegram (Global Broadcast Bot)
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Bot khusus kantor untuk mengirimkan notifikasi penambahan/pembaruan skills baru ke grup tim RSUD.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = { ...config };
+                    if (!updated.telegram_target) {
+                      updated.telegram_target = { bot_token: "", chat_id: "", topic_id: "", enabled: true };
+                    } else {
+                      updated.telegram_target.enabled = !updated.telegram_target.enabled;
+                    }
+                    setConfig(updated);
+                  }}
+                  className={`px-3 py-1 rounded-full text-[10px] font-mono border transition-all ${
+                    config.telegram_target?.enabled 
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                      : "bg-slate-800 text-slate-400 border-slate-700"
+                  }`}
+                >
+                  {config.telegram_target?.enabled ? "BROADCAST AKTIF" : "NONAKTIF"}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5 col-span-2">
+                  <label className="text-xs text-slate-400 font-medium">Bot Token Telegram (Kantor / Sistem)</label>
+                  <input 
+                    type="password" 
+                    placeholder="Contoh: 7829104523:AAFnJ39..."
+                    value={config.telegram_target?.bot_token || ""}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (!updated.telegram_target) {
+                        updated.telegram_target = { bot_token: e.target.value, chat_id: "", topic_id: "", enabled: true };
+                      } else {
+                        updated.telegram_target.bot_token = e.target.value;
+                      }
+                      setConfig(updated);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                  <span className="text-[10px] text-slate-500 block">
+                    * Token bot ini otomatis dikirim ke Hermes Evaluator pada saat handshake review transkrip.
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Target Chat / Group ID</label>
+                  <input 
+                    type="text" 
+                    placeholder="Contoh: -10023456789 atau @channel"
+                    value={config.telegram_target?.chat_id || ""}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (!updated.telegram_target) {
+                        updated.telegram_target = { bot_token: "", chat_id: e.target.value, topic_id: "", enabled: true };
+                      } else {
+                        updated.telegram_target.chat_id = e.target.value;
+                      }
+                      setConfig(updated);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Topic / Thread ID (Opsional)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Contoh: 84 (kosongkan jika grup biasa)"
+                    value={config.telegram_target?.topic_id || ""}
+                    onChange={(e) => {
+                      const updated = { ...config };
+                      if (!updated.telegram_target) {
+                        updated.telegram_target = { bot_token: "", chat_id: "", topic_id: e.target.value, enabled: true };
+                      } else {
+                        updated.telegram_target.topic_id = e.target.value;
+                      }
+                      setConfig(updated);
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Konfigurasi Gateway Server</h3>
               
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-400 font-medium">Server Evaluator Hermes (URL)</label>
