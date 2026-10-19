@@ -5,8 +5,8 @@ import {
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
-  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2, Bell, Send, MessageSquare, Bell, Send, MessageSquare,
-  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search
+  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2, Bell, Send, MessageSquare,
+  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy
 } from 'lucide-react';
 
 interface GitTarget {
@@ -245,6 +245,13 @@ export default function App() {
   const [newMcpDesc, setNewMcpDesc] = useState('');
 
   // Live Telemetry Logs
+    const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+
+  const handleCopySnippet = (snippet: string, key: string) => {
+    navigator.clipboard.writeText(snippet);
+    setCopiedSnippet(key);
+    setTimeout(() => setCopiedSnippet(null), 2500);
+  };
   const [logs, setLogs] = useState<{ time: string; event: string }[]>([
     { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
     { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
@@ -734,6 +741,56 @@ export default function App() {
         {/* TAB 2: WORKSPACES (UNIFORM SPLIT-PANE HIERARCHY) */}
         {activeTab === "workspaces" && (
           <div className="space-y-4">
+            {/* IDE Connection Setup & Auto-Discovery Helper */}
+            <div className="p-4 bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/30 border border-cyan-500/30 rounded-2xl flex items-center justify-between shadow-lg">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-cyan-500/10 rounded-lg text-cyan-400 border border-cyan-500/20">
+                    <Network className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                    Koneksi IDE (Antigravity / VS Code / Cursor) ke HHG
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                    UNIFIED BRIDGE READY
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-snug">
+                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Synology, MikroTik, Grafana, & SOP Skills) otomatis terhubung secara transparan via Named Pipe <code>\\.\pipe\hhg-bridge</code>.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCopySnippet(JSON.stringify({
+                    mcpServers: {
+                      "hermes-hub-gateway": {
+                        command: "powershell",
+                        args: [
+                          "-NoProfile",
+                          "-ExecutionPolicy", "Bypass",
+                          "-File", "%USERPROFILE%\\.hermes-hub\\scripts\\pipe-bridge.ps1"
+                        ]
+                      }
+                    }
+                  }, null, 2), "ide_json")}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all whitespace-nowrap"
+                >
+                  {copiedSnippet === "ide_json" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Copied JSON!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy IDE MCP Config</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -2012,3 +2069,5 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
     </div>
   );
 }
+
+  
