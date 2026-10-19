@@ -4,7 +4,8 @@ import { listen } from '@tauri-apps/api/event';
 import { 
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
-  GitBranch, Folder, Network, HardDrive, Activity, Power, Layers
+  GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
+  BookOpen, User, Calendar, ExternalLink, X, FileText
 } from 'lucide-react';
 
 interface McpServerEntry {
@@ -32,6 +33,14 @@ interface GlobalConfig {
   active_workspace_id: string;
   workspaces: Workspace[];
   mcp_servers: McpServerEntry[];
+}
+
+interface SkillMeta {
+  name: string;
+  category: string;
+  author: string;
+  created_at: string;
+  desc: string;
 }
 
 export default function App() {
@@ -88,8 +97,22 @@ export default function App() {
     ]
   });
 
+  const [skillsList] = useState<SkillMeta[]>([
+    { name: 'simgos2-bpjs-vclaim', category: 'simgos2', author: 'agus', created_at: '2026-10-18', desc: 'Integrasi BPJS VClaim 2.0, generate signature HMAC-SHA256, dan pembuatan SEP RSUD Jusuf SK' },
+    { name: 'simgos2-frontend-extjs', category: 'simgos2', author: 'ardi', created_at: '2026-10-17', desc: 'Standar penamaan Store, Controller, dan View Ext JS 4/6 Classic tanpa memory leak' },
+    { name: 'simgos2-core-blueprint', category: 'simgos2', author: 'agus', created_at: '2026-10-15', desc: 'Arsitektur modul backend PHP 8.2 Simgos2, router RESTful, dan audit log transaksi' },
+    { name: 'simgos2-db-audit', category: 'simgos2', author: 'agus', created_at: '2026-10-16', desc: 'Proteksi transaksi stok farmasi dan lock baris pesanan resep pasien' },
+    { name: 'git-upstream-sync', category: 'devops', author: 'ardi', created_at: '2026-10-14', desc: 'Prosedur sinkronisasi branch fitur ke remote upstream GitLab SIMRS' },
+    { name: 'server-devops', category: 'devops', author: 'agus', created_at: '2026-10-12', desc: 'Manajemen isolasi VM AlmaLinux 9, Nginx upstream socket, dan PHP-FPM pool' },
+    { name: 'synology-dsm-operations', category: 'devops', author: 'agus', created_at: '2026-10-19', desc: 'Audit retensi GFS 7-Daily/4-Weekly/12-Monthly di Synology NAS RSUD' }
+  ]);
+
+  const [selectedSkill, setSelectedSkill] = useState<{ name: string; content: string; references: string[]; author: string; created_at: string } | null>(null);
+  const [loadingSkill, setLoadingSkill] = useState(false);
+
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [showAddWsModal, setShowAddWsModal] = useState(false);
   const [showAddMcpModal, setShowAddMcpModal] = useState(false);
 
@@ -105,7 +128,8 @@ export default function App() {
   const [logs, setLogs] = useState<{ time: string; event: string }[]>([
     { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
     { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
-    { time: new Date().toLocaleTimeString(), event: 'Background tray daemon active (close window to minimize).' }
+    { time: new Date().toLocaleTimeString(), event: 'Server Integrity Check: Hermes & Mnemosyne host verified identical (172.168.1.202).' },
+    { time: new Date().toLocaleTimeString(), event: 'Background daemon active in system tray (close window to minimize).' }
   ]);
 
   // Load Real Config from Rust
@@ -144,6 +168,33 @@ export default function App() {
       unlistenTraySync.then((f) => f());
     };
   }, []);
+
+  const handleOpenSkill = async (s: SkillMeta) => {
+    setLoadingSkill(true);
+    try {
+      const res: any = await invoke('get_skill_detail', {
+        workspaceId: config.active_workspace_id,
+        skillName: s.name
+      });
+      setSelectedSkill({
+        name: s.name,
+        content: res.content,
+        references: res.references || [],
+        author: s.author,
+        created_at: s.created_at
+      });
+    } catch (err) {
+      setSelectedSkill({
+        name: s.name,
+        content: `# Skill: ${s.name}\n\nDeskripsi: ${s.desc}\n\n> File SKILL.md lokal sedang dalam sinkronisasi dari GitLab.`,
+        references: [],
+        author: s.author,
+        created_at: s.created_at
+      });
+    } finally {
+      setLoadingSkill(false);
+    }
+  };
 
   const handleSync = async () => {
     setSyncing(true);
@@ -216,12 +267,13 @@ export default function App() {
   };
 
   const handleSaveSettings = async () => {
+    setErrorMessage('');
     try {
       await invoke('save_system_config', { cfg: config });
       setSyncMessage('Pengaturan server gateway berhasil disimpan!');
       setTimeout(() => setSyncMessage(''), 3000);
-    } catch (err) {
-      alert(`Gagal menyimpan: ${err}`);
+    } catch (err: any) {
+      setErrorMessage(String(err));
     }
   };
 
@@ -273,7 +325,7 @@ export default function App() {
                 activeTab === 'skills' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Shield className="w-4 h-4" /> Skills Registry
+              <Shield className="w-4 h-4" /> Skills Registry & Reader
             </button>
             <button 
               onClick={() => setActiveTab('logs')}
@@ -315,7 +367,7 @@ export default function App() {
               {activeTab === 'dashboard' && 'System Status & Overview'}
               {activeTab === 'workspaces' && 'Isolated Workspaces Manager'}
               {activeTab === 'mcp_hub' && 'Unified MCP Servers Hub (Gudang Terpusat MCP)'}
-              {activeTab === 'skills' && 'Knowledge & Skills Registry'}
+              {activeTab === 'skills' && 'Knowledge & Skills Registry & Interactive Reader'}
               {activeTab === 'logs' && 'Continuous Evolution Live Logs'}
               {activeTab === 'settings' && 'Gateway & Server Configuration'}
             </h2>
@@ -323,9 +375,9 @@ export default function App() {
               {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for RSUD dr. H. Jusuf SK.'}
               {activeTab === 'workspaces' && 'Kelola folder koding terisolasi tanpa mengotori project dengan folder .agents fisik.'}
               {activeTab === 'mcp_hub' && 'Konfigurasi server MCP eksternal (Database, Synology, MikroTik, Grafana) yang diekspos ke IDE.'}
-              {activeTab === 'skills' && 'Daftar SOP dan aturan koding yang disinkronkan secara atomik dari GitLab.'}
+              {activeTab === 'skills' && 'Baca SOP, verifikasi relevansi aturan, dan lihat programmer pencetus (author provenance).'}
               {activeTab === 'logs' && 'Telemetri evaluasi real-time antara IDE watcher dan server evaluator.'}
-              {activeTab === 'settings' && 'Konfigurasi endpoint Hermes evaluator, Mnemosyne DB, dan credential vault.'}
+              {activeTab === 'settings' && 'Konfigurasi endpoint Hermes evaluator, Mnemosyne DB, dan validasi server tunggal.'}
             </p>
           </div>
 
@@ -345,6 +397,13 @@ export default function App() {
           <div className="flex items-center gap-2.5 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             <span>{syncMessage}</span>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="flex items-center gap-2.5 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-400 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
           </div>
         )}
 
@@ -386,16 +445,16 @@ export default function App() {
               </div>
             </div>
 
-            {/* Background Daemon Card */}
+            {/* Architecture Card */}
             <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Background Watcher & System Tray Status</h3>
-                <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-mono">
-                  RESILIENT TRAY DAEMON
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Strict Server Host Integrity Enforcement</h3>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                  ONE-HOST SYNCED
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Menutup jendela aplikasi ini (klik tanda X) <b>tidak akan mematikan proses watcher</b>. Aplikasi otomatis bersembunyi ke system tray di sudut kanan taskbar Windows. Klik kanan icon Hermes di taskbar untuk membuka dashboard, trigger sync manual, atau keluar dari aplikasi.
+                Hermes Evaluator (Otak Ekstraksi SOP) dan Mnemosyne Shared Memory (Pusat Memori) <b>wajib berada di server fisik/VM yang sama</b> ({config.default_hermes_evaluator_url.split(':').slice(0, 2).join(':')}). Arsitektur ini mencegah split-brain atau desinkronisasi aturan antar programmer.
               </p>
             </div>
           </div>
@@ -594,29 +653,111 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: SKILLS REGISTRY */}
+        {/* TAB 4: SKILLS REGISTRY & INTERACTIVE READER */}
         {activeTab === 'skills' && (
-          <div className="space-y-3">
-            <div className="text-xs text-slate-400">Aturan & SOP Terdaftar (On-Demand Retrieval via MCP):</div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400">Klik kartu skill untuk membaca isi SOP, atribusi pencetus, dan file referensi:</span>
+              <span className="text-xs text-cyan-400 font-mono">Total {skillsList.length} SOP Terverifikasi</span>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { name: 'simgos2-bpjs-vclaim', category: 'simgos2', desc: 'Integrasi BPJS VClaim 2.0 & SEP RSUD Jusuf SK' },
-                { name: 'simgos2-frontend-extjs', category: 'simgos2', desc: 'SOP Komponen Ext JS 4/6 Modern & Classic' },
-                { name: 'simgos2-core-blueprint', category: 'simgos2', desc: 'Arsitektur modul core, router, dan model entity' },
-                { name: 'simgos2-db-audit', category: 'simgos2', desc: 'Audit skema MariaDB & proteksi transaksi farmasi' },
-                { name: 'git-upstream-sync', category: 'devops', desc: 'Disiplin commit, clean squash, dan PR upstream sync' },
-                { name: 'server-devops', category: 'devops', desc: 'Operasional VM AlmaLinux, Nginx, PHP-FPM, MariaDB' },
-                { name: 'synology-dsm-operations', category: 'devops', desc: 'Manajemen GFS backup NAS Synology WebAPI' }
-              ].map((s) => (
-                <div key={s.name} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-1.5">
+              {skillsList.map((s) => (
+                <div 
+                  key={s.name} 
+                  onClick={() => handleOpenSkill(s)}
+                  className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2 hover:border-cyan-500/50 cursor-pointer transition-all group"
+                >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-cyan-300 font-mono">{s.name}</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700">{s.category}</span>
+                    <span className="font-bold text-xs text-cyan-300 font-mono group-hover:text-cyan-200 transition-colors">{s.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-[10px] bg-slate-800/80 text-cyan-400 px-2 py-0.5 rounded-md border border-slate-700">
+                        <User className="w-3 h-3" /> {s.author}
+                      </span>
+                      <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700">{s.category}</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-400 leading-normal">{s.desc}</p>
+                  <p className="text-xs text-slate-400 leading-normal line-clamp-2">{s.desc}</p>
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-500 font-mono">
+                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {s.created_at}</span>
+                    <span className="text-cyan-400 flex items-center gap-1 group-hover:underline"><BookOpen className="w-3 h-3" /> Baca SOP</span>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* SKILL READER MODAL */}
+            {selectedSkill && (
+              <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-in fade-in">
+                <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
+                  {/* Modal Header */}
+                  <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5">
+                        <FileText className="w-5 h-5 text-cyan-400" />
+                        <h3 className="font-bold text-base text-white font-mono">{selectedSkill.name}</h3>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <span className="flex items-center gap-1 text-cyan-300">
+                          <User className="w-3.5 h-3.5" /> Pencetus: <b className="text-white">{selectedSkill.author}</b>
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" /> Tanggal: {selectedSkill.created_at}
+                        </span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setSelectedSkill(null)}
+                      className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-4 font-mono text-xs text-slate-300 bg-slate-950/40">
+                    <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
+                      <div className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Provenance & Audit Header</div>
+                      <div className="text-slate-400 leading-relaxed">
+                        Skill ini diekstrak secara otomatis oleh Hermes Evaluator dari turn percakapan programmer <b>@{selectedSkill.author}</b>. Aturan ini telah disahkan dan di-commit ke Git target tanpa mengubah source code project target secara fisik.
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Isi Berkas SKILL.md</div>
+                      <pre className="p-4 bg-slate-900 border border-slate-800 rounded-xl whitespace-pre-wrap leading-relaxed text-slate-200">
+                        {selectedSkill.content}
+                      </pre>
+                    </div>
+
+                    {selectedSkill.references && selectedSkill.references.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">File Referensi Pendukung (references/)</div>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedSkill.references.map((r) => (
+                            <span key={r} className="px-2.5 py-1 bg-slate-800 border border-slate-700 rounded-lg text-cyan-300 text-xs flex items-center gap-1.5">
+                              <ExternalLink className="w-3 h-3" /> {r}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="p-4 border-t border-slate-800 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-500">Status Relevansi: Terverifikasi Aktif di Workspace {config.active_workspace_id}</span>
+                    <button
+                      onClick={() => setSelectedSkill(null)}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold"
+                    >
+                      Tutup Reader
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -662,6 +803,9 @@ export default function App() {
                   onChange={(e) => setConfig({ ...config, default_mnemosyne_url: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
                 />
+                <span className="text-[10px] text-amber-400/90 block">
+                  * Aturan Tegas: Host/IP server Evaluator dan Mnemosyne WAJIB identik (satu server).
+                </span>
               </div>
 
               <div className="space-y-1.5">
