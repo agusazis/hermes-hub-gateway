@@ -204,6 +204,7 @@ export default function App() {
   const [newWsGitToken, setNewWsGitToken] = useState('');
   
   // MCP Testing & Tool Calling Discovery state
+  const [selectedMcpName, setSelectedMcpName] = useState<string>('database-simrs-readonly');
   const [testingMcpIndex, setTestingMcpIndex] = useState<number | null>(null);
   const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>({
     "database-simrs-readonly": [
@@ -369,6 +370,21 @@ export default function App() {
     setTimeout(() => {
       setTestResult(`✓ Handshake JSON-RPC 2.0 Success! Server "${mcp.name}" merespon dalam 14ms via \\.\pipe\hhg-bridge. Tools calling discovery aktif.`);
     }, 800);
+  };
+
+    const getTotalToolsCount = () => {
+    let total = 0;
+    Object.values(mcpToolsDiscovery).forEach((arr) => {
+      total += arr.length;
+    });
+    return total;
+  };
+
+  const handleToggleAllTools = (mcpName: string, enableAll: boolean) => {
+    setMcpToolsDiscovery((prev) => {
+      const list = (prev[mcpName] || []).map((t) => ({ ...t, enabled: enableAll }));
+      return { ...prev, [mcpName]: list };
+    });
   };
 
   const handleToggleToolCalling = (mcpName: string, toolIdx: number) => {
@@ -783,23 +799,39 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: MCP SERVERS HUB */}
-        {activeTab === 'mcp_hub' && (
+        {/* TAB 3: MCP SERVERS HUB (IDE-STYLE MASTER-DETAIL) */}
+        {activeTab === "mcp_hub" && (
           <div className="space-y-4">
+            {/* Top Toolbar */}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-medium">Gudang MCP Terpusat ({config.mcp_servers.length} Terdaftar)</span>
+              <div className="space-y-0.5">
+                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
+                  <Layers className="w-4 h-4 text-cyan-400" /> Manage MCP Servers & Tool Capabilities
+                </span>
+                <p className="text-[11px] text-slate-400">
+                  Total <b>{getTotalToolsCount()} tools</b> terdeteksi dari {config.mcp_servers.length} server MCP terdaftar.
+                </p>
+              </div>
               <button 
-                onClick={() => setShowAddMcpModal(true)}
+                onClick={() => {
+                  setEditingMcpIndex(null);
+                  setNewMcpName("");
+                  setNewMcpCmd("");
+                  setNewMcpArgs("");
+                  setNewMcpDesc("");
+                  setShowAddMcpModal(true);
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
               >
                 <Plus className="w-3.5 h-3.5" /> Daftarkan Server MCP Baru
               </button>
             </div>
 
+            {/* Modal Edit / Add MCP Server */}
             {showAddMcpModal && (
               <form onSubmit={handleCreateMcp} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
-                  {editingMcpIndex !== null ? 'Edit Konfigurasi Server MCP' : 'Daftarkan MCP Server Baru'}
+                  {editingMcpIndex !== null ? "Edit Konfigurasi Server MCP" : "Daftarkan MCP Server Baru"}
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -857,104 +889,200 @@ export default function App() {
                     type="submit"
                     className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold"
                   >
-                    {editingMcpIndex !== null ? 'Simpan Perubahan' : 'Simpan MCP Server'}
+                    {editingMcpIndex !== null ? "Simpan Perubahan" : "Simpan MCP Server"}
                   </button>
                 </div>
               </form>
             )}
 
-            <div className="space-y-3">
-              {config.mcp_servers.map((mcp, idx) => (
-                <div key={mcp.name} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3">
-                  <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-white font-mono">{mcp.name}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
-                        mcp.enabled ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                      }`}>
-                        {mcp.enabled ? 'ENABLED' : 'DISABLED'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-400">{mcp.description}</div>
-                    <div className="font-mono text-[11px] text-cyan-400/80">Command: {mcp.command} {mcp.args.join(' ')}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleTestMcp(mcp, idx)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-400 border border-cyan-800/60 rounded-lg text-xs font-semibold transition-all"
-                      title="Uji Koneksi & Discover Tools MCP"
-                    >
-                      <Play className="w-3 h-3 fill-current" /> Test MCP
-                    </button>
-                    <button
-                      onClick={() => handleOpenEditMcp(idx)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition-all border border-slate-700"
-                      title="Edit Command & Parameter MCP"
-                    >
-                      <Edit3 className="w-3.5 h-3.5 text-cyan-400" /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleToggleMcp(idx)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        mcp.enabled 
-                          ? "bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-800/60" 
-                          : "bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-800/60"
+            {/* Split-Pane: Sidebar Server List (Left) + Detailed Vertical Tools Table (Right) */}
+            <div className="grid grid-cols-12 gap-5 min-h-[520px]">
+              {/* Left Column: Server Cards List */}
+              <div className="col-span-4 space-y-2 bg-slate-900/30 border border-slate-800/80 rounded-2xl p-3 max-h-[580px] overflow-y-auto">
+                <div className="text-[10px] font-mono uppercase text-slate-500 px-2 py-1 flex items-center justify-between">
+                  <span>Server MCP</span>
+                  <span>Tools Aktif</span>
+                </div>
+
+                {config.mcp_servers.map((mcp, idx) => {
+                  const tools = mcpToolsDiscovery[mcp.name] || [];
+                  const activeCount = tools.filter(t => t.enabled).length;
+                  const isSelected = selectedMcpName === mcp.name;
+
+                  return (
+                    <div 
+                      key={mcp.name}
+                      onClick={() => setSelectedMcpName(mcp.name)}
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                        isSelected 
+                          ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
+                          : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
                       }`}
                     >
-                      {mcp.enabled ? "Nonaktifkan" : "Aktifkan"}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMcp(idx)}
-                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-all"
-                      title="Hapus Server MCP"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  </div>
-
-                  {/* Discovered Tools Calling & Individual Enable/Disable */}
-                  {mcpToolsDiscovery[mcp.name] && (
-                    <div className="pt-2 border-t border-slate-800/70 space-y-2">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400 font-medium flex items-center gap-1.5">
-                          <CheckCircle className="w-3 h-3 text-cyan-400" /> Tools Calling Terdeteksi ({mcpToolsDiscovery[mcp.name].length} fungsi):
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`font-mono text-xs font-bold truncate ${isSelected ? "text-cyan-300" : "text-slate-200"}`}>
+                          {mcp.name}
                         </span>
-                        <span className="text-[10px] text-slate-500 font-mono">Dapat dimatikan per-fungsi</span>
+                        <span className="text-[11px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
+                          {tools.length > 0 ? `${activeCount}/${tools.length}` : (mcp.enabled ? "Active" : "Off")}
+                        </span>
                       </div>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        {mcpToolsDiscovery[mcp.name].map((tool, tIdx) => (
-                          <div 
-                            key={tool.name}
-                            onClick={() => handleToggleToolCalling(mcp.name, tIdx)}
-                            className={`p-2 rounded-lg border text-left cursor-pointer transition-all ${
-                              tool.enabled 
-                                ? "bg-slate-950/80 border-slate-800 hover:border-cyan-500/40 text-slate-200" 
-                                : "bg-slate-950/30 border-slate-900 text-slate-600 opacity-60"
-                            }`}
+                      <div className="text-[10px] text-slate-400 line-clamp-1 leading-snug">
+                        {mcp.description}
+                      </div>
+                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/60 text-[10px]">
+                        <span className={`font-mono ${mcp.enabled ? "text-emerald-400" : "text-rose-400"}`}>
+                          {mcp.enabled ? "● RUNNING" : "○ DISABLED"}
+                        </span>
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => handleOpenEditMcp(idx)}
+                            className="p-1 hover:text-cyan-300 text-slate-400 transition-colors"
+                            title="Edit Server"
                           >
-                            <div className="flex items-center justify-between mb-0.5">
-                              <span className="font-mono text-[11px] font-semibold text-cyan-300 truncate">{tool.name}</span>
-                              <span className={`w-1.5 h-1.5 rounded-full ${tool.enabled ? "bg-emerald-400" : "bg-slate-600"}`}></span>
-                            </div>
-                            <div className="text-[10px] text-slate-400 truncate leading-tight">{tool.desc}</div>
-                          </div>
-                        ))}
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMcp(idx)}
+                            className="p-1 hover:text-rose-400 text-slate-500 transition-colors"
+                            title="Hapus Server"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  )}
+                  );
+                })}
+              </div>
 
-                  {/* Testing Feedback Banner */}
-                  {testingMcpName === mcp.name && testResult && (
-                    <div className="p-2.5 bg-cyan-950/30 border border-cyan-500/30 rounded-lg text-xs font-mono text-cyan-300 animate-in fade-in flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 flex-shrink-0 text-cyan-400" />
-                      <span>{testResult}</span>
+              {/* Right Column: Active MCP Details & Vertical Scrollable Tools List */}
+              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                {(() => {
+                  const currentMcpIdx = config.mcp_servers.findIndex(m => m.name === selectedMcpName);
+                  const currentMcp = config.mcp_servers[currentMcpIdx] || config.mcp_servers[0];
+                  if (!currentMcp) return null;
+
+                  const tools = mcpToolsDiscovery[currentMcp.name] || [];
+                  const allActive = tools.length > 0 && tools.every(t => t.enabled);
+
+                  return (
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      {/* Selected MCP Header */}
+                      <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2.5">
+                            <h3 className="font-bold text-base text-white font-mono">{currentMcp.name}</h3>
+                            <button
+                              onClick={() => handleToggleMcp(currentMcpIdx)}
+                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono border font-semibold ${
+                                currentMcp.enabled 
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                                  : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                              }`}
+                            >
+                              {currentMcp.enabled ? "SERVER ENABLED" : "SERVER DISABLED"}
+                            </button>
+                          </div>
+                          <p className="text-xs text-slate-400">{currentMcp.description}</p>
+                          <div className="text-[11px] font-mono text-cyan-400/90 pt-1">
+                            Command: <code>{currentMcp.command} {currentMcp.args.join(" ")}</code>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleTestMcp(currentMcp, currentMcpIdx)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-800/60 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                          >
+                            <Play className="w-3 h-3 fill-current text-cyan-400" /> Test Connection
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Test Result Message */}
+                      {testingMcpName === currentMcp.name && testResult && (
+                        <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-xs font-mono text-cyan-300 animate-in fade-in flex items-center gap-2.5">
+                          <CheckCircle className="w-4 h-4 flex-shrink-0 text-cyan-400" />
+                          <span>{testResult}</span>
+                        </div>
+                      )}
+
+                      {/* Tools Calling Section Header */}
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-white">
+                            Tools Calling ({tools.length} fungsi)
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            Aktifkan/nonaktifkan fungsi per-item untuk agen
+                          </span>
+                        </div>
+                        {tools.length > 0 && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <button
+                              onClick={() => handleToggleAllTools(currentMcp.name, true)}
+                              className="text-[11px] text-cyan-400 hover:underline"
+                            >
+                              Select All
+                            </button>
+                            <span className="text-slate-600">|</span>
+                            <button
+                              onClick={() => handleToggleAllTools(currentMcp.name, false)}
+                              className="text-[11px] text-slate-400 hover:underline"
+                            >
+                              Deselect All
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Vertical Scrollable Tool Items (Mirip IDE) */}
+                      <div className="flex-1 max-h-[340px] overflow-y-auto space-y-2 pr-1">
+                        {tools.length === 0 ? (
+                          <div className="p-8 text-center text-xs text-slate-500 font-mono">
+                            Belum ada tools calling yang terdaftar untuk server ini. Klik tombol "Test Connection" untuk melakukan discovery.
+                          </div>
+                        ) : (
+                          tools.map((tool, tIdx) => (
+                            <div 
+                              key={tool.name}
+                              className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                                tool.enabled 
+                                  ? "bg-slate-950/80 border-slate-800/80 hover:border-cyan-500/30" 
+                                  : "bg-slate-950/30 border-slate-900 opacity-50"
+                              }`}
+                            >
+                              <div className="space-y-0.5 flex-1 pr-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-xs font-bold text-cyan-300">
+                                    {tool.name}
+                                  </span>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${tool.enabled ? "bg-emerald-400" : "bg-slate-600"}`}></span>
+                                </div>
+                                <p className="text-[11px] text-slate-400 leading-snug">
+                                  {tool.desc}
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() => handleToggleToolCalling(currentMcp.name, tIdx)}
+                                className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all border ${
+                                  tool.enabled 
+                                    ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-rose-950/40 hover:text-rose-400 hover:border-rose-800/40" 
+                                    : "bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300"
+                                }`}
+                              >
+                                {tool.enabled ? "ENABLED" : "DISABLED"}
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                })()}
+              </div>
             </div>
           </div>
         )}
@@ -1212,98 +1340,7 @@ export default function App() {
 
             {/* Gateway Servers Config */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
-              {/* Global Central Telegram Notification Config */}
-            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Send className="w-4 h-4 text-cyan-400" /> Notifikasi Terpusat Telegram (Global Broadcast Bot)
-                  </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Bot khusus kantor untuk mengirimkan notifikasi penambahan/pembaruan skills baru ke grup tim RSUD.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const updated = { ...config };
-                    if (!updated.telegram_target) {
-                      updated.telegram_target = { bot_token: '', chat_id: '', topic_id: '', enabled: true };
-                    } else {
-                      updated.telegram_target.enabled = !updated.telegram_target.enabled;
-                    }
-                    setConfig(updated);
-                  }}
-                  className={config.telegram_target?.enabled ? "px-3 py-1 rounded-full text-[10px] font-mono border transition-all bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "px-3 py-1 rounded-full text-[10px] font-mono border transition-all bg-slate-800 text-slate-400 border-slate-700"}
-                >
-                  {config.telegram_target?.enabled ? 'BROADCAST AKTIF' : 'NONAKTIF'}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5 col-span-2">
-                  <label className="text-xs text-slate-400 font-medium">Bot Token Telegram (Kantor / Sistem)</label>
-                  <input 
-                    type="password" 
-                    placeholder="Contoh: 7829104523:AAFnJ39..."
-                    value={config.telegram_target?.bot_token || ''}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (!updated.telegram_target) {
-                        updated.telegram_target = { bot_token: e.target.value, chat_id: '', topic_id: '', enabled: true };
-                      } else {
-                        updated.telegram_target.bot_token = e.target.value;
-                      }
-                      setConfig(updated);
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  />
-                  <span className="text-[10px] text-slate-500 block">
-                    * Token bot ini otomatis dikirim ke Hermes Evaluator pada saat handshake review transkrip.
-                  </span>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Target Chat / Group ID</label>
-                  <input 
-                    type="text" 
-                    placeholder="Contoh: -10023456789 atau @channel"
-                    value={config.telegram_target?.chat_id || ''}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (!updated.telegram_target) {
-                        updated.telegram_target = { bot_token: '', chat_id: e.target.value, topic_id: '', enabled: true };
-                      } else {
-                        updated.telegram_target.chat_id = e.target.value;
-                      }
-                      setConfig(updated);
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Topic / Thread ID (Opsional)</label>
-                  <input 
-                    type="text" 
-                    placeholder="Contoh: 84 (kosongkan jika grup biasa)"
-                    value={config.telegram_target?.topic_id || ''}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (!updated.telegram_target) {
-                        updated.telegram_target = { bot_token: '', chat_id: '', topic_id: e.target.value, enabled: true };
-                      } else {
-                        updated.telegram_target.topic_id = e.target.value;
-                      }
-                      setConfig(updated);
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Global Central Telegram Notification Config */}
+{/* Global Central Telegram Notification Config */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
