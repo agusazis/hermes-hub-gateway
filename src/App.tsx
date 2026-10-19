@@ -1740,10 +1740,16 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
 
                 <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                   {logs
-                    .filter(l => l.conv.toLowerCase().includes(logFilterQuery.toLowerCase()) || l.file.toLowerCase().includes(logFilterQuery.toLowerCase()))
+                    .filter(l => {
+                      const q = (logFilterQuery || '').toLowerCase();
+                      const evt = (l.event || '').toLowerCase();
+                      const c = (l.conv || '').toLowerCase();
+                      const f = (l.file || '').toLowerCase();
+                      return evt.includes(q) || c.includes(q) || f.includes(q);
+                    })
                     .map((item, idx) => {
                       const isSelected = selectedLogIndex === idx;
-                      const isLesson = item.status.includes("Lesson") || item.status.includes("learned");
+                      const isLesson = (item.event || '').includes("Lesson") || (item.event || '').includes("learned");
 
                       return (
                         <div 
@@ -1757,7 +1763,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className={`font-mono text-xs font-bold truncate ${isLesson ? "text-emerald-400" : isSelected ? "text-cyan-300" : "text-slate-300"}`}>
-                              {item.status}
+                              {item.event || 'System Event'}
                             </span>
                             <span className="text-[10px] font-mono text-slate-500">
                               {item.time}
@@ -1787,13 +1793,13 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                       <div className="flex items-start justify-between pb-4 border-b border-slate-800">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-base text-white font-mono">{currentLog.status}</h3>
+                            <h3 className="font-bold text-base text-white font-mono">{currentLog.event || 'System Event'}</h3>
                             <span className="px-2 py-0.5 rounded-md bg-slate-800 text-cyan-400 border border-slate-700 text-[10px] font-mono">
-                              {currentLog.time}
+                              {(currentLog?.time || '')}
                             </span>
                           </div>
                           <p className="text-xs text-slate-400 font-mono truncate">
-                            Berkas: {currentLog.file}
+                            Sumber / Berkas: {(currentLog?.file || 'internal') || 'system-internal'}
                           </p>
                         </div>
                       </div>
@@ -1801,14 +1807,14 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                       <div className="space-y-2 flex-1 flex flex-col">
                         <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                           <span>Inspection Trace JSON</span>
-                          <span className="text-[10px] text-slate-500 font-mono">Conversation ID: {currentLog.conv}</span>
+                          <span className="text-[10px] text-slate-500 font-mono">Context ID: {(currentLog?.conv || 'trace') || 'global-trace'}</span>
                         </div>
                         <pre className="flex-1 p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-[11px] text-cyan-300 whitespace-pre-wrap leading-relaxed overflow-y-auto">
 {JSON.stringify({
-  event_timestamp: currentLog.time,
-  status: currentLog.status,
-  conversation_id: currentLog.conv,
-  target_file: currentLog.file,
+  event_timestamp: (currentLog?.time || ''),
+  event_message: currentLog.event,
+  conversation_id: (currentLog?.conv || 'trace') || 'system-trace',
+  target_file: (currentLog?.file || 'internal') || 'engine-watcher',
   watcher_trigger: "Brain transcript length increase detected",
   evaluator_endpoint: config.default_hermes_evaluator_url + "/review",
   zero_pollution_enforced: true,
@@ -1827,109 +1833,18 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
         
 
 
-        {/* TAB 6: SETTINGS & REPOSITORIES */}
+        {/* TAB 6: SETTINGS & SYSTEM CONFIGURATION */}
         {activeTab === 'settings' && (
           <div className="max-w-2xl space-y-5">
-            {/* Git Target Repository Config */}
-            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                  <GitBranch className="w-4 h-4 text-cyan-400" /> Repositori Penyimpanan Skills (GitLab / GitHub)
-                </h3>
-                <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-mono">
-                  CENTRAL REPO
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Provider Git</label>
-                  <select 
-                    value={activeWs?.git_target?.provider || 'gitlab'}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (updated.workspaces[0].git_target) {
-                        updated.workspaces[0].git_target.provider = e.target.value;
-                        setConfig(updated);
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  >
-                    <option value="gitlab">GitLab (Self-Hosted RSUD)</option>
-                    <option value="github">GitHub</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Project ID / Repo Identifier</label>
-                  <input 
-                    type="text" 
-                    value={activeWs?.git_target?.project_id || '84'}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (updated.workspaces[0].git_target) {
-                        updated.workspaces[0].git_target.project_id = e.target.value;
-                        setConfig(updated);
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5 col-span-2">
-                  <label className="text-xs text-slate-400 font-medium">URL Repositori Remote Git</label>
-                  <input 
-                    type="text" 
-                    value={activeWs?.git_target?.repo_url || 'http://172.168.1.33/simrs/ai-agents.git'}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (updated.workspaces[0].git_target) {
-                        updated.workspaces[0].git_target.repo_url = e.target.value;
-                        setConfig(updated);
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Branch Target</label>
-                  <input 
-                    type="text" 
-                    value={activeWs?.git_target?.target_branch || 'main'}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (updated.workspaces[0].git_target) {
-                        updated.workspaces[0].git_target.target_branch = e.target.value;
-                        setConfig(updated);
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Personal Access Token (PAT)</label>
-                  <input 
-                    type="password" 
-                    placeholder="glpat-••••••••••••••••"
-                    value={activeWs?.git_target?.auth_token || ''}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (updated.workspaces[0].git_target) {
-                        updated.workspaces[0].git_target.auth_token = e.target.value;
-                        setConfig(updated);
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
+            {/* Notice Info: Git is strictly per-workspace */}
+            <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl flex items-center justify-between text-xs text-slate-400">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                <span>Koneksi Repositori Git Skills kini <b>terkunci dan diisolasi mandiri per-workspace</b> di menu Workspaces.</span>
               </div>
             </div>
 
-            {/* Gateway Servers Config */}
-            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
-{/* Global Central Telegram Notification Config */}
+            {/* Global Central Telegram Notification Config */}
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
@@ -2024,7 +1939,8 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
               </div>
             </div>
 
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Konfigurasi Gateway Server</h3>
+            <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Konfigurasi Gateway Server</h3>
               
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-400 font-medium">Server Evaluator Hermes (URL)</label>
