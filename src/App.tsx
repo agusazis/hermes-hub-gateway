@@ -256,7 +256,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.3.1');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.0');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -274,11 +274,38 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.4.0',
+      name: 'Hermes Hub Gateway v0.4.0 (Official Version Logs & Git Connectivity Testing)',
+      date: '19 Oktober 2026',
+      type: 'MAJOR',
+      status: 'LATEST',
+      highlights: 'Rilis tonggak penting yang menghadirkan penjelajah Version Logs (Changelog) resmi di sidebar aplikasi, tombol Test Koneksi Git di modal pendaftaran/edit workspace dengan notasi hijau zamrud kontras, serta manajemen siklus hidup penuh workspace.',
+      features: [
+        'Version Logs & Official Changelog Explorer: Menu khusus di sidebar untuk menelusuri riwayat versi, catatan perubahan fitur/bug, serta tautan unduh biner resmi.',
+        'Test Koneksi Git Remote: Tombol uji jangkauan jaringan dan validasi Personal Access Token (PAT) GitLab RSUD/GitHub langsung di modal workspace.',
+        'Manajemen Penuh Workspace: Fitur Edit konfigurasi dan Hapus workspace yang sudah terdaftar.',
+        'One-Click IDE MCP Configuration: Kartu bantuan koneksi IDE dengan tombol salin konfigurasi Named Pipe \\\\.\\pipe\\hhg-bridge.'
+      ],
+      fixes: [
+        'Pemberitahuan Uji Koneksi Hijau Zamrud Kontras (Emerald 500) pada seluruh pengujian koneksi (MCP dan Git).',
+        'Pembersihan total kartu repositori Git sentral di tab Settings.',
+        'Perbaikan penanganan event sistem pada Evolution Logs untuk mencegah layar blank putih.'
+      ],
+      architecture: [
+        'Pola Seragam Master-Detail Split-Pane di seluruh 5 menu utama (Workspaces, MCP Hub, Skills Hierarchy, Evolution Logs, Version Logs).',
+        'Isolasi Repositori Git Mandiri yang mengikat pointer skills langsung pada masing-masing workspace.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.0/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.73 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.0/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.3.1',
       name: 'Hermes Hub Gateway v0.3.1 (Complete Management & UI Upgrade)',
       date: '19 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan manajemen penuh Workspace (Edit & Hapus), Helper Koneksi IDE via MCP satu-klik, notasi hasil testing hijau menyala, isolasi Git per-workspace tanpa duplikasi di Settings, dan perbaikan stabilitas Evolution Logs.',
       features: [
         'Manajemen Penuh Workspace: Tombol Edit dan Hapus pada masing-masing kartu workspace.',
@@ -743,7 +770,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.2.1</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.0</span>
             </div>
           </div>
 
