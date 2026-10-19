@@ -199,6 +199,7 @@ export default function App() {
   const [showAddWsModal, setShowAddWsModal] = useState(false);
   const [showAddMcpModal, setShowAddMcpModal] = useState(false);
   const [editingMcpIndex, setEditingMcpIndex] = useState<number | null>(null);
+  const [editingWorkspaceIndex, setEditingWorkspaceIndex] = useState<number | null>(null);
 
   const [newWsName, setNewWsName] = useState('');
   const [newWsPath, setNewWsPath] = useState('');
@@ -333,9 +334,89 @@ export default function App() {
     }
   };
 
+  const handleOpenEditWs = (index: number) => {
+    const ws = config.workspaces[index];
+    setNewWsName(ws.name);
+    setNewWsPath(ws.target_path);
+    setNewWsGitProvider(ws.git_target?.provider || 'gitlab');
+    setNewWsGitRepoUrl(ws.git_target?.repo_url || '');
+    setNewWsGitProjectId(ws.git_target?.project_id || '');
+    setNewWsGitBranch(ws.git_target?.target_branch || 'main');
+    setNewWsGitToken(ws.git_target?.auth_token || '');
+    setEditingWorkspaceIndex(index);
+    setShowAddWsModal(true);
+  };
+
+  const handleDeleteWorkspace = async (index: number) => {
+    const ws = config.workspaces[index];
+    if (!confirm(`Hapus workspace "${ws.name}"? File project lokal Anda tidak akan dihapus.`)) return;
+    const remaining = config.workspaces.filter((_, i) => i !== index);
+    const updated = {
+      ...config,
+      active_workspace_id: remaining.length > 0 ? remaining[0].id : '',
+      workspaces: remaining
+    };
+    setConfig(updated);
+    await invoke('save_system_config', { cfg: updated });
+    setSyncMessage(`Workspace "${ws.name}" berhasil dihapus.`);
+    setTimeout(() => setSyncMessage(''), 3000);
+  };
+
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWsName || !newWsPath) return;
+
+    if (editingWorkspaceIndex !== null) {
+      try {
+        const wsToEdit = config.workspaces[editingWorkspaceIndex];
+        const gitTarget: GitTarget | undefined = newWsGitRepoUrl ? {
+          provider: newWsGitProvider,
+          base_url: newWsGitRepoUrl.includes("github.com") ? "https://github.com" : "http://172.168.1.33",
+          project_id: newWsGitProjectId || "0",
+          repo_url: newWsGitRepoUrl,
+          target_branch: newWsGitBranch || "main",
+          auth_token: newWsGitToken
+        } : undefined;
+
+        const updatedWsList = [...config.workspaces];
+        updatedWsList[editingWorkspaceIndex] = {
+          ...wsToEdit,
+          name: newWsName,
+          target_path: newWsPath,
+          git_target: gitTarget
+        };
+
+        const updated = {
+          ...config,
+          workspaces: updatedWsList
+        };
+
+        setConfig(updated);
+        await invoke("save_system_config", { cfg: updated });
+
+        // Update declarative AGENTS.md in target directory
+        try {
+          await invoke("create_workspace_declarative", {
+            name: newWsName,
+            targetPath: newWsPath
+          });
+        } catch (_) {}
+
+        setShowAddWsModal(false);
+        setEditingWorkspaceIndex(null);
+        setNewWsName("");
+        setNewWsPath("");
+        setNewWsGitRepoUrl("");
+        setNewWsGitProjectId("");
+        setNewWsGitToken("");
+        setSyncMessage(`Workspace "${newWsName}" berhasil diperbarui!`);
+        setTimeout(() => setSyncMessage(""), 4000);
+        return;
+      } catch (err) {
+        alert(`Gagal memperbarui workspace: ${err}`);
+        return;
+      }
+    }
 
     try {
       const id = newWsName.toLowerCase().replace(/\s+/g, "-");
@@ -812,7 +893,21 @@ export default function App() {
             {/* Modal Tambah Workspace Baru */}
             {showAddWsModal && (
               <form onSubmit={handleCreateWorkspace} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4 shadow-xl">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">Pendaftaran Workspace Baru (Zero-Pollution & Isolated Git Repo)</h4>
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                    {editingWorkspaceIndex !== null ? "Edit Konfigurasi Workspace & Git Remote" : "Pendaftaran Workspace Baru (Zero-Pollution & Isolated Git Repo)"}
+                  </h4>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowAddWsModal(false);
+                      setEditingWorkspaceIndex(null);
+                    }}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs text-slate-400 font-medium">Nama Workspace / Project</label>
@@ -918,7 +1013,7 @@ export default function App() {
                     type="submit"
                     className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm"
                   >
-                    Generate AGENTS.md & Simpan Workspace
+                    {editingWorkspaceIndex !== null ? "Simpan Perubahan Workspace" : "Generate AGENTS.md & Simpan Workspace"}
                   </button>
                 </div>
               </form>
@@ -981,8 +1076,23 @@ export default function App() {
                             {ws.target_path}
                           </div>
                           <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/60 text-[10px] text-slate-500">
-                            <span>ID: {ws.id}</span>
-                            <span>{ws.git_target?.repo_url ? "Git Remote" : "Lokal"}</span>
+                            <span>ID: {ws.id} • {ws.git_target?.repo_url ? "Git Remote" : "Lokal"}</span>
+                            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => handleOpenEditWs(config.workspaces.findIndex(w => w.id === ws.id))}
+                                className="p-1 hover:text-cyan-400 text-slate-400 transition-colors"
+                                title="Edit Workspace"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteWorkspace(config.workspaces.findIndex(w => w.id === ws.id))}
+                                className="p-1 hover:text-rose-400 text-slate-500 transition-colors"
+                                title="Hapus Workspace"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
