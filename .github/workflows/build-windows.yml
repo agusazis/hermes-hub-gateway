@@ -3,10 +3,22 @@ name: Build Hermes Hub Gateway (Windows)
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-tauri:
+    # Hanya jalankan build biner jika commit message mengandung keyword build/release ATAU via manual trigger (workflow_dispatch)
+    # Jika commit hanya perubahan biasa (misal fix typo, docs, config minor), skip build kompilasi berat
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build]') || contains(github.event.head_commit.message, '[release]')
     permissions:
       contents: write
     runs-on: windows-latest
