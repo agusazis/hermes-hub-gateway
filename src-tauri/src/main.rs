@@ -213,8 +213,11 @@ async fn main() {
             let quit_i = MenuItem::with_id(app, "quit", "Stop & Keluar Aplikasi", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &sync_i, &quit_i])?;
 
-            let _tray = TrayIconBuilder::new()
-                .menu(&menu)
+            let mut tray_builder = TrayIconBuilder::new().menu(&menu);
+            if let Some(default_icon) = app.default_window_icon() {
+                tray_builder = tray_builder.icon(default_icon.clone());
+            }
+            let _tray = tray_builder
                 .show_menu_on_left_click(false)
                 .tooltip("Hermes Hub Gateway (Active Background)")
                 .on_menu_event(move |app, event| match event.id.as_ref() {
