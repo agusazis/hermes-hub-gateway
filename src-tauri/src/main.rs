@@ -236,6 +236,78 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
     Ok(result)
 }
 
+#[tauri::command]
+async fn test_gateway_connection(evaluator_url: String, mnemosyne_url: String) -> Result<serde_json::Value, String> {
+    if evaluator_url.trim().is_empty() || mnemosyne_url.trim().is_empty() {
+        return Err("URL Evaluator dan URL Mnemosyne wajib diisi.".to_string());
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_millis(3500))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // Check Evaluator API
+    let eval_res = client.get(&evaluator_url).send().await;
+    let eval_status = match eval_res {
+        Ok(r) => format!("HTTP {}", r.status().as_u16()),
+        Err(e) => format!("Gagal: {}", e)
+    };
+
+    // Check Mnemosyne Shared Memory Server
+    let mnemo_res = client.get(&mnemosyne_url).send().await;
+    let mnemo_status = match mnemo_res {
+        Ok(r) => format!("HTTP {}", r.status().as_u16()),
+        Err(e) => format!("Gagal: {}", e)
+    };
+
+    Ok(serde_json::json!({
+        "success": true,
+        "evaluator_status": eval_status,
+        "mnemosyne_status": mnemo_status,
+        "message": format!("Hasil Koneksi Nyata -> Evaluator: {}, Mnemosyne: {}", eval_status, mnemo_status)
+    }))
+}
+
+#[tauri::command]
+async fn test_git_remote(repo_url: String, auth_token: Option<String>) -> Result<serde_json::Value, String> {
+    if repo_url.trim().is_empty() {
+        return Err("URL Git remote wajib diisi.".to_string());
+    }
+
+    let mut target_url = repo_url.trim().to_string();
+    if let Some(token) = auth_token {
+        if !token.trim().is_empty() && target_url.starts_with("http") {
+            let parts: Vec<&str> = target_url.split("://").collect();
+            if parts.len() == 2 {
+                target_url = format!("{}://oauth2:{}@{}", parts[0], token.trim(), parts[1]);
+            }
+        }
+    }
+
+    let output = tokio::process::Command::new("git")
+        .args(&["ls-remote", &target_url, "HEAD"])
+        .output()
+        .await;
+
+    match output {
+        Ok(out) => {
+            if out.status.success() {
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                let head_ref = stdout.lines().next().unwrap_or("HEAD").chars().take(12).collect::<String>();
+                Ok(serde_json::json!({
+                    "success": true,
+                    "message": format!("✓ Terhubung ke Git Remote! Commit HEAD: {}", head_ref)
+                }))
+            } else {
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                Err(format!("Git error: {}", stderr.trim()))
+            }
+        },
+        Err(e) => Err(format!("Gagal mengeksekusi git CLI: {}", e))
+    }
+}
+
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
@@ -331,7 +403,9 @@ async fn main() {
             create_workspace_declarative,
             trigger_manual_sync,
             test_telegram_broadcast,
-            get_skills_hierarchy
+            get_skills_hierarchy,
+            test_gateway_connection,
+            test_git_remote
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
