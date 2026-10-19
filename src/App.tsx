@@ -1283,11 +1283,16 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Test Result Message */}
+                      {/* Test Result Message (VIVID GREEN CONTRASS) */}
                       {testingMcpName === currentMcp.name && testResult && (
-                        <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-xs font-mono text-cyan-300 animate-in fade-in flex items-center gap-2.5">
-                          <CheckCircle className="w-4 h-4 flex-shrink-0 text-cyan-400" />
-                          <span>{testResult}</span>
+                        <div className="p-3.5 bg-emerald-950/80 border-2 border-emerald-500 rounded-xl text-xs font-mono text-emerald-300 shadow-xl shadow-emerald-950/60 animate-in fade-in flex items-center gap-3">
+                          <div className="p-1.5 bg-emerald-500/20 rounded-lg text-emerald-400 border border-emerald-500/40">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          </div>
+                          <div className="space-y-0.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Hasil Pengujian Koneksi MCP (Sukses)</div>
+                            <span className="font-semibold text-emerald-200">{testResult}</span>
+                          </div>
                         </div>
                       )}
 
