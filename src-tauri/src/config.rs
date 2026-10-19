@@ -13,6 +13,14 @@ pub struct GitTarget {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TelegramTarget {
+    pub bot_token: String,
+    pub chat_id: String,
+    pub topic_id: Option<String>,
+    pub enabled: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct McpServerEntry {
     pub name: String,
     pub command: String,
@@ -39,6 +47,7 @@ pub struct GlobalConfig {
     pub default_hermes_evaluator_url: String,
     pub default_mnemosyne_url: String,
     pub active_workspace_id: String,
+    pub telegram_target: Option<TelegramTarget>,
     pub workspaces: Vec<Workspace>,
     pub mcp_servers: Vec<McpServerEntry>,
 }
@@ -119,6 +128,12 @@ impl Default for GlobalConfig {
             default_hermes_evaluator_url: "http://172.168.1.202:9125".to_string(),
             default_mnemosyne_url: "http://172.168.1.202:8080".to_string(),
             active_workspace_id: "simgos2".to_string(),
+            telegram_target: Some(TelegramTarget {
+                bot_token: "".to_string(),
+                chat_id: "".to_string(),
+                topic_id: None,
+                enabled: false,
+            }),
             workspaces: vec![default_ws],
             mcp_servers: default_mcps,
         }
