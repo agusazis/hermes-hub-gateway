@@ -346,7 +346,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.5');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.6');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -364,11 +364,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.4.6',
+      name: 'Hermes Hub Gateway v0.4.6 (Live Telegram API Broadcast & High-Contrast Light Theme)',
+      date: '19 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghadirkan koneksi Telegram API asli via native Rust reqwest (bukan lagi simulasi lokal), validasi keaslian bot token (mendeteksi token dummy/masking), serta formulasi desain sistem Mode Terang berdaya kontras tinggi (Clean White Card Design).',
+      features: [
+        'Live Telegram Bot API Integration: Tombol uji di Settings menembak langsung endpoint resmi https://api.telegram.org/bot<TOKEN>/sendMessage via Rust HTTP client.',
+        'Validasi Kredensial Asli: Sistem otomatis mengingatkan pengguna jika Bot Token masih berstatus masking (***) atau tidak terdaftar di Telegram.',
+        'Pola Desain Sistem Mode Terang Elegan: Seluruh kartu metrik, panel watcher, dan kontainer utama menggunakan palet kartu putih (#FFFFFF) dengan teks tajam (#0F172A) yang seimbang dan nyaman di mata.',
+        'One-Key Rapid Provisioning: Onboarding instan tim RSUD dr. H. Jusuf SK dengan pengisian otomatis konfigurasi terpusat.'
+      ],
+      fixes: [
+        'Eliminasi Fake Success Alert: Status pengujian koneksi Telegram kini merefleksikan respons nyata HTTP server Telegram.',
+        'Koreksi Kontras Teks: Menghilangkan teks redup atau silau saat berpindah antara Mode Gelap dan Mode Terang.'
+      ],
+      architecture: [
+        'Native Rust Asynchronous HTTP Client (reqwest) dengan fallback web fetch & Dual Theme Matrix System.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.49 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.6/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.75 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.6/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.4.5',
       name: 'Hermes Hub Gateway v0.4.5 (One-Key Provisioning & Global App-Wide Theme System)',
       date: '19 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan modul One-Key Organization Provisioning (cukup 1 ID untuk mengaktifkan seluruh parameter Evaluator, Mnemosyne, Bot Telegram RSUD) dan sinkronisasi tema global ke seluruh kerangka antarmuka (Sidebar, Header, Main Content).',
       features: [
         'One-Key Organization Provisioning: Input ID Organisasi RSUD (RSUD-JUSUF-SK) langsung mengisi otomatis IP Evaluator (:9125), Mnemosyne (:8080), dan kredensial Telegram secara instan.',
@@ -983,23 +1008,79 @@ export default function App() {
   };
 
   const handleTestTelegram = async () => {
-    if (!config.telegram_target?.bot_token || !config.telegram_target?.chat_id) {
+    const botToken = config.telegram_target?.bot_token?.trim();
+    const chatId = config.telegram_target?.chat_id?.trim();
+    const topicId = config.telegram_target?.topic_id?.trim();
+
+    if (!botToken || !chatId) {
       setTelegramTestResult({ success: false, message: 'Bot Token dan Target Chat ID wajib diisi terlebih dahulu.' });
       setTimeout(() => setTelegramTestResult(null), 5000);
+      return;
+    }
+
+    if (botToken.includes('***')) {
+      setTelegramTestResult({ 
+        success: false, 
+        message: 'Bot Token masih berstatus placeholder/masking (***). Masukkan token Bot Telegram asli Anda (contoh dari @BotFather) sebelum melakukan pengujian.' 
+      });
+      setTimeout(() => setTelegramTestResult(null), 7000);
       return;
     }
 
     setTestingTelegram(true);
     setTelegramTestResult(null);
 
-    setTimeout(() => {
+    try {
+      // 1. Coba panggil native command Tauri di desktop Windows
+      const res: any = await invoke('test_telegram_broadcast', {
+        botToken: botToken,
+        chatId: chatId,
+        topicId: topicId || null
+      });
+
       setTestingTelegram(false);
       setTelegramTestResult({
         success: true,
-        message: '✓ Pesan Uji Terkirim! Bot Telegram RSUD berhasil terhubung ke Chat ID ' + config.telegram_target?.chat_id + '.'
+        message: res?.message || `✓ Berhasil! Pesan uji resmi telah terkirim langsung ke Chat ID ${chatId} via Telegram Bot API!`
       });
-      setTimeout(() => setTelegramTestResult(null), 5000);
-    }, 800);
+    } catch (nativeErr: any) {
+      // 2. Fallback via browser fetch jika dipratinjau di web
+      try {
+        const payload: any = {
+          chat_id: chatId,
+          text: '🐴 [Hermes Hub Gateway] Uji koneksi notifikasi bot Telegram RSUD dr. H. Jusuf SK berhasil terhubung! Status: READY.',
+          parse_mode: 'HTML'
+        };
+        if (topicId) payload.message_thread_id = parseInt(topicId, 10);
+
+        const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await resp.json();
+
+        setTestingTelegram(false);
+        if (json.ok) {
+          setTelegramTestResult({
+            success: true,
+            message: `✓ Sukses Nyata! Pesan uji telah mendarat di Telegram Chat ID ${chatId}!`
+          });
+        } else {
+          setTelegramTestResult({
+            success: false,
+            message: `Telegram API Menolak (Error ${json.error_code}): ${json.description}`
+          });
+        }
+      } catch (fetchErr: any) {
+        setTestingTelegram(false);
+        setTelegramTestResult({
+          success: false,
+          message: `Gagal mengirim ke Telegram: ${nativeErr?.toString() || fetchErr?.message || 'Periksa koneksi internet dan keaslian Bot Token Anda.'}`
+        });
+      }
+    }
+    setTimeout(() => setTelegramTestResult(null), 6000);
   };
 
   const handleTestGatewayServer = async () => {
@@ -1195,7 +1276,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.5</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.6</span>
             </div>
           </div>
 
@@ -1382,119 +1463,187 @@ export default function App() {
             <div className="grid grid-cols-4 gap-4">
               <div 
                 onClick={() => setActiveTab("workspaces")}
-                className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2 hover:border-cyan-500/40 cursor-pointer transition-all group"
+                className={`p-5 rounded-2xl space-y-2 cursor-pointer transition-all border group ${
+                  effectiveTheme === 'dark'
+                    ? 'bg-slate-900/60 border-slate-800/80 hover:border-cyan-500/40'
+                    : 'bg-white border-slate-200/90 hover:border-cyan-500/50 shadow-sm'
+                }`}
               >
-                <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                <div className={`flex items-center justify-between text-xs font-medium ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                }`}>
                   <span>Workspaces Terdaftar</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-500 transition-colors" />
                 </div>
-                <div className="text-2xl font-bold text-white">{config.workspaces.length} Project</div>
-                <div className="text-[11px] text-cyan-400 font-mono truncate">{activeWs?.name} (Aktif)</div>
+                <div className={`text-2xl font-bold ${
+                  effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>{config.workspaces.length} Project</div>
+                <div className="text-[11px] text-cyan-500 dark:text-cyan-400 font-mono truncate font-semibold">{activeWs?.name} (Aktif)</div>
               </div>
 
               <div 
                 onClick={() => setActiveTab("mcp_hub")}
-                className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2 hover:border-cyan-500/40 cursor-pointer transition-all group"
+                className={`p-5 rounded-2xl space-y-2 cursor-pointer transition-all border group ${
+                  effectiveTheme === 'dark'
+                    ? 'bg-slate-900/60 border-slate-800/80 hover:border-cyan-500/40'
+                    : 'bg-white border-slate-200/90 hover:border-cyan-500/50 shadow-sm'
+                }`}
               >
-                <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                <div className={`flex items-center justify-between text-xs font-medium ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                }`}>
                   <span>Tools Calling MCP</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-500 transition-colors" />
                 </div>
-                <div className="text-2xl font-bold text-white">{getTotalToolsCount()} Fungsi</div>
-                <div className="text-[11px] text-emerald-400 font-mono truncate">{config.mcp_servers.filter(m => m.enabled).length} Server Online</div>
+                <div className={`text-2xl font-bold ${
+                  effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>{getTotalToolsCount()} Fungsi</div>
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono truncate font-semibold">{config.mcp_servers.filter(m => m.enabled).length} Server Online</div>
               </div>
 
               <div 
                 onClick={() => setActiveTab("skills")}
-                className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2 hover:border-cyan-500/40 cursor-pointer transition-all group"
+                className={`p-5 rounded-2xl space-y-2 cursor-pointer transition-all border group ${
+                  effectiveTheme === 'dark'
+                    ? 'bg-slate-900/60 border-slate-800/80 hover:border-cyan-500/40'
+                    : 'bg-white border-slate-200/90 hover:border-cyan-500/50 shadow-sm'
+                }`}
               >
-                <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                <div className={`flex items-center justify-between text-xs font-medium ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                }`}>
                   <span>SOP & Aturan Koding</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-500 transition-colors" />
                 </div>
-                <div className="text-2xl font-bold text-white">{skillsHierarchy.length} Rules</div>
-                <div className="text-[11px] text-cyan-400 font-mono truncate">Terverifikasi di GitLab</div>
+                <div className={`text-2xl font-bold ${
+                  effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>{skillsHierarchy.length} Rules</div>
+                <div className="text-[11px] text-cyan-600 dark:text-cyan-400 font-mono truncate font-semibold">Terverifikasi di GitLab</div>
               </div>
 
-              <div className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+              <div className={`p-5 rounded-2xl space-y-2 border ${
+                effectiveTheme === 'dark'
+                  ? 'bg-slate-900/60 border-slate-800/80'
+                  : 'bg-white border-slate-200/90 shadow-sm'
+              }`}>
+                <div className={`flex items-center justify-between text-xs font-medium ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                }`}>
                   <span>Pipe IPC Bridge</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 </div>
-                <div className="text-2xl font-bold text-white">READY</div>
-                <div className="text-[11px] text-slate-400 font-mono truncate">\\.\pipe\hhg-bridge</div>
+                <div className={`text-2xl font-bold ${
+                  effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>READY</div>
+                <div className={`text-[11px] font-mono truncate ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                }`}>\\.\pipe\hhg-bridge</div>
               </div>
             </div>
 
             {/* Status Dua Arah: Watcher & Server Evaluator */}
             <div className="grid grid-cols-2 gap-5">
               {/* Card 1: Antigravity IDE Transcript Watcher */}
-              <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
+              <div className={`p-5 rounded-2xl space-y-3 border transition-colors ${
+                effectiveTheme === 'dark'
+                  ? 'bg-slate-900/40 border-slate-800'
+                  : 'bg-white border-slate-200 shadow-sm'
+              }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-cyan-400" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-white">Antigravity IDE Transcript Watcher</h3>
+                    <Activity className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                    <h3 className={`text-xs font-bold uppercase tracking-wider ${
+                      effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                    }`}>Antigravity IDE Transcript Watcher</h3>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-semibold">
                     LISTENING
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className={`text-xs leading-relaxed ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                }`}>
                   Thread native Rust memantau transkrip koding di <code>%USERPROFILE%\.gemini\antigravity-ide\brain\</code> secara asinkron tanpa membebani IDE.
                 </p>
-                <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 font-mono text-[11px] text-slate-300 space-y-1">
+                <div className={`p-3 rounded-xl border font-mono text-[11px] space-y-1 ${
+                  effectiveTheme === 'dark'
+                    ? 'bg-slate-950/60 border-slate-800/80 text-slate-300'
+                    : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Bypass Tag:</span>
-                    <span className="text-cyan-400">_DO_NOT_CAPTURE_BLOCK</span>
+                    <span className={effectiveTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}>Bypass Tag:</span>
+                    <span className="text-cyan-600 dark:text-cyan-400 font-semibold">_DO_NOT_CAPTURE_BLOCK</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Trailing Review Buffer:</span>
-                    <span className="text-slate-300">12,000 karakter</span>
+                    <span className={effectiveTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}>Trailing Review Buffer:</span>
+                    <span className={effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'}>12,000 karakter</span>
                   </div>
                 </div>
               </div>
 
               {/* Card 2: Hermes Evaluator & Mnemosyne Memory */}
-              <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
+              <div className={`p-5 rounded-2xl space-y-3 border transition-colors ${
+                effectiveTheme === 'dark'
+                  ? 'bg-slate-900/40 border-slate-800'
+                  : 'bg-white border-slate-200 shadow-sm'
+              }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Server className="w-4 h-4 text-cyan-400" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-white">Server Host Integritas (Otak & Memori)</h3>
+                    <Server className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                    <h3 className={`text-xs font-bold uppercase tracking-wider ${
+                      effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                    }`}>Server Host Integritas (Otak & Memori)</h3>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-[10px] font-mono font-semibold">
                     IDENTICAL HOST VERIFIED
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className={`text-xs leading-relaxed ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                }`}>
                   Hermes Evaluator dan Memori Mnemosyne berjalan pada satu server fisik yang sama untuk menjamin keselarasan penalaran agen.
                 </p>
-                <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 font-mono text-[11px] text-slate-300 space-y-1">
+                <div className={`p-3 rounded-xl border font-mono text-[11px] space-y-1 ${
+                  effectiveTheme === 'dark'
+                    ? 'bg-slate-950/60 border-slate-800/80 text-slate-300'
+                    : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Evaluator API:</span>
-                    <span className="text-emerald-400">{config.default_hermes_evaluator_url}</span>
+                    <span className={effectiveTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}>Evaluator API:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{config.default_hermes_evaluator_url}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Mnemosyne Shared:</span>
-                    <span className="text-emerald-400">{config.default_mnemosyne_url}</span>
+                    <span className={effectiveTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}>Mnemosyne Shared:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{config.default_mnemosyne_url}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Card 3: Status Background Daemon & Single-Instance IPC */}
-            <div className="p-5 bg-slate-900/30 border border-slate-800/70 rounded-2xl flex items-center justify-between">
+            <div className={`p-5 rounded-2xl flex items-center justify-between border transition-colors ${
+              effectiveTheme === 'dark'
+                ? 'bg-slate-900/30 border-slate-800/70'
+                : 'bg-white border-slate-200 shadow-sm'
+            }`}>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-cyan-400" />
-                  <span className="font-bold text-xs uppercase tracking-wider text-white">Single-Instance IPC Daemon & Tray Active</span>
+                  <Shield className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                  <span className={`font-bold text-xs uppercase tracking-wider ${
+                    effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                  }`}>Single-Instance IPC Daemon & Tray Active</span>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className={`text-xs ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
                   Menutup jendela menjaga background watcher tetap hidup di system tray. Membuka shortcut aplikasi langsung memfokuskan jendela aktif tanpa error atau kebutuhan <i>End Task</i>.
                 </p>
               </div>
               <button 
                 onClick={() => setActiveTab("logs")}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
+                className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  effectiveTheme === 'dark'
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'
+                }`}
               >
                 Lihat Telemetri Logs
               </button>
