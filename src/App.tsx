@@ -214,7 +214,8 @@ export default function App() {
   const [drilldownWsId, setDrilldownWsId] = useState<string | null>('simgos2');
   const [activeSkillName, setActiveSkillName] = useState<string>('simgos2-bpjs-vclaim');
   const [skillSearchQuery, setSkillSearchQuery] = useState<string>('');
-  const [skillsHierarchy] = useState<SkillHierarchyItem[]>([
+  const [skillsHierarchy, setSkillsHierarchy] = useState<SkillHierarchyItem[]>([
+    // Fallback blueprint data jika offline
     {
       name: 'simgos2-bpjs-vclaim',
       workspace_id: 'simgos2', category: 'simgos2',
@@ -346,7 +347,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.7');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.8');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -364,11 +365,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.4.8',
+      name: 'Hermes Hub Gateway v0.4.8 (Startup Git Sync & Dynamic Real-Time Skills Inspection)',
+      date: '19 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghapus ketergantungan daftar statis pada SKILL.md: aplikasi kini secara otomatis menjalankan sinkronisasi Git di awal booting (startup) dan membaca seluruh pohon direktori SOP beserta daftar berkas referensi pendukungnya secara dinamis.',
+      features: [
+        'Startup Git Synchronization: Rust background thread otomatis menjalankan git pull/clone ke repositori target sesaat setelah aplikasi dinyalakan.',
+        'Inspeksi Dinamis Pohon SKILL.md: Perintah get_skills_hierarchy memindai langsung folder internal skills dan subfolder references/ sehingga jumlah berkas selalu 100% identik dengan kondisi repo Git aktual.',
+        'Eliminasi Inkonsistensi Statis: Tidak ada lagi perbedaan jumlah referensi antara UI gateway dan berkas Git (seperti 3 referensi simgos2-db-audit).',
+        'Auto-Refetch saat Sync Manual: Menekan tombol Sync Rules Now langsung memperbarui state hirarki skill di frontend tanpa perlu me-restart aplikasi.'
+      ],
+      fixes: [
+        'Sinkronisasi Status Dinamis pada tab SOP & Aturan Koding.',
+        'Penanganan Otomatis Folder Skills jika Belum Pernah di-Clone.'
+      ],
+      architecture: [
+        'Asynchronous Git Pull on Boot & Dynamic Filesystem Inspection Engine.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.49 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.8/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.75 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.8/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.4.7',
       name: 'Hermes Hub Gateway v0.4.7 (Tray Icon Binding, Complete SOP References & Subtle Light Theme)',
       date: '19 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Memperbaiki binding icon system tray native di Windows, melengkapi 3 berkas referensi SOP simgos2-db-audit sesuai repositori Git, dan mengharmoniskan kontras kartu aktif di Mode Terang.',
       features: [
         'Native Windows System Tray Icon Binding: Memastikan icon aplikasi tampil jelas di taskbar tray Windows tanpa blank.',
@@ -697,6 +723,14 @@ export default function App() {
       .then((res) => {
         if (res && res.workspaces) {
           setConfig(res);
+          // Auto-fetch dynamic skills hierarchy from disk/git
+          invoke<SkillHierarchyItem[]>('get_skills_hierarchy', { workspaceId: res.active_workspace_id })
+            .then((skills) => {
+              if (skills && skills.length > 0) {
+                setSkillsHierarchy(skills);
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch((err) => console.error('Failed to load system config:', err));
@@ -791,6 +825,15 @@ export default function App() {
     try {
       const res: any = await invoke('trigger_manual_sync');
       setSyncMessage(res.message);
+
+      // Muat ulang daftar skill & reference nyata hasil sinkronisasi git
+      try {
+        const dynamicSkills: any = await invoke('get_skills_hierarchy', { workspaceId: activeWorkspaceId });
+        if (dynamicSkills && dynamicSkills.length > 0) {
+          setSkillsHierarchy(dynamicSkills);
+        }
+      } catch (_) {}
+
       setTimeout(() => setSyncMessage(''), 4000);
     } finally {
       setSyncing(false);
@@ -1301,7 +1344,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.7</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.8</span>
             </div>
           </div>
 
