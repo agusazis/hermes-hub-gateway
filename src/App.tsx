@@ -4,8 +4,17 @@ import { listen } from '@tauri-apps/api/event';
 import { 
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
-  GitBranch, Folder
+  GitBranch, Folder, Network, HardDrive, Activity, Power, Layers
 } from 'lucide-react';
+
+interface McpServerEntry {
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  enabled: boolean;
+  description: string;
+}
 
 interface Workspace {
   id: string;
@@ -22,10 +31,11 @@ interface GlobalConfig {
   default_mnemosyne_url: string;
   active_workspace_id: string;
   workspaces: Workspace[];
+  mcp_servers: McpServerEntry[];
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'skills' | 'logs' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'skills' | 'logs' | 'settings'>('dashboard');
   
   const [config, setConfig] = useState<GlobalConfig>({
     active_profile: 'agus',
@@ -41,19 +51,61 @@ export default function App() {
         hermes_evaluator_url: 'http://172.168.1.202:9125',
         mnemosyne_url: 'http://172.168.1.202:8080'
       }
+    ],
+    mcp_servers: [
+      {
+        name: 'database-simrs-readonly',
+        command: 'python',
+        args: ['mysql_mcp_readonly.py'],
+        env: { DB_HOST: '172.168.1.4', DB_PORT: '3306', DB_NAME: 'db_rs' },
+        enabled: true,
+        description: 'Proxy SQL Query Aman (Read-Only) ke Database SIMGOS2 SIMRS'
+      },
+      {
+        name: 'synology-nas-storage',
+        command: 'npx',
+        args: ['-y', 'mcp-server-synology'],
+        env: { SYNOLOGY_HOST: '172.168.1.27' },
+        enabled: true,
+        description: 'Manajemen Storage & Audit Retensi GFS Backup di NAS Synology'
+      },
+      {
+        name: 'mikrotik-router',
+        command: 'python',
+        args: ['mikrotik_mcp.py'],
+        env: { ROUTER_IP: '172.168.1.1' },
+        enabled: true,
+        description: 'Pemantauan Traffic WAN & Antrean Bandwidth Router Jaringan RSUD'
+      },
+      {
+        name: 'grafana-observability',
+        command: 'npx',
+        args: ['-y', '@dockndevai/mcp-grafana'],
+        env: { GRAFANA_URL: 'http://172.168.1.8:3000' },
+        enabled: true,
+        description: 'Monitoring Metrik Server & Alerting RSUD dr. H. Jusuf SK'
+      }
     ]
   });
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddWsModal, setShowAddWsModal] = useState(false);
+  const [showAddMcpModal, setShowAddMcpModal] = useState(false);
+
   const [newWsName, setNewWsName] = useState('');
   const [newWsPath, setNewWsPath] = useState('');
+
+  const [newMcpName, setNewMcpName] = useState('');
+  const [newMcpCmd, setNewMcpCmd] = useState('');
+  const [newMcpArgs, setNewMcpArgs] = useState('');
+  const [newMcpDesc, setNewMcpDesc] = useState('');
 
   // Live Telemetry Logs
   const [logs, setLogs] = useState<{ time: string; event: string }[]>([
     { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
-    { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' }
+    { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
+    { time: new Date().toLocaleTimeString(), event: 'Background tray daemon active (close window to minimize).' }
   ]);
 
   // Load Real Config from Rust
@@ -66,11 +118,10 @@ export default function App() {
       })
       .catch((err) => console.error('Failed to load system config:', err));
 
-    // Listen to real watcher telemetry from Rust
     const unlistenWatcher = listen<any>('watcher-event', (event) => {
       const p = event.payload;
       setLogs((prev) => [
-        { time: new Date().toLocaleTimeString(), event: `[EVALUATING] Conv ${p.conversation_id} sent to ${config.default_hermes_evaluator_url}` },
+        { time: new Date().toLocaleTimeString(), event: `[WATCHER] Transkrip ${p.conversation_id} terdeteksi -> kirim review ke ${config.default_hermes_evaluator_url}` },
         ...prev.slice(0, 50)
       ]);
     });
@@ -78,14 +129,19 @@ export default function App() {
     const unlistenLesson = listen<any>('lesson-learned', (event) => {
       const p = event.payload;
       setLogs((prev) => [
-        { time: new Date().toLocaleTimeString(), event: `🎉 [LESSON LEARNED] ${p.skill_name}: ${p.commit || 'auto-pushed to git'}` },
+        { time: new Date().toLocaleTimeString(), event: `🎉 [NEW RULE LEARNED] ${p.skill_name}: Aturan baru berhasil di-push ke GitLab!` },
         ...prev.slice(0, 50)
       ]);
+    });
+
+    const unlistenTraySync = listen('tray-sync-clicked', () => {
+      handleSync();
     });
 
     return () => {
       unlistenWatcher.then((f) => f());
       unlistenLesson.then((f) => f());
+      unlistenTraySync.then((f) => f());
     };
   }, []);
 
@@ -114,7 +170,7 @@ export default function App() {
         active_workspace_id: created.id,
         workspaces: [...prev.workspaces, created]
       }));
-      setShowAddModal(false);
+      setShowAddWsModal(false);
       setNewWsName('');
       setNewWsPath('');
       setSyncMessage(`Workspace '${created.name}' aktif! AGENTS.md deklaratif otomatis dibuat.`);
@@ -122,6 +178,41 @@ export default function App() {
     } catch (err) {
       alert(`Gagal membuat workspace: ${err}`);
     }
+  };
+
+  const handleToggleMcp = async (index: number) => {
+    const updated = { ...config };
+    updated.mcp_servers[index].enabled = !updated.mcp_servers[index].enabled;
+    setConfig(updated);
+    await invoke('save_system_config', { cfg: updated });
+  };
+
+  const handleCreateMcp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMcpName || !newMcpCmd) return;
+
+    const newMcp: McpServerEntry = {
+      name: newMcpName,
+      command: newMcpCmd,
+      args: newMcpArgs ? newMcpArgs.split(' ') : [],
+      env: {},
+      enabled: true,
+      description: newMcpDesc || 'Custom MCP Server Tool'
+    };
+
+    const updated = {
+      ...config,
+      mcp_servers: [...config.mcp_servers, newMcp]
+    };
+    setConfig(updated);
+    await invoke('save_system_config', { cfg: updated });
+    setShowAddMcpModal(false);
+    setNewMcpName('');
+    setNewMcpCmd('');
+    setNewMcpArgs('');
+    setNewMcpDesc('');
+    setSyncMessage(`MCP '${newMcp.name}' berhasil ditambahkan ke Unified Bridge!`);
+    setTimeout(() => setSyncMessage(''), 4000);
   };
 
   const handleSaveSettings = async () => {
@@ -167,6 +258,14 @@ export default function App() {
               }`}
             >
               <FolderKanban className="w-4 h-4" /> Workspaces
+            </button>
+            <button 
+              onClick={() => setActiveTab('mcp_hub')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'mcp_hub' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <Layers className="w-4 h-4" /> MCP Servers Hub
             </button>
             <button 
               onClick={() => setActiveTab('skills')}
@@ -215,6 +314,7 @@ export default function App() {
             <h2 className="text-xl font-bold tracking-tight text-white capitalize">
               {activeTab === 'dashboard' && 'System Status & Overview'}
               {activeTab === 'workspaces' && 'Isolated Workspaces Manager'}
+              {activeTab === 'mcp_hub' && 'Unified MCP Servers Hub (Gudang Terpusat MCP)'}
               {activeTab === 'skills' && 'Knowledge & Skills Registry'}
               {activeTab === 'logs' && 'Continuous Evolution Live Logs'}
               {activeTab === 'settings' && 'Gateway & Server Configuration'}
@@ -222,6 +322,7 @@ export default function App() {
             <p className="text-xs text-slate-400 mt-0.5">
               {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for RSUD dr. H. Jusuf SK.'}
               {activeTab === 'workspaces' && 'Kelola folder koding terisolasi tanpa mengotori project dengan folder .agents fisik.'}
+              {activeTab === 'mcp_hub' && 'Konfigurasi server MCP eksternal (Database, Synology, MikroTik, Grafana) yang diekspos ke IDE.'}
               {activeTab === 'skills' && 'Daftar SOP dan aturan koding yang disinkronkan secara atomik dari GitLab.'}
               {activeTab === 'logs' && 'Telemetri evaluasi real-time antara IDE watcher dan server evaluator.'}
               {activeTab === 'settings' && 'Konfigurasi endpoint Hermes evaluator, Mnemosyne DB, dan credential vault.'}
@@ -264,20 +365,18 @@ export default function App() {
               </div>
 
               <div 
-                onClick={() => setActiveTab('skills')}
+                onClick={() => setActiveTab('mcp_hub')}
                 className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2 hover:border-cyan-500/40 cursor-pointer transition-all group"
               >
                 <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                  <span>Skills Learned</span>
+                  <span>Unified MCP Servers</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
                 </div>
-                <div className="text-xl font-bold text-white">12 Skills</div>
-                <div className="text-[11px] text-emerald-400 flex items-center gap-1.5">
-                  <Check className="w-3 h-3" /> Up-to-Date with GitLab main
-                </div>
+                <div className="text-xl font-bold text-white">{config.mcp_servers.filter(m => m.enabled).length} Active Tools</div>
+                <div className="text-[11px] text-cyan-400 font-mono truncate">DB, Synology, MikroTik, Grafana</div>
               </div>
 
-              <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-2">
+              <div className="p-5 bg-slate-900/60 border border-slate-800/80 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
                   <span>Unified MCP Bridge</span>
                   <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -287,11 +386,16 @@ export default function App() {
               </div>
             </div>
 
-            {/* Architecture Card */}
+            {/* Background Daemon Card */}
             <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Continuous Self-Improvement Loop Bridge</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">Background Watcher & System Tray Status</h3>
+                <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-mono">
+                  RESILIENT TRAY DAEMON
+                </span>
+              </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Hermes Hub Gateway (HHG) mengawasi transkrip percakapan IDE secara background. Saat ada kendala selesai dipecahkan, Hermes Evaluator server (:9125) mengekstrak SOP baru dan mengunggahnya ke repo. HHG otomatis menarik aturan tersebut ke penyimpanan lokal tanpa menyentuh atau mengotori root folder project koding Anda.
+                Menutup jendela aplikasi ini (klik tanda X) <b>tidak akan mematikan proses watcher</b>. Aplikasi otomatis bersembunyi ke system tray di sudut kanan taskbar Windows. Klik kanan icon Hermes di taskbar untuk membuka dashboard, trigger sync manual, atau keluar dari aplikasi.
               </p>
             </div>
           </div>
@@ -303,14 +407,14 @@ export default function App() {
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-medium">Terdaftar {config.workspaces.length} Workspace Aktif</span>
               <button 
-                onClick={() => setShowAddModal(true)}
+                onClick={() => setShowAddWsModal(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
               >
                 <Plus className="w-3.5 h-3.5" /> Tambah Workspace Baru
               </button>
             </div>
 
-            {showAddModal && (
+            {showAddWsModal && (
               <form onSubmit={handleCreateWorkspace} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">Pendaftaran Workspace Baru (Zero-Pollution)</h4>
                 <div className="grid grid-cols-2 gap-4">
@@ -340,7 +444,7 @@ export default function App() {
                 <div className="flex items-center justify-end gap-2 pt-2">
                   <button 
                     type="button" 
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => setShowAddWsModal(false)}
                     className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
                   >
                     Batal
@@ -379,7 +483,118 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: SKILLS REGISTRY */}
+        {/* TAB 3: MCP SERVERS HUB */}
+        {activeTab === 'mcp_hub' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400 font-medium">Gudang MCP Terpusat ({config.mcp_servers.length} Terdaftar)</span>
+              <button 
+                onClick={() => setShowAddMcpModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" /> Daftarkan Server MCP Baru
+              </button>
+            </div>
+
+            {showAddMcpModal && (
+              <form onSubmit={handleCreateMcp} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">Daftarkan MCP Server Baru</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Nama Identifier MCP</label>
+                    <input 
+                      type="text" 
+                      placeholder="Contoh: postman-mcp"
+                      value={newMcpName}
+                      onChange={(e) => setNewMcpName(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400">Command Eksekusi</label>
+                    <input 
+                      type="text" 
+                      placeholder="npx atau python"
+                      value={newMcpCmd}
+                      onChange={(e) => setNewMcpCmd(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="text-xs text-slate-400">Argumen (Spasi dipisahkan)</label>
+                    <input 
+                      type="text" 
+                      placeholder="-y @postman/mcp-server"
+                      value={newMcpArgs}
+                      onChange={(e) => setNewMcpArgs(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="text-xs text-slate-400">Deskripsi / Peran Tool</label>
+                    <input 
+                      type="text" 
+                      placeholder="Integrasi testing API Postman koleksi SIMRS"
+                      value={newMcpDesc}
+                      onChange={(e) => setNewMcpDesc(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddMcpModal(false)}
+                    className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold"
+                  >
+                    Simpan MCP Server
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="space-y-3">
+              {config.mcp_servers.map((mcp, idx) => (
+                <div key={mcp.name} className="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-white font-mono">{mcp.name}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
+                        mcp.enabled ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      }`}>
+                        {mcp.enabled ? 'ENABLED' : 'DISABLED'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-400">{mcp.description}</div>
+                    <div className="font-mono text-[11px] text-cyan-400/80">Command: {mcp.command} {mcp.args.join(' ')}</div>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => handleToggleMcp(idx)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        mcp.enabled 
+                          ? 'bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-800/60' 
+                          : 'bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-800/60'
+                      }`}
+                    >
+                      {mcp.enabled ? 'Nonaktifkan' : 'Aktifkan'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: SKILLS REGISTRY */}
         {activeTab === 'skills' && (
           <div className="space-y-3">
             <div className="text-xs text-slate-400">Aturan & SOP Terdaftar (On-Demand Retrieval via MCP):</div>
@@ -405,7 +620,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: EVOLUTION LOGS */}
+        {/* TAB 5: EVOLUTION LOGS */}
         {activeTab === 'logs' && (
           <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 font-mono text-xs">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 text-slate-400">
@@ -423,7 +638,7 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: SETTINGS */}
+        {/* TAB 6: SETTINGS */}
         {activeTab === 'settings' && (
           <div className="max-w-xl space-y-5">
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
