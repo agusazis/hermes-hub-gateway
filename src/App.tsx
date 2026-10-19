@@ -6,7 +6,7 @@ import {
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
   BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2, Bell, Send, MessageSquare,
-  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy
+  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles
 } from 'lucide-react';
 
 interface GitTarget {
@@ -65,7 +65,7 @@ interface SkillHierarchyItem {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'skills' | 'logs' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'skills' | 'logs' | 'releases' | 'settings'>('dashboard');
   
   const [config, setConfig] = useState<GlobalConfig>({
     active_profile: 'agus',
@@ -253,6 +253,144 @@ export default function App() {
     setCopiedSnippet(key);
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
+    // Version Logs / Releases Changelog State
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.3.1');
+  const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
+
+  interface ReleaseLog {
+    version: string;
+    name: string;
+    date: string;
+    type: 'FEATURE' | 'STABILITY' | 'MAJOR';
+    status: 'LATEST' | 'STABLE';
+    highlights: string;
+    features: string[];
+    fixes: string[];
+    architecture: string[];
+    downloads: { name: string; type: string; size: string; url: string }[];
+  }
+
+  const releaseLogs: ReleaseLog[] = [
+    {
+      version: 'v0.3.1',
+      name: 'Hermes Hub Gateway v0.3.1 (Complete Management & UI Upgrade)',
+      date: '19 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghadirkan manajemen penuh Workspace (Edit & Hapus), Helper Koneksi IDE via MCP satu-klik, notasi hasil testing hijau menyala, isolasi Git per-workspace tanpa duplikasi di Settings, dan perbaikan stabilitas Evolution Logs.',
+      features: [
+        'Manajemen Penuh Workspace: Tombol Edit dan Hapus pada masing-masing kartu workspace.',
+        'Modal Update Workspace: Memperbarui Nama, Path Lokal, dan Remote Git tanpa mengulang konfigurasi.',
+        'Unified IDE MCP Connection Helper: Kartu bantuan koneksi IDE dengan tombol One-Click Copy konfigurasi Named Pipe \\\\.\\pipe\\hhg-bridge.',
+        'Version Logs (Changelog) Explorer: Menu khusus di sidebar untuk menelusuri riwayat rilis dan unduhan installer resmi.'
+      ],
+      fixes: [
+        'Perbaikan Notasi Pengujian MCP: Menggunakan warna hijau zamrud (emerald-500) kontras tinggi menggantikan warna biru yang menyatu.',
+        'Pembersihan Tab Settings: Menghapus konfigurasi Git sentral lama agar seluruh repositori terkunci mandiri per-workspace.',
+        'Stabilitas Evolution Logs: Memperbaiki penanganan null-check pada event sistem sehingga menu logs tidak blank putih lagi.'
+      ],
+      architecture: [
+        'Named Pipe Gateway Multiplexing: Menjamin satu koneksi IDE dapat mengekspos puluhan server MCP sekaligus.',
+        'Zero-Pollution Project Root: Tetap mempertahankan prinsip 1 file deklaratif tunggal AGENTS.md di folder koding target.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.3.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.73 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.3.1/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
+      version: 'v0.3.0',
+      name: 'Hermes Hub Gateway v0.3.0 (Master-Detail Standardization & Scalable Tables)',
+      date: '19 Oktober 2026',
+      type: 'FEATURE',
+      status: 'STABLE',
+      highlights: 'Standardisasi antarmuka Master-Detail Split-Pane di seluruh menu, tabel referensi vertikal scalable (>10 files), 3-level drilldown skills, dan perbaikan tampilan MCP tools discovery.',
+      features: [
+        'Uniform Master-Detail Split-Pane: Tata letak Col 4 (Master List) dan Col 8 (Detail Inspector) di seluruh menu.',
+        'Scalable Vertical References Table: Menampung puluhan file referensi pendukung SOP tanpa melar ke samping.',
+        '3-Level Skills Hierarchy: Drilldown terstruktur dari Workspace -> SOP Aturan -> File Referensi.',
+        'Per-Tool Toggle Discovery: Pengaturan enable/disable tools MCP individual seperti antarmuka IDE modern.'
+      ],
+      fixes: [
+        'Perbaikan crash rendering SVG icons pada penjelajah tools calling MCP.',
+        'Pembersihan kartu ganda notifikasi bot Telegram di tab Settings.'
+      ],
+      architecture: [
+        'Modular Master-Detail Design System untuk kemudahan navigasi programmer kantor.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.3.0/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.73 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.3.0/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
+      version: 'v0.2.1',
+      name: 'Hermes Hub Gateway v0.2.1 (Per-Workspace Git Binding & Telegram Notifications)',
+      date: '19 Oktober 2026',
+      type: 'STABILITY',
+      status: 'STABLE',
+      highlights: 'Menghubungkan remote Git repository mandiri pada saat pendaftaran workspace serta integrasi notifikasi broadcast bot Telegram.',
+      features: [
+        'Binding Git Mandiri: Tiap workspace memiliki target branch, project ID, dan token akses GitLab RSUD.',
+        'Integrasi Notifikasi Telegram: Mengirim alert otomatis ke grup programmer saat terjadi evolusi SOP.'
+      ],
+      fixes: [
+        'Perbaikan validasi form pendaftaran workspace lokal.'
+      ],
+      architecture: [
+        'Sinkronisasi transcript review handshake dengan evaluator port :9125.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.2.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.73 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.2.1/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
+      version: 'v0.2.0',
+      name: 'Hermes Hub Gateway v0.2.0 (Single-Instance IPC & System Tray)',
+      date: '19 Oktober 2026',
+      type: 'MAJOR',
+      status: 'STABLE',
+      highlights: 'Implementasi daemon Single-Instance IPC agar membuka aplikasi kembali langsung memfokuskan jendela yang aktif, serta system tray Windows interaktif.',
+      features: [
+        'Single-Instance Daemon: Mencegah duplikasi proses background HHG di Windows.',
+        'System Tray Interaktif: Tray icon Windows dengan menu restore dan exit bersih.',
+        'Tab MCP Servers Hub: Tempat pendaftaran server koding database, NAS, router, dan observabilitas.'
+      ],
+      fixes: [
+        'Perbaikan system tray blank slot di Windows 11.'
+      ],
+      architecture: [
+        'Validasi ketat host server tunggal: Evaluator dan Mnemosyne wajib berada di server IP yang sama.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.2.0/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' }
+      ]
+    },
+    {
+      version: 'v0.1.0',
+      name: 'Hermes Hub Gateway v0.1.0 (Initial Core Release)',
+      date: '19 Oktober 2026',
+      type: 'MAJOR',
+      status: 'STABLE',
+      highlights: 'Rilis pondasi awal aplikasi desktop native berbasis Tauri v2 + React dengan zero-pollution contract generator.',
+      features: [
+        'Isolated Workspaces Core Engine.',
+        'Pembuat otomatis kontrak AGENTS.md.',
+        'Inisialisasi JSON-RPC Named Pipe Bridge.'
+      ],
+      fixes: [
+        'Rilis perdana scaffolding.'
+      ],
+      architecture: [
+        'Arsitektur pemisahan kontrol: IDE pengguna tidak menyentuh core engine watcher Hermes.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.1.0/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' }
+      ]
+    }
+  ];
+
   const [logs, setLogs] = useState<{ time: string; event: string }[]>([
     { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
     { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
@@ -621,6 +759,14 @@ export default function App() {
               <Terminal className="w-4 h-4" /> Evolution Logs
             </button>
             <button 
+              onClick={() => setActiveTab('releases')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'releases' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <History className="w-4 h-4" /> Version Logs / Changelog
+            </button>
+            <button 
               onClick={() => setActiveTab('settings')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
@@ -654,6 +800,7 @@ export default function App() {
               {activeTab === 'mcp_hub' && 'Unified MCP Servers Hub (Gudang Terpusat MCP)'}
               {activeTab === 'skills' && 'Knowledge & Skills Hierarchy (Parent & References)'}
               {activeTab === 'logs' && 'Continuous Evolution Live Logs'}
+              {activeTab === 'releases' && 'Version Logs & Official Changelog'}
               {activeTab === 'settings' && 'Gateway & Git Repository Configuration'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -662,6 +809,7 @@ export default function App() {
               {activeTab === 'mcp_hub' && 'Konfigurasi server MCP eksternal (Database, Synology, MikroTik, Grafana) yang diekspos ke IDE.'}
               {activeTab === 'skills' && 'Struktur hirarki berkas: SOP Parent (SKILL.md) dan referensi pendukung (references/).'}
               {activeTab === 'logs' && 'Telemetri evaluasi real-time antara IDE watcher dan server evaluator.'}
+              {activeTab === 'releases' && 'Catatan resmi pembaruan fitur, perbaikan bug, dan riwayat installer rilis Hermes Hub Gateway.'}
               {activeTab === 'settings' && 'Pengaturan koneksi repositori skills Git (GitLab/GitHub) dan endpoint server terpusat.'}
             </p>
           </div>
@@ -1942,6 +2090,236 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
 
         
 
+
+        {/* TAB 7: VERSION LOGS / OFFICIAL CHANGELOG (UNIFORM MASTER-DETAIL) */}
+        {activeTab === "releases" && (
+          <div className="space-y-4">
+            {/* Top Toolbar */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-cyan-500/10 rounded-lg text-cyan-400 border border-cyan-500/20">
+                  <History className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-white">Catatan Riwayat Versi Aplikasi (Official Changelog)</h3>
+                  <p className="text-[11px] text-slate-400">Daftar evolusi fitur, perbaikan bug, dan installer rilis resmi untuk RSUD dr. H. Jusuf SK.</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-semibold">
+                  TOTAL: {releaseLogs.length} RILIS RESMI
+                </span>
+              </div>
+            </div>
+
+            {/* Split-Pane Hierarchy: Panel Kiri (Daftar Versi) + Panel Kanan (Detail Catatan Rilis) */}
+            <div className="grid grid-cols-12 gap-5 min-h-[520px]">
+              {/* Panel Kiri (Col 4): List Versi */}
+              <div className="col-span-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px]">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                  <input 
+                    type="text" 
+                    placeholder="Cari versi atau fitur..." 
+                    value={releaseSearchQuery}
+                    onChange={(e) => setReleaseSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50"
+                  />
+                </div>
+
+                <div className="text-[10px] font-mono uppercase text-slate-500 px-1 flex items-center justify-between">
+                  <span>Versi Rilis ({releaseLogs.length})</span>
+                  <span>Tipe</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                  {releaseLogs
+                    .filter(rel => 
+                      rel.version.toLowerCase().includes(releaseSearchQuery.toLowerCase()) || 
+                      rel.name.toLowerCase().includes(releaseSearchQuery.toLowerCase()) ||
+                      rel.highlights.toLowerCase().includes(releaseSearchQuery.toLowerCase())
+                    )
+                    .map((rel) => {
+                      const isSelected = selectedReleaseTag === rel.version;
+
+                      return (
+                        <div 
+                          key={rel.version}
+                          onClick={() => setSelectedReleaseTag(rel.version)}
+                          className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                            isSelected 
+                              ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
+                              : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`font-mono text-xs font-bold truncate ${isSelected ? "text-cyan-300" : "text-slate-200"}`}>
+                              {rel.version}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {rel.status === "LATEST" && (
+                                <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">
+                                  LATEST
+                                </span>
+                              )}
+                              <span className="text-[9px] font-mono text-cyan-400 bg-cyan-950 px-1.5 py-0.5 rounded border border-cyan-800/40">
+                                {rel.type}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-[11px] text-slate-300 font-medium truncate mb-1">
+                            {rel.name.replace(`Hermes Hub Gateway ${rel.version} `, '')}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-500">
+                            <span>{rel.date}</span>
+                            <span>{rel.features.length + rel.fixes.length} Pembaruan</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Panel Kanan (Col 8): Detail Catatan Rilis */}
+              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between max-h-[580px] overflow-y-auto">
+                {(() => {
+                  const currentRel = releaseLogs.find(r => r.version === selectedReleaseTag) || releaseLogs[0];
+                  if (!currentRel) return null;
+
+                  return (
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      {/* Release Header */}
+                      <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2.5">
+                            <h3 className="font-bold text-base text-white font-mono">{currentRel.name}</h3>
+                            {currentRel.status === "LATEST" ? (
+                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-bold">
+                                RILIS TERBARU
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-mono">
+                                ARSIP STABIL
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-400 font-mono">
+                            Dipublikasikan pada: <b className="text-slate-300">{currentRel.date}</b> • Tipe Rilis: <span className="text-cyan-400 uppercase font-semibold">{currentRel.type}</span>
+                          </div>
+                        </div>
+
+                        <a 
+                          href={`https://github.com/agusazis/hermes-hub-gateway/releases/tag/${currentRel.version}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition-all"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-cyan-400" /> GitHub Tag
+                        </a>
+                      </div>
+
+                      {/* Highlights Card */}
+                      <div className="p-3.5 bg-cyan-950/20 border border-cyan-500/30 rounded-xl space-y-1">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" /> Ringkasan Perubahan
+                        </div>
+                        <p className="text-xs text-slate-200 leading-relaxed font-sans">
+                          {currentRel.highlights}
+                        </p>
+                      </div>
+
+                      {/* 3 Categories: Fitur Baru, Perbaikan Bug, Arsitektur */}
+                      <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+                        {/* Features */}
+                        {currentRel.features.length > 0 && (
+                          <div className="space-y-1.5">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                              <CheckCircle className="w-3.5 h-3.5" /> Fitur & Peningkatan Baru
+                            </h4>
+                            <div className="space-y-1 pl-2 border-l-2 border-emerald-500/30">
+                              {currentRel.features.map((feat, i) => (
+                                <div key={i} className="text-xs text-slate-300 leading-snug flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">•</span>
+                                  <span>{feat}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Fixes */}
+                        {currentRel.fixes.length > 0 && (
+                          <div className="space-y-1.5 pt-1">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5" /> Perbaikan Bug & Optimalisasi
+                            </h4>
+                            <div className="space-y-1 pl-2 border-l-2 border-amber-500/30">
+                              {currentRel.fixes.map((fix, i) => (
+                                <div key={i} className="text-xs text-slate-300 leading-snug flex items-start gap-2">
+                                  <span className="text-amber-400 font-bold">•</span>
+                                  <span>{fix}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Architecture */}
+                        {currentRel.architecture.length > 0 && (
+                          <div className="space-y-1.5 pt-1">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                              <Shield className="w-3.5 h-3.5" /> Tata Kelola & Arsitektur
+                            </h4>
+                            <div className="space-y-1 pl-2 border-l-2 border-cyan-500/30">
+                              {currentRel.architecture.map((arch, i) => (
+                                <div key={i} className="text-xs text-slate-300 leading-snug flex items-start gap-2">
+                                  <span className="text-cyan-400 font-bold">•</span>
+                                  <span>{arch}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Download Assets Section */}
+                      <div className="pt-3 border-t border-slate-800 space-y-2">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                          <span>Paket Biner Installer Resmi</span>
+                          <span className="text-[10px] text-slate-500 font-mono">Windows x64 Architecture</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {currentRel.downloads.map((dl, i) => (
+                            <a
+                              key={i}
+                              href={dl.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2.5 bg-slate-950 border border-slate-800 hover:border-cyan-500/50 rounded-xl flex items-center justify-between text-xs transition-all group"
+                            >
+                              <div className="space-y-0.5 truncate pr-2">
+                                <div className="font-mono text-cyan-400 font-semibold truncate group-hover:text-cyan-300">
+                                  {dl.name}
+                                </div>
+                                <div className="text-[10px] text-slate-500">
+                                  {dl.type} • {dl.size}
+                                </div>
+                              </div>
+                              <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 flex-shrink-0" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* TAB 6: SETTINGS & SYSTEM CONFIGURATION */}
         {activeTab === 'settings' && (
