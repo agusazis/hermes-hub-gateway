@@ -347,7 +347,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.9');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.0');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -365,11 +365,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.0',
+      name: 'Hermes Hub Gateway v0.5.0 (Tauri v2 Schema Validation Fix & Stable Release)',
+      date: '20 Oktober 2026',
+      type: 'RELEASE',
+      status: 'LATEST',
+      highlights: 'Menuntaskan error kompilasi CI/CD Windows: menghapus properti invalid icon pada app > windows > 0 yang melanggar skema ketat Tauri v2 CLI, memastikan bundle ikon global tervalidasi 100%, serta menyatukan seluruh fitur audit koneksi riil dan sinkronisasi Git otomatis.',
+      features: [
+        'Strict Schema Compliance: Mengoreksi tauri.conf.json agar sepenuhnya valid terhadap skema JSON resmi Tauri v2 CLI (menghilangkan error Additional properties are not allowed icon).',
+        'Auto-Generated Window Icons: Memanfaatkan bundle.icon resmi Tauri untuk seluruh resolusi taskbar, system tray, dan shortcut desktop.',
+        'Unified Live Verification Engine: Seluruh pengujian jaringan (Git remote ls-remote, Gateway HTTP check, dan Telegram broadcast) aktif dan teruji.',
+        'High-Contrast Theme Uniformity: Antarmuka Light & Dark Mode seragam dan bersih di semua tab.'
+      ],
+      fixes: [
+        'Resolusi Error CI/CD Windows build step npm run tauri build.',
+        'Penyelarasan System Tray Menu Event Handlers.'
+      ],
+      architecture: [
+        'Tauri v2 Pure-Compliant Desktop Engine & Industrial Automation Suite.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.0/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.0/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.4.9',
       name: 'Hermes Hub Gateway v0.4.9 (Comprehensive Architecture Audit & 100% Real Verification Engine)',
       date: '19 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Audit menyeluruh eliminasi seluruh mock/dummy logic: pengujian Git Remote kini menjalankan git ls-remote nyata, validasi Gateway menembak HTTP live ke Evaluator (:9125) & Mnemosyne (:8080), serta perbaikan total seluruh kartu antarmuka di Mode Terang.',
       features: [
         'Real Git Remote Verification: Tombol Test Koneksi Git mengeksekusi git ls-remote HEAD langsung ke server GitLab RSUD, memvalidasi commit dan token autentikasi secara nyata.',
@@ -1380,7 +1405,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.9</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.0</span>
             </div>
           </div>
 
