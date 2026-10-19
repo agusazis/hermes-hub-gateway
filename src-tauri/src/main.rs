@@ -2,7 +2,7 @@
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::{Manager, Emitter};
+use tauri::{Manager, Emitter, WindowEvent};
 use std::path::PathBuf;
 
 mod watcher;
@@ -45,7 +45,6 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
         git_target: None,
     };
 
-    // Buat AGENTS.md deklaratif di folder project target
     let target_dir = PathBuf::from(&target_path);
     if target_dir.exists() {
         let _ = config::generate_declarative_agents_md(&target_dir, &ws);
@@ -94,13 +93,14 @@ async fn main() {
         .setup(|app| {
             let app_handle = app.handle().clone();
 
-            let quit_i = MenuItem::with_id(app, "quit", "Exit", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "Open Dashboard", true, None::<&str>)?;
-            let sync_i = MenuItem::with_id(app, "sync", "Sync Rules Now", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", "Keluar Aplikasi", true, None::<&str>)?;
+            let show_i = MenuItem::with_id(app, "show", "Buka Dashboard", true, None::<&str>)?;
+            let sync_i = MenuItem::with_id(app, "sync", "Sync Rules Sekarang", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &sync_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
+                .tooltip("Hermes Hub Gateway (Background Active)")
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "quit" => {
                         std::process::exit(0);
@@ -108,6 +108,7 @@ async fn main() {
                     "show" => {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
+                            let _ = window.unminimize();
                             let _ = window.set_focus();
                         }
                     }
@@ -121,6 +122,7 @@ async fn main() {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
+                            let _ = window.unminimize();
                             let _ = window.set_focus();
                         }
                     }
@@ -137,6 +139,13 @@ async fn main() {
             });
 
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // Background daemon: Jangan terminate aplikasi saat window ditutup (X), minimize ke tray
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .invoke_handler(tauri::generate_handler![
             get_system_config,

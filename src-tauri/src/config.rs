@@ -13,6 +13,16 @@ pub struct GitTarget {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct McpServerEntry {
+    pub name: String,
+    pub command: String,
+    pub args: Vec<String>,
+    pub env: std::collections::HashMap<String, String>,
+    pub enabled: bool,
+    pub description: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Workspace {
     pub id: String,
     pub name: String,
@@ -30,6 +40,7 @@ pub struct GlobalConfig {
     pub default_mnemosyne_url: String,
     pub active_workspace_id: String,
     pub workspaces: Vec<Workspace>,
+    pub mcp_servers: Vec<McpServerEntry>,
 }
 
 impl Default for GlobalConfig {
@@ -58,12 +69,58 @@ impl Default for GlobalConfig {
             }),
         };
 
+        let default_mcps = vec![
+            McpServerEntry {
+                name: "database-simrs-readonly".to_string(),
+                command: "python".to_string(),
+                args: vec!["mysql_mcp_readonly.py".to_string()],
+                env: std::collections::HashMap::from([
+                    ("DB_HOST".to_string(), "172.168.1.4".to_string()),
+                    ("DB_PORT".to_string(), "3306".to_string()),
+                    ("DB_NAME".to_string(), "db_rs".to_string()),
+                ]),
+                enabled: true,
+                description: "Proxy SQL Query Aman (Read-Only) ke Database SIMGOS2 SIMRS".to_string(),
+            },
+            McpServerEntry {
+                name: "synology-nas-storage".to_string(),
+                command: "npx".to_string(),
+                args: vec!["-y".to_string(), "mcp-server-synology".to_string()],
+                env: std::collections::HashMap::from([
+                    ("SYNOLOGY_HOST".to_string(), "172.168.1.27".to_string()),
+                ]),
+                enabled: true,
+                description: "Manajemen Storage & Audit Retensi GFS Backup di NAS Synology".to_string(),
+            },
+            McpServerEntry {
+                name: "mikrotik-router".to_string(),
+                command: "python".to_string(),
+                args: vec!["mikrotik_mcp.py".to_string()],
+                env: std::collections::HashMap::from([
+                    ("ROUTER_IP".to_string(), "172.168.1.1".to_string()),
+                ]),
+                enabled: true,
+                description: "Pemantauan Traffic WAN & Antrean Bandwidth Router Jaringan RSUD".to_string(),
+            },
+            McpServerEntry {
+                name: "grafana-observability".to_string(),
+                command: "npx".to_string(),
+                args: vec!["-y".to_string(), "@dockndevai/mcp-grafana".to_string()],
+                env: std::collections::HashMap::from([
+                    ("GRAFANA_URL".to_string(), "http://172.168.1.8:3000".to_string()),
+                ]),
+                enabled: true,
+                description: "Monitoring Metrik Server & Alerting RSUD dr. H. Jusuf SK".to_string(),
+            },
+        ];
+
         GlobalConfig {
             active_profile: "agus".to_string(),
             default_hermes_evaluator_url: "http://172.168.1.202:9125".to_string(),
             default_mnemosyne_url: "http://172.168.1.202:8080".to_string(),
             active_workspace_id: "simgos2".to_string(),
             workspaces: vec![default_ws],
+            mcp_servers: default_mcps,
         }
     }
 }
