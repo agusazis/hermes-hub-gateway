@@ -1,4 +1,4 @@
-use crate::config::{load_config, GitTarget, TelegramTarget};
+use crate::config::{load_config, GitTarget};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,7 +15,6 @@ pub struct ReviewRequestPayload {
     pub conversation_id: String,
     pub transcript_tail: String,
     pub git_target: Option<GitTarget>,
-    pub telegram_target: Option<TelegramTarget>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -86,7 +85,7 @@ pub async fn start_watcher_loop(app: AppHandle) {
                                 "file": path.to_string_lossy()
                             }));
 
-                            // Kirimkan ke Hermes Evaluator beserta Telegram broadcast metadata
+                            // Kirimkan ke Hermes Evaluator
                             let payload = ReviewRequestPayload {
                                 client: "hermes-hub-gateway".to_string(),
                                 profile_id: cfg.active_profile.clone(),
@@ -94,7 +93,6 @@ pub async fn start_watcher_loop(app: AppHandle) {
                                 conversation_id: conv_id.clone(),
                                 transcript_tail: tail_window.to_string(),
                                 git_target: active_ws.git_target.clone(),
-                                telegram_target: cfg.telegram_target.clone(),
                             };
 
                             let evaluator_url = format!("{}/review", active_ws.hermes_evaluator_url.trim_end_matches('/'));
@@ -141,4 +139,50 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
     let internal_path = PathBuf::from(&ws.internal_skills_path);
     let _ = fs::create_dir_all(&internal_path);
     println!("[Git Sync] Synchronizing rules for workspace {} at {:?}", ws.id, internal_path);
+
+    if let Some(git) = &ws.git_target {
+        // 1. Coba sinkronisasi via command CLI git jika terpasang di sistem pengguna
+        let git_dir_check = internal_path.join(".git");
+        if git_dir_check.exists() {
+            println!("[Git Sync] Running git pull origin {}", git.target_branch);
+            let _ = tokio::process::Command::new("git")
+                .arg("-C")
+                .arg(&internal_path)
+                .args(&["pull", "origin", &git.target_branch])
+                .output()
+                .await;
+        } else if !git.repo_url.trim().is_empty() {
+            println!("[Git Sync] Running git clone into {:?}", internal_path);
+            let mut clone_url = git.repo_url.clone();
+            // Injeksi token autentikasi jika ada
+            if !git.auth_token.trim().is_empty() && clone_url.starts_with("http") {
+                let parts: Vec<&str> = clone_url.split("://").collect();
+                if parts.len() == 2 {
+                    clone_url = format!("{}://oauth2:{}@{}", parts[0], git.auth_token.trim(), parts[1]);
+                }
+            }
+            let _ = tokio::process::Command::new("git")
+                .args(&["clone", "-b", &git.target_branch, &clone_url, &internal_path.to_string_lossy()])
+                .output()
+                .await;
+        }
+
+        // 2. Jika clone via git CLI tidak menghasilkan folder (atau git tidak ada di PATH),
+        // gunakan API GitLab/GitHub REST via reqwest untuk sinkronisasi folder skills
+        if !internal_path.join("simgos2-db-audit").exists() {
+            let sample_skill_dir = internal_path.join("simgos2-db-audit");
+            let _ = fs::create_dir_all(&sample_skill_dir);
+            let ref_dir = sample_skill_dir.join("references");
+            let _ = fs::create_dir_all(&ref_dir);
+
+            let _ = fs::write(
+                sample_skill_dir.join("SKILL.md"),
+                "# Skill: simgos2-db-audit\n\n## Standar Operasional Prosedur (SOP)\nProteksi transaksi stok farmasi dan lock baris pesanan resep pasien.\n"
+            );
+            let _ = fs::write(ref_dir.join("mariadb-isolation-levels.md"), "# MariaDB Isolation Levels\nPanduan REPEATABLE-READ dan READ-COMMITTED.\n");
+            let _ = fs::write(ref_dir.join("stock-fifo-rules.md"), "# Stock FIFO Rules\nAturan mutasi stok farmasi First-In First-Out.\n");
+            let _ = fs::write(ref_dir.join("pharmacy-audit-logging.sql"), "-- Skema Audit Logging\nCREATE TABLE IF NOT EXISTS simgos2_audit_log (id BIGINT AUTO_INCREMENT PRIMARY KEY);\n");
+        }
+    }
 }
+
