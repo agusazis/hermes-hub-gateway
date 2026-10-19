@@ -5,7 +5,7 @@ import {
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
-  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight,
+  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2,
   GitFork, Key, Globe, FolderTree
 } from 'lucide-react';
 
@@ -185,6 +185,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [showAddWsModal, setShowAddWsModal] = useState(false);
   const [showAddMcpModal, setShowAddMcpModal] = useState(false);
+  const [editingMcpIndex, setEditingMcpIndex] = useState<number | null>(null);
 
   const [newWsName, setNewWsName] = useState('');
   const [newWsPath, setNewWsPath] = useState('');
@@ -298,6 +299,29 @@ export default function App() {
     } catch (err) {
       alert(`Gagal membuat workspace: ${err}`);
     }
+  };
+
+    const handleOpenEditMcp = (index: number) => {
+    const item = config.mcp_servers[index];
+    setNewMcpName(item.name);
+    setNewMcpCmd(item.command);
+    setNewMcpArgs(item.args.join(' '));
+    setNewMcpDesc(item.description);
+    setEditingMcpIndex(index);
+    setShowAddMcpModal(true);
+  };
+
+  const handleDeleteMcp = async (index: number) => {
+    const item = config.mcp_servers[index];
+    if (!confirm()) return;
+    const updated = {
+      ...config,
+      mcp_servers: config.mcp_servers.filter((_, i) => i !== index)
+    };
+    setConfig(updated);
+    await invoke('save_system_config', { cfg: updated });
+    setSyncMessage();
+    setTimeout(() => setSyncMessage(''), 3000);
   };
 
   const handleToggleMcp = async (index: number) => {
@@ -626,7 +650,9 @@ export default function App() {
 
             {showAddMcpModal && (
               <form onSubmit={handleCreateMcp} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">Daftarkan MCP Server Baru</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                  {editingMcpIndex !== null ? 'Edit Konfigurasi Server MCP' : 'Daftarkan MCP Server Baru'}
+                </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs text-slate-400">Nama Identifier MCP</label>
@@ -683,7 +709,7 @@ export default function App() {
                     type="submit"
                     className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold"
                   >
-                    Simpan MCP Server
+                    {editingMcpIndex !== null ? 'Simpan Perubahan' : 'Simpan MCP Server'}
                   </button>
                 </div>
               </form>
@@ -704,16 +730,30 @@ export default function App() {
                     <div className="text-xs text-slate-400">{mcp.description}</div>
                     <div className="font-mono text-[11px] text-cyan-400/80">Command: {mcp.command} {mcp.args.join(' ')}</div>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleOpenEditMcp(idx)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition-all border border-slate-700"
+                      title="Edit Command & Parameter MCP"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-cyan-400" /> Edit
+                    </button>
                     <button
                       onClick={() => handleToggleMcp(idx)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                         mcp.enabled 
-                          ? 'bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-800/60' 
-                          : 'bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-800/60'
+                          ? "bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-800/60" 
+                          : "bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-800/60"
                       }`}
                     >
-                      {mcp.enabled ? 'Nonaktifkan' : 'Aktifkan'}
+                      {mcp.enabled ? "Nonaktifkan" : "Aktifkan"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMcp(idx)}
+                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-all"
+                      title="Hapus Server MCP"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
