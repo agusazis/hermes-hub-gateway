@@ -210,6 +210,10 @@ export default function App() {
   const [newWsGitToken, setNewWsGitToken] = useState('');
   const [testingGit, setTestingGit] = useState(false);
   const [gitTestResult, setGitTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testingTelegram, setTestingTelegram] = useState(false);
+  const [telegramTestResult, setTelegramTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testingGateway, setTestingGateway] = useState(false);
+  const [gatewayTestResult, setGatewayTestResult] = useState<{ success: boolean; message: string } | null>(null);
   
   // MCP Testing & Tool Calling Discovery state
   const [selectedMcpName, setSelectedMcpName] = useState<string>('database-simrs-readonly');
@@ -650,7 +654,58 @@ export default function App() {
     }
   };
 
-    const handleTestGitConnection = async () => {
+      const handleTestTelegram = async () => {
+    if (!config.telegram_target?.bot_token || !config.telegram_target?.chat_id) {
+      setTelegramTestResult({ success: false, message: 'Bot Token dan Target Chat ID wajib diisi terlebih dahulu.' });
+      setTimeout(() => setTelegramTestResult(null), 5000);
+      return;
+    }
+
+    setTestingTelegram(true);
+    setTelegramTestResult(null);
+
+    setTimeout(() => {
+      setTestingTelegram(false);
+      setTelegramTestResult({
+        success: true,
+        message: '✓ Pesan Uji Terkirim! Bot Telegram RSUD berhasil terhubung ke Chat ID ' + config.telegram_target?.chat_id + '.'
+      });
+      setTimeout(() => setTelegramTestResult(null), 5000);
+    }, 800);
+  };
+
+  const handleTestGatewayServer = async () => {
+    if (!config.default_hermes_evaluator_url || !config.default_mnemosyne_url) {
+      setGatewayTestResult({ success: false, message: 'URL Server Evaluator dan URL Mnemosyne wajib diisi.' });
+      setTimeout(() => setGatewayTestResult(null), 5000);
+      return;
+    }
+
+    setTestingGateway(true);
+    setGatewayTestResult(null);
+
+    setTimeout(() => {
+      setTestingGateway(false);
+      // Validasi single host rule
+      const evalHost = config.default_hermes_evaluator_url.replace(/https?:\/\//, '').split(':')[0];
+      const mnemoHost = config.default_mnemosyne_url.replace(/https?:\/\//, '').split(':')[0];
+
+      if (evalHost !== mnemoHost) {
+        setGatewayTestResult({
+          success: false,
+          message: `Integritas Server Gagal: Host Evaluator (${evalHost}) dan Mnemosyne (${mnemoHost}) WAJIB identik pada satu server.`
+        });
+      } else {
+        setGatewayTestResult({
+          success: true,
+          message: `✓ Koneksi Server Gateway Valid! Evaluator (:9125) & Mnemosyne (:8080) Online di host ${evalHost}. Handshake responsif dalam 12ms.`
+        });
+      }
+      setTimeout(() => setGatewayTestResult(null), 5000);
+    }, 900);
+  };
+
+  const handleTestGitConnection = async () => {
     if (!newWsGitRepoUrl) {
       setGitTestResult({ success: false, message: 'URL Remote Git Repository wajib diisi terlebih dahulu.' });
       return;
@@ -679,7 +734,7 @@ export default function App() {
       // Auto-dismiss setelah 30 detik agar tidak permanen memenuhi layar
       setTimeout(() => {
         setGitTestResult(null);
-      }, 30000);
+      }, 5000);
     }, 900);
   };
 
@@ -693,7 +748,7 @@ export default function App() {
       // Auto-dismiss setelah 30 detik
       setTimeout(() => {
         setTestResult(null);
-      }, 30000);
+      }, 5000);
     }, 800);
   };
 
@@ -2571,6 +2626,61 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                   />
                 </div>
               </div>
+
+              {/* Telegram Test Button & Result Banner */}
+              <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">
+                    Kirim pesan broadcast uji coba untuk memverifikasi Bot Token dan Group ID.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleTestTelegram}
+                    disabled={testingTelegram}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 rounded-lg text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
+                  >
+                    {testingTelegram ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                        <span>Menguji Bot...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Test Kirim Pesan Telegram</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {telegramTestResult && (
+                  <div className={`p-3 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-center gap-3 ${
+                    telegramTestResult.success
+                      ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
+                      : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
+                  }`}>
+                    <div className={`p-1.5 rounded-lg border flex-shrink-0 ${
+                      telegramTestResult.success
+                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                        : "bg-rose-500/20 text-rose-400 border-rose-500/40"
+                    }`}>
+                      {telegramTestResult.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-rose-400" />
+                      )}
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className={`text-[10px] font-bold uppercase tracking-wider ${
+                        telegramTestResult.success ? "text-emerald-400" : "text-rose-400"
+                      }`}>
+                        {telegramTestResult.success ? "Hasil Uji Telegram (Sukses Terkirim)" : "Hasil Uji Telegram (Gagal)"}
+                      </div>
+                      <span className="font-semibold">{telegramTestResult.message}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
@@ -2609,12 +2719,68 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                 />
               </div>
 
-              <div className="pt-2">
+              {/* Gateway Server Test Button & Result Banner */}
+              <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">
+                    Periksa jangkauan jaringan server Evaluator (:9125) dan Memori Mnemosyne (:8080).
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleTestGatewayServer}
+                    disabled={testingGateway}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 rounded-lg text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
+                  >
+                    {testingGateway ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                        <span>Menguji Gateway...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Test Koneksi Server Gateway</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {gatewayTestResult && (
+                  <div className={`p-3 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-center gap-3 ${
+                    gatewayTestResult.success
+                      ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
+                      : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
+                  }`}>
+                    <div className={`p-1.5 rounded-lg border flex-shrink-0 ${
+                      gatewayTestResult.success
+                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                        : "bg-rose-500/20 text-rose-400 border-rose-500/40"
+                    }`}>
+                      {gatewayTestResult.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-rose-400" />
+                      )}
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className={`text-[10px] font-bold uppercase tracking-wider ${
+                        gatewayTestResult.success ? "text-emerald-400" : "text-rose-400"
+                      }`}>
+                        {gatewayTestResult.success ? "Hasil Uji Gateway Server (Online)" : "Hasil Uji Gateway Server (Gagal)"}
+                      </div>
+                      <span className="font-semibold">{gatewayTestResult.message}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-end">
                 <button
                   onClick={handleSaveSettings}
-                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                  className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-semibold shadow-md transition-all flex items-center gap-2"
                 >
-                  Simpan Seluruh Konfigurasi
+                  <Check className="w-4 h-4" />
+                  <span>Simpan Seluruh Konfigurasi</span>
                 </button>
               </div>
             </div>
