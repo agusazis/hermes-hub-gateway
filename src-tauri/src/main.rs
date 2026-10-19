@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, Emitter, WindowEvent};
 use std::path::PathBuf;
 
@@ -140,14 +140,15 @@ async fn main() {
         .setup(|app| {
             let app_handle = app.handle().clone();
 
-            let quit_i = MenuItem::with_id(app, "quit", "Keluar Aplikasi", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "Buka Dashboard", true, None::<&str>)?;
-            let sync_i = MenuItem::with_id(app, "sync", "Sync Rules Sekarang", true, None::<&str>)?;
+            let sync_i = MenuItem::with_id(app, "sync", "Reload & Sync Rules", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", "Stop & Keluar Aplikasi", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &sync_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
-                .tooltip("Hermes Hub Gateway (Background Active)")
+                .show_menu_on_left_click(false)
+                .tooltip("Hermes Hub Gateway (Active Background)")
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "quit" => {
                         std::process::exit(0);
@@ -165,13 +166,26 @@ async fn main() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click { .. } = event {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.unminimize();
-                            let _ = window.set_focus();
+                    match event {
+                        // Klik Ganda (Double Click) membuka UI Dashboard
+                        TrayIconEvent::DoubleClick { button: MouseButton::Left, .. } => {
+                            let app = tray.app_handle();
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.unminimize();
+                                let _ = window.set_focus();
+                            }
                         }
+                        // Klik Tunggal (Single Click) juga langsung buka/fokus jendela
+                        TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } => {
+                            let app = tray.app_handle();
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.unminimize();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        _ => {}
                     }
                 })
                 .build(app)?;
