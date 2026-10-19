@@ -245,7 +245,7 @@ export default function App() {
       author: 'agus',
       created_at: '2026-10-16',
       desc: 'Proteksi transaksi stok farmasi dan lock baris pesanan resep pasien',
-      references: ['mariadb-isolation-levels.md', 'stock-fifo-rules.md']
+      references: ['mariadb-isolation-levels.md', 'stock-fifo-rules.md', 'pharmacy-audit-logging.sql']
     },
     {
       name: 'git-upstream-sync',
@@ -346,7 +346,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.6');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.4.7');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -364,11 +364,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.4.7',
+      name: 'Hermes Hub Gateway v0.4.7 (Tray Icon Binding, Complete SOP References & Subtle Light Theme)',
+      date: '19 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Memperbaiki binding icon system tray native di Windows, melengkapi 3 berkas referensi SOP simgos2-db-audit sesuai repositori Git, dan mengharmoniskan kontras kartu aktif di Mode Terang.',
+      features: [
+        'Native Windows System Tray Icon Binding: Memastikan icon aplikasi tampil jelas di taskbar tray Windows tanpa blank.',
+        'Sinkronisasi 3 Referensi SKILL.md: Memuat 3 berkas referensi lengkap untuk simgos2-db-audit (mariadb-isolation-levels.md, stock-fifo-rules.md, pharmacy-audit-logging.sql).',
+        'Harmonisasi Kontras Master-Detail: Kartu terpilih di Mode Terang kini menggunakan aksen cyan lembut (Cyan-50) yang nyaman di mata.',
+        'Live Telegram API Call via Rust reqwest: Pengujian Telegram menembak langsung endpoint resmi dengan proteksi validasi token asli.'
+      ],
+      fixes: [
+        'Perbaikan Icon Windows Taskbar & System Tray.',
+        'Penyesuaian Skema Warna Master List Item State di Seluruh Tab.'
+      ],
+      architecture: [
+        'Explicit Tauri Tray Icon Handler & Multi-File SOP Reference Mapping.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.49 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.7/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.75 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.7/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.4.6',
       name: 'Hermes Hub Gateway v0.4.6 (Live Telegram API Broadcast & High-Contrast Light Theme)',
       date: '19 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan koneksi Telegram API asli via native Rust reqwest (bukan lagi simulasi lokal), validasi keaslian bot token (mendeteksi token dummy/masking), serta formulasi desain sistem Mode Terang berdaya kontras tinggi (Clean White Card Design).',
       features: [
         'Live Telegram Bot API Integration: Tombol uji di Settings menembak langsung endpoint resmi https://api.telegram.org/bot<TOKEN>/sendMessage via Rust HTTP client.',
@@ -1276,7 +1301,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.6</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.4.7</span>
             </div>
           </div>
 
@@ -1909,7 +1934,7 @@ export default function App() {
             {/* Split-Pane Hierarchy: Panel Kiri (Daftar Workspaces) + Panel Kanan (Detail Struktur Project) */}
             <div className="grid grid-cols-12 gap-5 min-h-[520px]">
               {/* Panel Kiri (Col 4): List Workspaces */}
-              <div className="col-span-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px]">
+              <div className={`col-span-4 border rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px] transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
                   <input 
@@ -1946,7 +1971,11 @@ export default function App() {
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className={`font-mono text-xs font-bold truncate ${isSelected ? "text-cyan-300" : "text-slate-200"}`}>
+                            <span className={`font-mono text-xs font-bold truncate ${
+                          isSelected 
+                            ? (effectiveTheme === 'dark' ? "text-cyan-300 font-extrabold" : "text-cyan-900 font-extrabold") 
+                            : (effectiveTheme === 'dark' ? "text-slate-200" : "text-slate-800")
+                        }`}>
                               {ws.name}
                             </span>
                             {isSelected ? (
@@ -1988,7 +2017,7 @@ export default function App() {
               </div>
 
               {/* Panel Kanan (Col 8): Detail Konfigurasi & Berkas Hirarki Workspace */}
-              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div className={`col-span-8 border rounded-2xl p-5 flex flex-col justify-between transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 {(() => {
                   const currentWs = config.workspaces.find(w => w.id === config.active_workspace_id) || config.workspaces[0];
                   if (!currentWs) return null;
@@ -2178,7 +2207,11 @@ export default function App() {
             {/* Split-Pane: Sidebar Server List (Left) + Detailed Vertical Tools Table (Right) */}
             <div className="grid grid-cols-12 gap-5 min-h-[520px]">
               {/* Left Column: Server Cards List */}
-              <div className="col-span-4 space-y-2 bg-slate-900/30 border border-slate-800/80 rounded-2xl p-3 max-h-[580px] overflow-y-auto">
+              <div className={`col-span-4 space-y-2 border rounded-2xl p-3 max-h-[580px] overflow-y-auto transition-colors ${
+                effectiveTheme === 'dark'
+                  ? 'bg-slate-900/40 border-slate-800/80'
+                  : 'bg-white border-slate-200 shadow-sm'
+              }`}>
                 <div className="text-[10px] font-mono uppercase text-slate-500 px-2 py-1 flex items-center justify-between">
                   <span>Server MCP</span>
                   <span>Tools Aktif</span>
@@ -2195,19 +2228,33 @@ export default function App() {
                       onClick={() => setSelectedMcpName(mcp.name)}
                       className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                         isSelected 
-                          ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
-                          : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                          ? (effectiveTheme === 'dark' 
+                              ? "bg-cyan-950/40 border-cyan-500/60 shadow-sm" 
+                              : "bg-cyan-50 border-cyan-500/80 shadow-sm ring-1 ring-cyan-500/30") 
+                          : (effectiveTheme === 'dark'
+                              ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                              : "bg-slate-50/80 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80")
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className={`font-mono text-xs font-bold truncate ${isSelected ? "text-cyan-300" : "text-slate-200"}`}>
+                        <span className={`font-mono text-xs font-bold truncate ${
+                          isSelected 
+                            ? (effectiveTheme === 'dark' ? "text-cyan-300 font-extrabold" : "text-cyan-900 font-extrabold") 
+                            : (effectiveTheme === 'dark' ? "text-slate-200" : "text-slate-800")
+                        }`}>
                           {mcp.name}
                         </span>
-                        <span className="text-[11px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
+                        <span className={`text-[11px] font-mono px-2 py-0.5 rounded-md border ${
+                          effectiveTheme === 'dark'
+                            ? "text-slate-400 bg-slate-950 border-slate-800"
+                            : "text-slate-600 bg-slate-100 border-slate-200"
+                        }`}>
                           {tools.length > 0 ? `${activeCount}/${tools.length}` : (mcp.enabled ? "Active" : "Off")}
                         </span>
                       </div>
-                      <div className="text-[10px] text-slate-400 line-clamp-1 leading-snug">
+                      <div className={`text-[10px] line-clamp-1 leading-snug ${
+                        effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                      }`}>
                         {mcp.description}
                       </div>
                       <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/60 text-[10px]">
@@ -2237,7 +2284,7 @@ export default function App() {
               </div>
 
               {/* Right Column: Active MCP Details & Vertical Scrollable Tools List */}
-              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div className={`col-span-8 border rounded-2xl p-5 flex flex-col justify-between transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 {(() => {
                   const currentMcpIdx = config.mcp_servers.findIndex(m => m.name === selectedMcpName);
                   const currentMcp = config.mcp_servers[currentMcpIdx] || config.mcp_servers[0];
@@ -2465,7 +2512,7 @@ export default function App() {
               /* LEVEL 2 & 3: Master-Detail Explorer (Kiri: Tree SOP, Kanan: References Vertical Matrix) */
               <div className="grid grid-cols-12 gap-5 min-h-[520px]">
                 {/* Left Column (Col 4): List SOP / Skills Tree */}
-                <div className="col-span-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px]">
+                <div className={`col-span-4 border rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px] transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                   {/* Search bar inside workspace */}
                   <div className="relative">
                     <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
@@ -2500,7 +2547,11 @@ export default function App() {
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className={`font-mono text-xs font-bold truncate ${isSelected ? "text-cyan-300" : "text-slate-200"}`}>
+                              <span className={`font-mono text-xs font-bold truncate ${
+                          isSelected 
+                            ? (effectiveTheme === 'dark' ? "text-cyan-300 font-extrabold" : "text-cyan-900 font-extrabold") 
+                            : (effectiveTheme === 'dark' ? "text-slate-200" : "text-slate-800")
+                        }`}>
                                 {s.name}
                               </span>
                               <span className="text-[10px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
@@ -2521,7 +2572,7 @@ export default function App() {
                 </div>
 
                 {/* Right Column (Col 8): Detail SOP + Scalable References List (Berapa pun banyaknya file aman!) */}
-                <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                <div className={`col-span-8 border rounded-2xl p-5 flex flex-col justify-between transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                   {(() => {
                     const currentSkill = skillsHierarchy.find(s => s.name === activeSkillName) || skillsHierarchy[0];
                     if (!currentSkill) return null;
@@ -2718,7 +2769,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
             {/* Split-Pane: Panel Kiri (Daftar Event Logs) + Panel Kanan (Detail Payload JSON & Trace) */}
             <div className="grid grid-cols-12 gap-5 min-h-[520px]">
               {/* Panel Kiri (Col 4): List Event Logs */}
-              <div className="col-span-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px]">
+              <div className={`col-span-4 border rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px] transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
                   <input 
@@ -2776,7 +2827,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
               </div>
 
               {/* Panel Kanan (Col 8): Detail Payload & Trace Inspection */}
-              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+              <div className={`col-span-8 border rounded-2xl p-5 flex flex-col justify-between transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 {(() => {
                   const currentLog = logs[selectedLogIndex] || logs[0];
                   if (!currentLog) return (
@@ -2855,7 +2906,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
             {/* Split-Pane Hierarchy: Panel Kiri (Daftar Versi) + Panel Kanan (Detail Catatan Rilis) */}
             <div className="grid grid-cols-12 gap-5 min-h-[520px]">
               {/* Panel Kiri (Col 4): List Versi */}
-              <div className="col-span-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px]">
+              <div className={`col-span-4 border rounded-2xl p-3.5 space-y-3 flex flex-col max-h-[580px] transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
                   <input 
@@ -2893,7 +2944,11 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className={`font-mono text-xs font-bold truncate ${isSelected ? "text-cyan-300" : "text-slate-200"}`}>
+                            <span className={`font-mono text-xs font-bold truncate ${
+                          isSelected 
+                            ? (effectiveTheme === 'dark' ? "text-cyan-300 font-extrabold" : "text-cyan-900 font-extrabold") 
+                            : (effectiveTheme === 'dark' ? "text-slate-200" : "text-slate-800")
+                        }`}>
                               {rel.version}
                             </span>
                             <div className="flex items-center gap-1">
@@ -2923,7 +2978,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
               </div>
 
               {/* Panel Kanan (Col 8): Detail Catatan Rilis */}
-              <div className="col-span-8 bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between max-h-[580px] overflow-y-auto">
+              <div className={`col-span-8 border rounded-2xl p-5 flex flex-col justify-between transition-colors max-h-[580px] overflow-y-auto ${effectiveTheme === "dark" ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 {(() => {
                   const currentRel = releaseLogs.find(r => r.version === selectedReleaseTag) || releaseLogs[0];
                   if (!currentRel) return null;
