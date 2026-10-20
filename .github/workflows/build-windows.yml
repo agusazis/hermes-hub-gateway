@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.5.8
-          releaseName: "Hermes Hub Gateway v0.5.8"
-          releaseBody: "Release v0.5.8: Total Theme Consistency & Empty-State Polish. Completely aligns unselected cards across Skills Hierarchy and MCP Hub into soft slate-50 light styling, adds graceful empty states, and compiles with accelerated Rust caching."
+          tagName: v0.6.0
+          releaseName: "Hermes Hub Gateway v0.6.0"
+          releaseBody: "Release v0.6.0: Global Design System Architecture & Theme Boundary Audit. Refactors styling into centralized CSS tokens and standard hhg-* atomic components. Integrates automated pre-build architectural linting to permanently enforce theme consistency across the entire application."
           releaseDraft: false
           prerelease: false
