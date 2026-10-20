@@ -62,12 +62,17 @@ pub async fn start_mcp_server() {
 
                 if let Ok(req) = serde_json::from_str::<JsonRpcRequest>(trimmed) {
                     let cfg = crate::config::load_config();
-                    let skills_dir = match cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned() {
+                    let raw_skills_dir = match cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned() {
                         Some(w) => PathBuf::from(&w.internal_skills_path),
                         None => match cfg.workspaces.first().cloned() {
                             Some(first) => PathBuf::from(&first.internal_skills_path),
                             None => dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".hermes-hub").join("skills"),
                         },
+                    };
+                    let skills_dir = if raw_skills_dir.join("skills").is_dir() {
+                        raw_skills_dir.join("skills")
+                    } else {
+                        raw_skills_dir
                     };
 
                     let res = handle_mcp_call(req, &skills_dir);
