@@ -46,7 +46,7 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
         doc.push_str("## Standar Operasional Prosedur (SOP) & Blueprint Koding\n");
         doc.push_str("Pedoman arsitektur dan standar koding terverifikasi otomatis oleh Hermes Evaluator untuk lingkungan software development.\n\n");
         doc.push_str("### 1. Prinsip Utama Arsitektur (Zero-Pollution Project Root)\n");
-        doc.push_str("- Dilarang mengotori root folder proyek (simgos2 dll) dengan file konfigurasi selain deklarasi standar `AGENTS.md`.\n");
+        doc.push_str("- Dilarang mengotori root folder proyek dengan file konfigurasi selain deklarasi standar `AGENTS.md`.\n");
         doc.push_str("- Seluruh dependensi dan tool calling diisolasi melalui Named Pipe bridge `\\\\.\\pipe\\hhg-bridge`.\n\n");
         
         if skill_name.contains("bpjs") || skill_name.contains("vclaim") {
@@ -222,7 +222,7 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
                     result.push(serde_json::json!({
                         "name": skill_name,
                         "workspace_id": ws.id,
-                        "category": "simgos2",
+                        "category": "core",
                         "author": "agus",
                         "created_at": "2026-10-18",
                         "desc": format!("Aturan koding otomatis tersinkron dari repository {}", ws.name),
