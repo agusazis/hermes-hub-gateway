@@ -44,7 +44,7 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
     } else {
         let mut doc = format!("# Skill: {}\n\n", skill_name);
         doc.push_str("## Standar Operasional Prosedur (SOP) & Blueprint Koding\n");
-        doc.push_str("Pedoman arsitektur dan kepatuhan koding terverifikasi otomatis oleh Hermes Evaluator untuk lingkungan RSUD dr. H. Jusuf SK.\n\n");
+        doc.push_str("Pedoman arsitektur dan standar koding terverifikasi otomatis oleh Hermes Evaluator untuk lingkungan software development.\n\n");
         doc.push_str("### 1. Prinsip Utama Arsitektur (Zero-Pollution Project Root)\n");
         doc.push_str("- Dilarang mengotori root folder proyek (simgos2 dll) dengan file konfigurasi selain deklarasi standar `AGENTS.md`.\n");
         doc.push_str("- Seluruh dependensi dan tool calling diisolasi melalui Named Pipe bridge `\\\\.\\pipe\\hhg-bridge`.\n\n");
@@ -69,7 +69,7 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
             doc.push_str("### 2. Kebijakan Retensi Backup GFS (Grandfather-Father-Son)\n");
             doc.push_str("- **Harian (Daily)**: 7 snapshot harian dipertahankan untuk pemulihan cepat insidental.\n");
             doc.push_str("- **Mingguan (Weekly)**: 4 snapshot mingguan diambil otomatis setiap Minggu pukul 02:00 WITA.\n");
-            doc.push_str("- **Bulanan (Monthly)**: 12 arsip akhir bulan disimpan permanen ke cold-storage Synology RSUD.\n");
+            doc.push_str("- **Bulanan (Monthly)**: 12 arsip akhir bulan disimpan permanen ke cold-storage NAS backup.\n");
         } else {
             doc.push_str("### 2. Tata Kelola Git & Handshake Evaluator\n");
             doc.push_str("- Seluruh commit di branch pengembangan wajib lolos evaluasi otomatis sebelum di-merge ke `main`.\n");
@@ -161,7 +161,7 @@ async fn test_telegram_broadcast(bot_token: String, chat_id: String, topic_id: O
 
     let mut body = serde_json::json!({
         "chat_id": chat_id.trim(),
-        "text": "🐴 [Hermes Hub Gateway] Uji koneksi notifikasi bot Telegram RSUD dr. H. Jusuf SK berhasil terhubung! Status: READY.",
+        "text": "🚀 [Hermes Hub Gateway] Uji koneksi notifikasi broadcast bot Telegram berhasil terhubung! Status: READY.",
         "parse_mode": "HTML"
     });
 
