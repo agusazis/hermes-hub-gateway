@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.5.6
-          releaseName: "Hermes Hub Gateway v0.5.6"
-          releaseBody: "Release v0.5.6: Comprehensive Light Theme Harmonization & Cache Optimization. Eliminates all harsh dark background artifacts in Skills Hierarchy, Reference Explorer, and Settings tab for an eye-friendly professional experience, accelerated with Rust CI/CD caching."
+          tagName: v0.5.7
+          releaseName: "Hermes Hub Gateway v0.5.7"
+          releaseBody: "Release v0.5.7: Flawless Light Theme & Universal Developer Workspace. Eliminates all lingering dark block artifacts across the Evolution Logs trace viewer and Settings theme selector cards. Backed by fast cached Rust CI/CD pipeline and TypeScript zero-error guarantees."
           releaseDraft: false
           prerelease: false
