@@ -5,7 +5,7 @@ import {
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
-  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2, Bell, Send, MessageSquare,
+  BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen, Edit3, Trash2, Bell, Send, MessageSquare,
   GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders
 } from 'lucide-react';
 
@@ -65,8 +65,9 @@ interface SkillHierarchyItem {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('workspaces');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
   const [wsDetailTab, setWsDetailTab] = useState<'overview' | 'skills'>('overview');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   // Provisioning Token / Organization Setup Key State
   const [provisionKey, setProvisionKey] = useState('');
@@ -325,7 +326,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.8');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.9');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -343,11 +344,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.9',
+      name: 'Hermes Hub Gateway v0.7.9 (Collapsible Navigation Sidebar & Space Optimization)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menambahkan fitur Collapsible Sidebar (bisa diciutkan ke mode ikon w-18 atau diperluas ke mode penuh w-64). Memberikan ruang kerja horizontal yang jauh lebih luas bagi programmer saat membaca dokumen SOP dan terminal telemetry logs.',
+      features: [
+        'Collapsible Navigation Sidebar: Toggle cepat via tombol panel di header sidebar dengan animasi transisi mulus.',
+        'Icon-Only Compact Mode: Menampilkan tooltip intuitif pada setiap navigasi dan indikator titik Evaluator LIVE saat sidebar diciutkan.',
+        'Footer Changelogs Navigation: Akses changelog tetap praktis di footer navigasi baik dalam mode luas maupun ciut.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Ruang layar horizontal yang sempit pada monitor laptop beresolusi standar saat membuka split-pane Workspaces atau Logs.'
+      ],
+      architecture: [
+        'Dynamic Sidebar State & Responsive Desktop Layout Engine.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.9/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.9/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.8',
       name: 'Hermes Hub Gateway v0.7.8 (Clean Nav Footer Changelogs & Streamlined Sidebar)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menyederhanakan bilah navigasi sidebar: memindahkan menu Changelogs ke footer navigasi tepat di bawah status Evaluator dengan teks ringkas Changelogs, sehingga menu utama tetap fokus pada Dashboard, Workspaces, MCP Hub, Logs, dan Settings.',
       features: [
         'Streamlined Sidebar Architecture: Navigasi utama lebih bersih tanpa tombol changelog yang memakan ruang.',
@@ -2210,94 +2235,130 @@ export default function App() {
         ? 'bg-slate-950 text-slate-100' 
         : 'bg-slate-100 text-slate-900'
     }`}>
-      {/* Sidebar */}
-      <aside className={`w-64 border-r p-4 flex flex-col justify-between transition-colors ${
+      {/* Sidebar (Collapsible) */}
+      <aside className={`${
+        isSidebarCollapsed ? 'w-18' : 'w-64'
+      } border-r p-3.5 flex flex-col justify-between transition-all duration-300 ${
         effectiveTheme === 'dark' 
           ? 'border-slate-800 bg-slate-900/60' 
           : 'border-slate-200 bg-white shadow-sm'
       }`}>
         <div>
-          <div className="flex items-center gap-3 px-2 py-3 mb-6">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-cyan-400 border border-cyan-300/30 flex items-center justify-center font-black text-white text-base shadow-lg shadow-cyan-500/20">
-              H
+          {/* Header Brand & Toggle */}
+          <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'} px-1 py-3 mb-6`}>
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 shrink-0 rounded-xl bg-gradient-to-tr from-cyan-600 to-cyan-400 border border-cyan-300/30 flex items-center justify-center font-black text-white text-base shadow-lg shadow-cyan-500/20">
+                H
+              </div>
+              {!isSidebarCollapsed && (
+                <div className="overflow-hidden">
+                  <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.7.9</span>
+                </div>
+              )}
             </div>
-            <div>
-              <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.8</span>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title={isSidebarCollapsed ? "Perluas Sidebar" : "Ciutkan Sidebar"}
+              className={`p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-800/40 transition-colors ${
+                isSidebarCollapsed ? 'mt-2' : ''
+              }`}
+            >
+              {isSidebarCollapsed ? (
+                <PanelLeftOpen className="w-4 h-4" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4" />
+              )}
+            </button>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-1.5">
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              title={isSidebarCollapsed ? "Dashboard" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Server className="w-4 h-4" /> Dashboard
+              <Server className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Dashboard</span>}
             </button>
             <button 
               onClick={() => setActiveTab('workspaces')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              title={isSidebarCollapsed ? "Workspaces & Skills" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'workspaces' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <FolderKanban className="w-4 h-4" /> Workspaces
+              <FolderKanban className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Workspaces</span>}
             </button>
             <button 
               onClick={() => setActiveTab('mcp_hub')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              title={isSidebarCollapsed ? "MCP Servers Hub" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'mcp_hub' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Layers className="w-4 h-4" /> MCP Servers Hub
+              <Layers className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>MCP Servers Hub</span>}
             </button>
             <button 
               onClick={() => setActiveTab('logs')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              title={isSidebarCollapsed ? "Evolution Logs" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'logs' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Terminal className="w-4 h-4" /> Evolution Logs
+              <Terminal className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Evolution Logs</span>}
             </button>
             <button 
               onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              title={isSidebarCollapsed ? "Settings & Repos" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Settings className="w-4 h-4" /> Settings & Repos
+              <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Settings & Repos</span>}
             </button>
           </nav>
         </div>
 
         <div className="space-y-2">
-          <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
-              <span>Evaluator Status</span>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span className="text-emerald-400 font-mono text-[10px]">LIVE</span>
+          {!isSidebarCollapsed ? (
+            <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                <span>Evaluator Status</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="text-emerald-400 font-mono text-[10px]">LIVE</span>
+                </div>
               </div>
+              <div className="font-mono text-[11px] text-slate-300 truncate">{config.default_hermes_evaluator_url}</div>
             </div>
-            <div className="font-mono text-[11px] text-slate-300 truncate">{config.default_hermes_evaluator_url}</div>
-          </div>
+          ) : (
+            <div className="flex justify-center p-2 rounded-xl bg-slate-900/80 border border-slate-800" title={`Evaluator LIVE: ${config.default_hermes_evaluator_url}`}>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+          )}
 
           {/* Footer Nav Link: Changelogs */}
-          <div className="pt-1 flex items-center justify-between px-1 text-[11px]">
+          <div className={`pt-1 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between px-1'} text-[11px]`}>
             <button
               type="button"
               onClick={() => setActiveTab('releases')}
+              title={isSidebarCollapsed ? "Changelogs (v0.7.9)" : undefined}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
                 activeTab === 'releases'
                   ? 'text-cyan-400 font-bold'
                   : 'text-slate-400 hover:text-cyan-400'
               }`}
             >
-              <History className="w-3.5 h-3.5" />
-              <span>Changelogs</span>
+              <History className="w-3.5 h-3.5 shrink-0" />
+              {!isSidebarCollapsed && <span>Changelogs</span>}
             </button>
-            <span className="text-[10px] font-mono text-slate-400">v0.7.8</span>
+            {!isSidebarCollapsed && (
+              <span className="text-[10px] font-mono text-slate-400">v0.7.9</span>
+            )}
           </div>
         </div>
       </aside>
