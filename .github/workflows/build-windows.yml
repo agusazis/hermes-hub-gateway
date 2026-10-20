@@ -18,15 +18,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js with caching
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust dependencies and build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          cache-on-failure: false
 
       - name: Install frontend dependencies
         run: npm install
@@ -34,7 +41,7 @@ jobs:
       - name: Run Pre-Build Verification Test Gates
         run: npm run verify
 
-      - name: Build Tauri Desktop Application
+      - name: Build Tauri Desktop Application (Fast Bundler)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,6 +49,6 @@ jobs:
         with:
           tagName: v0.5.5
           releaseName: "Hermes Hub Gateway v0.5.5"
-          releaseBody: "Release v0.5.5: Harmonized Light Mode & Zero-Clash Visual Theme. Eliminates hardcoded dark blocks across the Isolated Workspaces Manager (IDE bridge helper banner, Git connection card, and AGENTS.md contract preview), adopting high-contrast, eye-friendly light styling backed by verified pre-build test gates."
+          releaseBody: "Release v0.5.5: Harmonized Light Mode & Fast Accelerated Build Pipeline. Eliminates harsh dark contrasts across the Workspaces tab for an elegant light theme, backed by strict TypeScript verification and persistent Rust CI/CD dependency caching."
           releaseDraft: false
           prerelease: false
