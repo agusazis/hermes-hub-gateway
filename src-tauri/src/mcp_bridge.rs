@@ -18,8 +18,73 @@ pub struct JsonRpcResponse {
     pub error: Option<serde_json::Value>,
 }
 
+#[cfg(windows)]
 pub async fn start_mcp_server() {
-    println!("[Unified MCP Hub] Initializing Local Named Pipe MCP Server on \\\\.\\pipe\\hhg-bridge...");
+    use tokio::net::windows::named_pipe::ServerOptions;
+    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+
+    let pipe_name = r"\\.\pipe\hhg-bridge";
+    println!("[Unified MCP Hub] Initializing Local Named Pipe MCP Server on {}...", pipe_name);
+
+    loop {
+        let server = match ServerOptions::new()
+            .first_pipe_instance(false)
+            .create(pipe_name)
+        {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("[Unified MCP Hub] Failed to create named pipe server: {}. Retrying in 3s...", e);
+                tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+                continue;
+            }
+        };
+
+        if let Err(e) = server.connect().await {
+            eprintln!("[Unified MCP Hub] Client connection failed: {}", e);
+            continue;
+        }
+
+        tokio::spawn(async move {
+            let (reader, mut writer) = tokio::io::split(server);
+            let mut buf_reader = BufReader::new(reader);
+            let mut line = String::new();
+
+            while let Ok(n) = buf_reader.read_line(&mut line).await {
+                if n == 0 {
+                    break;
+                }
+
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    line.clear();
+                    continue;
+                }
+
+                if let Ok(req) = serde_json::from_str::<JsonRpcRequest>(trimmed) {
+                    let cfg = crate::config::load_config();
+                    let skills_dir = match cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned() {
+                        Some(w) => PathBuf::from(&w.internal_skills_path),
+                        None => match cfg.workspaces.first().cloned() {
+                            Some(first) => PathBuf::from(&first.internal_skills_path),
+                            None => dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".hermes-hub").join("skills"),
+                        },
+                    };
+
+                    let res = handle_mcp_call(req, &skills_dir);
+                    if let Ok(res_str) = serde_json::to_string(&res) {
+                        let _ = writer.write_all(format!("{}\n", res_str).as_bytes()).await;
+                        let _ = writer.flush().await;
+                    }
+                }
+                line.clear();
+            }
+        });
+    }
+}
+
+#[cfg(not(windows))]
+pub async fn start_mcp_server() {
+    println!("[Unified MCP Hub] Local Named Pipe listener active on Windows targets.");
 }
 
 pub fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> JsonRpcResponse {
