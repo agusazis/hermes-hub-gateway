@@ -252,6 +252,8 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
         }
     };
     let raw_internal = PathBuf::from(&ws.internal_skills_path);
+    // STANDAR STRUKTUR EVALUATOR:
+    // Selalu gunakan subfolder skills/ jika ada atau gunakan raw_internal jika di dalamnya terdapat subfolder ber-SKILL.md
     let internal_path = if raw_internal.join("skills").is_dir() {
         raw_internal.join("skills")
     } else {
@@ -266,7 +268,7 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
                 let path = entry.path();
                 if path.is_dir() {
                     let skill_name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default().to_string();
-                    if skill_name.starts_with(".") || skill_name == "specialists" || skill_name == "tools" || skill_name == "rules" || skill_name == "memory" {
+                    if skill_name.starts_with(".") || skill_name == "specialists" || skill_name == "tools" || skill_name == "rules" || skill_name == "memory" || skill_name == "skills" {
                         continue;
                     }
 
