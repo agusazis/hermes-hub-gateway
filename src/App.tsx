@@ -321,7 +321,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.3');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.4');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -339,11 +339,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.4',
+      name: 'Hermes Hub Gateway v0.6.4 (Pure NSIS Exclusive Bundle & Legacy Profile Purge)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menonaktifkan bundle MSI yang tidak mendukung uninstaller dialog kustom, beralih 100% eksklusif ke NSIS Setup Installer (.exe) dengan prompt Yes/No untuk pembersihan total folder sisa %USERPROFILE%\\.hermes-hub dan AppData lama.',
+      features: [
+        'Exclusive NSIS Build: Menghapus paket .msi agar pengguna tidak terjebak pada Windows Installer standar yang bisu terhadap skrip pembersihan.',
+        'Legacy AppData Purge: Hook custom-nsis.nsh kini menghapus folder legacy (com.jusufsk.hermes-hub-gateway) maupun namespace baru (com.hermeshub.gateway).',
+        'Clean Uninstall Experience: Dialog box Yes/No native Windows langsung muncul saat proses uninstall dijalankan dari .exe setup.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Installer .msi yang menimpa mekanisme uninstaller hook NSIS di Windows Control Panel.',
+        'Proses background yang mengunci file saat aplikasi diminimize ke system tray.'
+      ],
+      architecture: [
+        'NSIS-Exclusive Single Binary Distribution Architecture.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.4/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' }
+      ]
+    },
+    {
       version: 'v0.6.3',
       name: 'Hermes Hub Gateway v0.6.3 (NSIS Uninstaller Complete Purge Hook)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menambahkan hook uninstaller NSIS Windows (custom-nsis.nsh) dengan dialog konfirmasi Yes/No untuk menghapus total seluruh sisa folder .hermes-hub dan AppData saat aplikasi di-uninstall.',
       features: [
         'Complete Uninstaller Purge: Dialog prompt saat proses uninstall Windows menanyakan apakah user ingin menghapus seluruh file konfigurasi dan data tersisa secara bersih.',
@@ -1888,7 +1912,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.3</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.4</span>
             </div>
           </div>
 
