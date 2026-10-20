@@ -321,7 +321,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.2');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.3');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -339,11 +339,34 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.3',
+      name: 'Hermes Hub Gateway v0.6.3 (NSIS Uninstaller Complete Purge Hook)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menambahkan hook uninstaller NSIS Windows (custom-nsis.nsh) dengan dialog konfirmasi Yes/No untuk menghapus total seluruh sisa folder .hermes-hub dan AppData saat aplikasi di-uninstall.',
+      features: [
+        'Complete Uninstaller Purge: Dialog prompt saat proses uninstall Windows menanyakan apakah user ingin menghapus seluruh file konfigurasi dan data tersisa secara bersih.',
+        'Zero Residual Footprint: Membersihkan %USERPROFILE%\\.hermes-hub dan folder AppData saat diizinkan oleh user.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Installer Windows NSIS sebelumnya tidak menghapus folder konfigurasi .hermes-hub saat di-remove.'
+      ],
+      architecture: [
+        'NSIS Native Windows Installer & Uninstaller Custom Hooks.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.3/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.3/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.2',
       name: 'Hermes Hub Gateway v0.6.2 (One-Click Clean Slate Factory Reset & Neutral Identifier)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan fitur Hapus Total Data Tersisa (Factory Reset to Clean Slate) langsung dari antarmuka Settings Disaster Recovery Center, serta memperbarui app identifier Windows tauri menjadi com.hermeshub.gateway yang murni universal.',
       features: [
         'One-Click Factory Reset: Tombol "Hapus Total Data" pada Disaster Recovery Center secara instan membersihkan seluruh file config.json, riwayat workspace lama, dan cache tersisa di AppData lokal.',
@@ -1865,7 +1888,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.2</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.3</span>
             </div>
           </div>
 
