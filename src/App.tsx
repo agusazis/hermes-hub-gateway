@@ -65,7 +65,7 @@ interface SkillHierarchyItem {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('workspaces');
   const [wsDetailTab, setWsDetailTab] = useState<'overview' | 'skills'>('overview');
 
   // Provisioning Token / Organization Setup Key State
@@ -325,7 +325,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.7');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.8');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -343,11 +343,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.8',
+      name: 'Hermes Hub Gateway v0.7.8 (Clean Nav Footer Changelogs & Streamlined Sidebar)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menyederhanakan bilah navigasi sidebar: memindahkan menu Changelogs ke footer navigasi tepat di bawah status Evaluator dengan teks ringkas Changelogs, sehingga menu utama tetap fokus pada Dashboard, Workspaces, MCP Hub, Logs, dan Settings.',
+      features: [
+        'Streamlined Sidebar Architecture: Navigasi utama lebih bersih tanpa tombol changelog yang memakan ruang.',
+        'Compact Footer Changelogs Link: Tautan Changelogs berada rapi di footer sidebar dengan indikator versi aktif v0.7.8.',
+        'Unified Workspaces & Skills Manager: Terintegrasi penuh dengan penjelajah SOP dan viewer dokumen.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Navigasi sidebar yang sebelumnya terlalu panjang dengan menu terpisah untuk changelog.'
+      ],
+      architecture: [
+        'Footer Sub-Navigation Layout & Minimalist Sidebar Design.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.8/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.8/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.7',
       name: 'Hermes Hub Gateway v0.7.7 (Unified Workspaces & Integrated Skills Explorer)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menggabungkan menu Workspaces dan Skills Hierarchy menjadi satu Menu Workspaces & Skills Manager yang terpadu, ringkas, dan berorientasi proyek. Memperbaiki alur reset bersih pada form pendaftaran workspace (tanpa pre-filled mock/token).',
       features: [
         'Unified Workspaces & Skills Manager: Akses SOP dan dokumen referensi langsung di dalam sub-tab workspace terkait tanpa berpindah menu.',
@@ -2199,7 +2223,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.7</span>
+              <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.8</span>
             </div>
           </div>
 
@@ -2237,14 +2261,6 @@ export default function App() {
               <Terminal className="w-4 h-4" /> Evolution Logs
             </button>
             <button 
-              onClick={() => setActiveTab('releases')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'releases' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-              }`}
-            >
-              <History className="w-4 h-4" /> Version Logs / Changelog
-            </button>
-            <button 
               onClick={() => setActiveTab('settings')}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
@@ -2255,15 +2271,34 @@ export default function App() {
           </nav>
         </div>
 
-        <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
-            <span>Evaluator Status</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-emerald-400 font-mono text-[10px]">LIVE</span>
+        <div className="space-y-2">
+          <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+              <span>Evaluator Status</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="text-emerald-400 font-mono text-[10px]">LIVE</span>
+              </div>
             </div>
+            <div className="font-mono text-[11px] text-slate-300 truncate">{config.default_hermes_evaluator_url}</div>
           </div>
-          <div className="font-mono text-[11px] text-slate-300 truncate">{config.default_hermes_evaluator_url}</div>
+
+          {/* Footer Nav Link: Changelogs */}
+          <div className="pt-1 flex items-center justify-between px-1 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setActiveTab('releases')}
+              className={`flex items-center gap-1.5 transition-colors font-medium ${
+                activeTab === 'releases'
+                  ? 'text-cyan-400 font-bold'
+                  : 'text-slate-400 hover:text-cyan-400'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Changelogs</span>
+            </button>
+            <span className="text-[10px] font-mono text-slate-400">v0.7.8</span>
+          </div>
         </div>
       </aside>
 
