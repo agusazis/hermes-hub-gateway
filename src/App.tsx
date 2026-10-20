@@ -159,6 +159,28 @@ export default function App() {
         };
 
         setConfig(provisionedConfig);
+        setMcpToolsDiscovery({
+          "database-simrs-readonly": [
+            { name: "read_query", desc: "Menjalankan SELECT SQL query aman dengan timeout 5 detik", enabled: true },
+            { name: "list_tables", desc: "Mendapatkan daftar tabel database SIMRS", enabled: true },
+            { name: "describe_table", desc: "Mendapatkan skema kolom tabel", enabled: true }
+          ],
+          "synology-nas-storage": [
+            { name: "get_storage_status", desc: "Cek utilisasi storage pool dan volume NAS Synology", enabled: true },
+            { name: "list_gfs_snapshots", desc: "Daftar snapshot retensi harian/mingguan/bulanan", enabled: true },
+            { name: "check_nas_health", desc: "Cek SMART disk dan suhu storage", enabled: true }
+          ],
+          "mikrotik-router": [
+            { name: "get_interface_traffic", desc: "Traffic real-time ether WAN & bridge LAN", enabled: true },
+            { name: "get_queue_simple", desc: "Daftar pembagian bandwidth per poli/unit RSUD", enabled: true },
+            { name: "router_ping", desc: "Uji latensi jaringan dari router ke host", enabled: true }
+          ],
+          "grafana-observability": [
+            { name: "query_prometheus", desc: "Evaluasi ekspresi PromQL metrik server", enabled: true },
+            { name: "query_loki_logs", desc: "Pencarian log error sistem Simgos2 via LogQL", enabled: true },
+            { name: "list_active_alerts", desc: "Daftar alert Prometheus/Grafana yang sedang firing", enabled: true }
+          ]
+        });
         try {
           await invoke('save_system_config', { cfg: provisionedConfig });
         } catch (_) {}
@@ -276,28 +298,7 @@ export default function App() {
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [wsSearchQuery, setWsSearchQuery] = useState<string>('');
   const [testingMcpIndex, setTestingMcpIndex] = useState<number | null>(null);
-  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>({
-    "database-simrs-readonly": [
-      { name: "read_query", desc: "Menjalankan SELECT SQL query aman dengan timeout 5 detik", enabled: true },
-      { name: "list_tables", desc: "Mendapatkan daftar tabel database SIMRS", enabled: true },
-      { name: "describe_table", desc: "Mendapatkan skema kolom tabel", enabled: true }
-    ],
-    "synology-nas-storage": [
-      { name: "get_storage_status", desc: "Cek utilisasi storage pool dan volume NAS Synology", enabled: true },
-      { name: "list_gfs_snapshots", desc: "Daftar snapshot retensi harian/mingguan/bulanan", enabled: true },
-      { name: "check_nas_health", desc: "Cek SMART disk dan suhu storage", enabled: true }
-    ],
-    "mikrotik-router": [
-      { name: "get_interface_traffic", desc: "Traffic real-time ether WAN & bridge LAN", enabled: true },
-      { name: "get_queue_simple", desc: "Daftar pembagian bandwidth per poli/unit RSUD", enabled: true },
-      { name: "router_ping", desc: "Uji latensi jaringan dari router ke host", enabled: true }
-    ],
-    "grafana-observability": [
-      { name: "query_prometheus", desc: "Evaluasi ekspresi PromQL metrik server", enabled: true },
-      { name: "query_loki_logs", desc: "Pencarian log error sistem Simgos2 via LogQL", enabled: true },
-      { name: "list_active_alerts", desc: "Daftar alert Prometheus/Grafana yang sedang firing", enabled: true }
-    ]
-  });
+  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>({});
   const [testResult, setTestResult] = useState<string | null>(null);
   const [testingMcpName, setTestingMcpName] = useState<string | null>(null);
 
@@ -321,7 +322,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.5');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.6');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -339,11 +340,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.6',
+      name: 'Hermes Hub Gateway v0.6.6 (Dual Dual-Distribution Installer & Zero-State Dashboard Fix)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menghadirkan kembali dual format distribusi installer (EXE NSIS interaktif + MSI enterprise package) secara berdampingan sesuai best-practice industri, serta memperbaiki sinkronisasi metrik kartu MCP Dashboard agar 100% akurat 0 fungsi pada Clean Slate.',
+      features: [
+        'Dual-Package Distribution: Merilis berkas NSIS Setup (.exe) untuk developer personal dan MSI Package (.msi) untuk sysadmin deployment massal.',
+        'Zero-State Dashboard Synchronization: Kartu "Tools Calling MCP" kini menghitung fungsi riil hanya dari server MCP yang aktif terdaftar, menampilkan 0 Fungsi saat sistem bersih.',
+        'Zero-State Workspace Label: Label kartu project menampilkan status informatif "Belum Ada Workspace" saat array kosong.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Metrik kartu MCP di dashboard yang sempat membaca 12 fungsi meskipun server MCP masih kosong.',
+        'Ketiadaan paket MSI pada release v0.6.5.'
+      ],
+      architecture: [
+        'Enterprise Multi-Target Distribution & Reactive Zero-State Dashboard.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.6/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.6/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.5',
       name: 'Hermes Hub Gateway v0.6.5 (Crash-Proof Clean Slate & Security Hardening)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghilangkan potensi crash saat aplikasi dibuka dalam kondisi kosong (Clean Slate) dengan penanganan aman array workspace pada backend Rust, serta mencabut tombol reset berisiko dari antarmuka pengguna demi aspek keamanan operasional.',
       features: [
         'Crash-Proof Architecture: Menghapus seluruh unwrap index out-of-bounds pada workspace kosong di backend Rust sehingga aplikasi tidak crash/tertutup saat baru diinstall.',
@@ -1632,10 +1658,11 @@ export default function App() {
     }, 800);
   };
 
-    const getTotalToolsCount = () => {
+  const getTotalToolsCount = () => {
     let total = 0;
-    Object.values(mcpToolsDiscovery).forEach((arr) => {
-      total += arr.length;
+    config.mcp_servers.forEach((server) => {
+      const tools = mcpToolsDiscovery[server.name] || [];
+      total += tools.length;
     });
     return total;
   };
@@ -1901,7 +1928,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.5</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.6</span>
             </div>
           </div>
 
@@ -2103,7 +2130,9 @@ export default function App() {
                 <div className={`text-2xl font-bold ${
                   effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
                 }`}>{config.workspaces.length} Project</div>
-                <div className="text-[11px] text-cyan-500 dark:text-cyan-400 font-mono truncate font-semibold">{activeWs?.name} (Aktif)</div>
+                <div className="text-[11px] text-cyan-500 dark:text-cyan-400 font-mono truncate font-semibold">
+                  {activeWs ? `${activeWs.name} (Aktif)` : 'Belum Ada Workspace'}
+                </div>
               </div>
 
               <div 
