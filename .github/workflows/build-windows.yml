@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.6.9
-          releaseName: "Hermes Hub Gateway v0.6.9"
-          releaseBody: "Release v0.6.9: Substantial Skills Discovery & Native Named Pipe MCP Server. Implements smart SKILL.md directory traversal, filters non-skill IDE folders (specialists, tools, rules), parses dynamic document headers, and activates live Windows Named Pipe IPC on pipe hhg-bridge."
+          tagName: v0.7.0
+          releaseName: "Hermes Hub Gateway v0.7.0"
+          releaseBody: "Release v0.7.0: Zero-Mock Physical Architecture & Strict Disk Verification. Removes all synthetic mock fallbacks across React and Rust. Guarantees 100% fidelity between GitLab repository files and desktop UI/MCP readers."
           releaseDraft: false
           prerelease: false
