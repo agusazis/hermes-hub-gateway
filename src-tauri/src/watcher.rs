@@ -146,53 +146,63 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
     println!("[Git Sync] Synchronizing rules for workspace {} at {:?}", ws.id, internal_path);
 
     if let Some(git) = &ws.git_target {
-        // 1. Coba sinkronisasi via command CLI git jika terpasang di sistem pengguna
+        // Jika folder internal sudah ada dan berisi .git lama yang tidak sinkron, lakukan pull
         let git_dir_check = internal_path.join(".git");
+        let mut git_success = false;
+
         if git_dir_check.exists() {
             println!("[Git Sync] Running git pull origin {}", git.target_branch);
-            let _ = tokio::process::Command::new("git")
+            let res = tokio::process::Command::new("git")
                 .arg("-C")
                 .arg(&internal_path)
                 .args(&["pull", "origin", &git.target_branch])
                 .output()
                 .await;
+            if let Ok(out) = res {
+                if out.status.success() {
+                    git_success = true;
+                }
+            }
         } else if !git.repo_url.trim().is_empty() {
             println!("[Git Sync] Running git clone into {:?}", internal_path);
             let mut clone_url = git.repo_url.clone();
-            // Injeksi token autentikasi jika ada
             if !git.auth_token.trim().is_empty() && clone_url.starts_with("http") {
                 let parts: Vec<&str> = clone_url.split("://").collect();
                 if parts.len() == 2 {
                     clone_url = format!("{}://oauth2:{}@{}", parts[0], git.auth_token.trim(), parts[1]);
                 }
             }
-            let _ = tokio::process::Command::new("git")
+            let res = tokio::process::Command::new("git")
                 .args(&["clone", "-b", &git.target_branch, &clone_url, &internal_path.to_string_lossy()])
                 .output()
                 .await;
-
-            // Jika repository meletakkan skill di subfolder "skills/", pindahkan isinya langsung ke internal_path agar terbaca rapi
-            let nested_skills = internal_path.join("skills");
-            if nested_skills.exists() && nested_skills.is_dir() {
-                if let Ok(entries) = std::fs::read_dir(&nested_skills) {
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if path.is_dir() {
-                            let target = internal_path.join(entry.file_name());
-                            if !target.exists() {
-                                let _ = std::fs::rename(&path, &target);
-                            }
-                        }
-                    }
+            if let Ok(out) = res {
+                if out.status.success() {
+                    git_success = true;
                 }
             }
         }
 
-        // 2. Jika clone via git CLI tidak menghasilkan folder (atau git tidak ada di PATH),
-        // gunakan API GitLab/GitHub REST via reqwest untuk sinkronisasi folder skills langsung
-        if !internal_path.join(".git").exists() || std::fs::read_dir(&internal_path).map(|r| r.count()).unwrap_or(0) <= 1 {
-            println!("[Git Sync] Falling back to GitLab REST API sync for project_id: {:?}", git.project_id);
-            if let Ok(client) = reqwest::Client::builder().timeout(Duration::from_secs(10)).build() {
+        // Jika clone/pull via Git CLI gagal, atau berkas skills tidak lengkap,
+        // jalankan sinkronisasi REST API langsung ke GitLab
+        let skills_root = if internal_path.join("skills").is_dir() {
+            internal_path.join("skills")
+        } else {
+            internal_path.clone()
+        };
+
+        let skill_count = std::fs::read_dir(&skills_root)
+            .map(|entries| {
+                entries
+                    .flatten()
+                    .filter(|e| e.path().is_dir() && e.path().join("SKILL.md").exists())
+                    .count()
+            })
+            .unwrap_or(0);
+
+        if !git_success || skill_count < 5 {
+            println!("[Git Sync] Local skill count is {} (low/missing). Triggering direct GitLab REST API sync...", skill_count);
+            if let Ok(client) = reqwest::Client::builder().timeout(Duration::from_secs(15)).build() {
                 let host = git.repo_url.split("/").take(3).collect::<Vec<&str>>().join("/");
                 let project_identifier = if !git.project_id.trim().is_empty() {
                     git.project_id.clone()
@@ -217,7 +227,7 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
                             if item.get("type").and_then(|t| t.as_str()) == Some("blob") {
                                 if let Some(path_str) = item.get("path").and_then(|p| p.as_str()) {
                                     let rel_sub = path_str.strip_prefix("skills/").unwrap_or(path_str);
-                                    let dest_file = internal_path.join(rel_sub);
+                                    let dest_file = skills_root.join(rel_sub);
                                     if let Some(parent) = dest_file.parent() {
                                         let _ = fs::create_dir_all(parent);
                                     }
@@ -231,12 +241,12 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
                                     if let Ok(f_resp) = f_req.send().await {
                                         if let Ok(bytes) = f_resp.bytes().await {
                                             let _ = fs::write(&dest_file, &bytes);
-                                            println!("[Git Sync] Downloaded: {:?}", dest_file);
                                         }
                                     }
                                 }
                             }
                         }
+                        println!("[Git Sync] REST API sync completed into {:?}", skills_root);
                     }
                 }
             }
