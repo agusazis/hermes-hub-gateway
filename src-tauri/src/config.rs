@@ -45,82 +45,13 @@ pub struct GlobalConfig {
 
 impl Default for GlobalConfig {
     fn default() -> Self {
-        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
-        let default_skills_dir = home
-            .join(".hermes-hub")
-            .join("workspaces")
-            .join("simgos2")
-            .join("skills");
-
-        let default_ws = Workspace {
-            id: "simgos2".to_string(),
-            name: "SIMGOSv2 SIMRS".to_string(),
-            target_path: "D:\\7. Project\\SIMGOSv2\\New - php82\\simgos2".to_string(),
-            internal_skills_path: default_skills_dir.to_string_lossy().to_string(),
-            hermes_evaluator_url: "http://172.168.1.202:9125".to_string(),
-            mnemosyne_url: "http://172.168.1.202:8080".to_string(),
-            git_target: Some(GitTarget {
-                provider: "gitlab".to_string(),
-                base_url: "http://172.168.1.33".to_string(),
-                project_id: "84".to_string(),
-                repo_url: "http://172.168.1.33/simrs/ai-agents.git".to_string(),
-                target_branch: "main".to_string(),
-                auth_token: "".to_string(),
-            }),
-        };
-
-        let default_mcps = vec![
-            McpServerEntry {
-                name: "database-simrs-readonly".to_string(),
-                command: "python".to_string(),
-                args: vec!["mysql_mcp_readonly.py".to_string()],
-                env: std::collections::HashMap::from([
-                    ("DB_HOST".to_string(), "172.168.1.4".to_string()),
-                    ("DB_PORT".to_string(), "3306".to_string()),
-                    ("DB_NAME".to_string(), "db_rs".to_string()),
-                ]),
-                enabled: true,
-                description: "Proxy SQL Query Aman (Read-Only) ke Database SIMGOS2 SIMRS".to_string(),
-            },
-            McpServerEntry {
-                name: "synology-nas-storage".to_string(),
-                command: "npx".to_string(),
-                args: vec!["-y".to_string(), "mcp-server-synology".to_string()],
-                env: std::collections::HashMap::from([
-                    ("SYNOLOGY_HOST".to_string(), "172.168.1.27".to_string()),
-                ]),
-                enabled: true,
-                description: "Manajemen Storage & Audit Retensi GFS Backup di NAS Synology".to_string(),
-            },
-            McpServerEntry {
-                name: "mikrotik-router".to_string(),
-                command: "python".to_string(),
-                args: vec!["mikrotik_mcp.py".to_string()],
-                env: std::collections::HashMap::from([
-                    ("ROUTER_IP".to_string(), "172.168.1.1".to_string()),
-                ]),
-                enabled: true,
-                description: "Pemantauan Traffic WAN & Antrean Bandwidth Router Jaringan".to_string(),
-            },
-            McpServerEntry {
-                name: "grafana-observability".to_string(),
-                command: "npx".to_string(),
-                args: vec!["-y".to_string(), "@dockndevai/mcp-grafana".to_string()],
-                env: std::collections::HashMap::from([
-                    ("GRAFANA_URL".to_string(), "http://172.168.1.8:3000".to_string()),
-                ]),
-                enabled: true,
-                description: "Monitoring Metrik Server & Alerting Infrastruktur".to_string(),
-            },
-        ];
-
         GlobalConfig {
-            active_profile: "agus".to_string(),
-            default_hermes_evaluator_url: "http://172.168.1.202:9125".to_string(),
-            default_mnemosyne_url: "http://172.168.1.202:8080".to_string(),
-            active_workspace_id: "simgos2".to_string(),
-            workspaces: vec![default_ws],
-            mcp_servers: default_mcps,
+            active_profile: "default".to_string(),
+            default_hermes_evaluator_url: "".to_string(),
+            default_mnemosyne_url: "".to_string(),
+            active_workspace_id: "".to_string(),
+            workspaces: Vec::new(),
+            mcp_servers: Vec::new(),
         }
     }
 }
