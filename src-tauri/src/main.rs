@@ -195,7 +195,7 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
 }
 
 #[tauri::command]
-fn trigger_manual_sync() -> serde_json::Value {
+async fn trigger_manual_sync() -> serde_json::Value {
     let cfg = config::load_config();
     let ws = match cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned() {
         Some(w) => w,
@@ -211,9 +211,8 @@ fn trigger_manual_sync() -> serde_json::Value {
         }
     };
     
-    tauri::async_runtime::spawn(async move {
-        watcher::sync_rules_from_git(&ws).await;
-    });
+    // Sinkronkan secara langsung (await) agar selesai sebelum response dikembalikan ke frontend
+    watcher::sync_rules_from_git(&ws).await;
 
     serde_json::json!({
         "success": true,
@@ -287,6 +286,9 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
                 let path = entry.path();
                 if path.is_dir() {
                     let skill_name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default().to_string();
+                    if skill_name == ".git" || skill_name.starts_with(".") {
+                        continue;
+                    }
                     let ref_dir = path.join("references");
                     let mut references = Vec::new();
                     if ref_dir.exists() {
