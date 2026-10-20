@@ -162,7 +162,12 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
         let _ = config::generate_declarative_agents_md(&target_dir, &ws);
     }
 
-    cfg.workspaces.push(ws.clone());
+    // Periksa apakah workspace dengan ID ini sudah ada untuk mencegah duplikasi entri
+    if let Some(pos) = cfg.workspaces.iter().position(|w| w.id == id) {
+        cfg.workspaces[pos] = ws.clone();
+    } else {
+        cfg.workspaces.push(ws.clone());
+    }
     cfg.active_workspace_id = id;
     config::save_config(&cfg);
 
