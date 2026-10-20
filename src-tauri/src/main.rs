@@ -33,6 +33,13 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn reset_system_config() -> Result<config::GlobalConfig, String> {
+    let clean_cfg = config::GlobalConfig::default();
+    config::save_config(&clean_cfg);
+    Ok(clean_cfg)
+}
+
+#[tauri::command]
 fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_json::Value, String> {
     let cfg = config::load_config();
     let ws = cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned().unwrap_or_else(|| cfg.workspaces[0].clone());
@@ -399,6 +406,7 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![
             get_system_config,
             save_system_config,
+            reset_system_config,
             get_skill_detail,
             create_workspace_declarative,
             trigger_manual_sync,
