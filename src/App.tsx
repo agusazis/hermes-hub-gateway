@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.1');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.2');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.2',
+      name: 'Hermes Hub Gateway v0.7.2 (Evaluator Standardized Folder Hierarchy & Auto-Reorganization)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menyelaraskan struktur direktori internal dengan kontrak resmi Hermes Evaluator: seluruh SOP diwajibkan berada di subfolder skills/<nama_skill>/SKILL.md dengan auto-reorganisasi fisik dan pelaporan real-time tanpa penahanan state.',
+      features: [
+        'Hermes Evaluator Directory Contract: Menata direktori internal internal_skills_path agar selalu mengelompokkan modul ke dalam direktori skills/<skill_name>/SKILL.md.',
+        'Zero-State Friction: State skillsHierarchy diperbarui secara reaktif dari disk fisik bahkan saat repositori baru diinisialisasi.',
+        'Eliminasi Folder Noise: Mengeliminasi folder specialists, tools, dan folder mentah skills dari daftar SOP.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Struktur folder lokal yang tidak seragam akibat perbedaan mekanisme clone git dan gitlab api.',
+        'Pembaruan state daftar SOP yang tertahan jika data awal kosong.'
+      ],
+      architecture: [
+        'Hermes Evaluator Standardized Folder Hierarchy & Dynamic FS Discovery.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.2/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.2/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.1',
       name: 'Hermes Hub Gateway v0.7.1 (Full Git Suite Sync & Multi-SOP Discovery)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menjamin seluruh 14 SOP resmi (simgos2-db-audit, simgos2-bpjs-vclaim, simgos2-frontend-extjs, dll.) tersinkronisasi dan tampil lengkap di panel daftar SOP dengan verifikasi hitung lokal dan fallback REST API otomatis.',
       features: [
         'Guaranteed Full Suite Sync: Sinkronisasi memeriksa jumlah folder SKILL.md di disk lokal. Jika di bawah batas minimal, REST API GitLab otomatis mengunduh seluruh 14 SOP secara lengkap.',
@@ -1271,7 +1296,7 @@ export default function App() {
           // Auto-fetch dynamic skills hierarchy from disk/git
           invoke<SkillHierarchyItem[]>('get_skills_hierarchy', { workspaceId: res.active_workspace_id })
             .then((skills) => {
-              if (skills && skills.length > 0) {
+              if (skills) {
                 setSkillsHierarchy(skills);
               }
             })
@@ -2044,7 +2069,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.1</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.2</span>
             </div>
           </div>
 
