@@ -169,19 +169,19 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
 
         // 2. Jika clone via git CLI tidak menghasilkan folder (atau git tidak ada di PATH),
         // gunakan API GitLab/GitHub REST via reqwest untuk sinkronisasi folder skills
-        if !internal_path.join("simgos2-db-audit").exists() {
-            let sample_skill_dir = internal_path.join("simgos2-db-audit");
+        if !internal_path.join("developer-guidelines").exists() {
+            let sample_skill_dir = internal_path.join("developer-guidelines");
             let _ = fs::create_dir_all(&sample_skill_dir);
             let ref_dir = sample_skill_dir.join("references");
             let _ = fs::create_dir_all(&ref_dir);
 
             let _ = fs::write(
                 sample_skill_dir.join("SKILL.md"),
-                "# Skill: simgos2-db-audit\n\n## Standar Operasional Prosedur (SOP)\nProteksi transaksi stok farmasi dan lock baris pesanan resep pasien.\n"
+                "# Skill: developer-guidelines\n\n## Standar Operasional Prosedur (SOP)\nProteksi transaksi stok farmasi dan lock baris pesanan resep pasien.\n"
             );
-            let _ = fs::write(ref_dir.join("mariadb-isolation-levels.md"), "# MariaDB Isolation Levels\nPanduan REPEATABLE-READ dan READ-COMMITTED.\n");
-            let _ = fs::write(ref_dir.join("stock-fifo-rules.md"), "# Stock FIFO Rules\nAturan mutasi stok farmasi First-In First-Out.\n");
-            let _ = fs::write(ref_dir.join("pharmacy-audit-logging.sql"), "-- Skema Audit Logging\nCREATE TABLE IF NOT EXISTS simgos2_audit_log (id BIGINT AUTO_INCREMENT PRIMARY KEY);\n");
+            let _ = fs::write(ref_dir.join("database-isolation-levels.md"), "# MariaDB Isolation Levels\nPanduan REPEATABLE-READ dan READ-COMMITTED.\n");
+            let _ = fs::write(ref_dir.join("coding-standards.md"), "# Stock FIFO Rules\nProject coding standards and conventions.\n");
+            let _ = fs::write(ref_dir.join("architecture-blueprint.md"), "# Architecture Blueprint\nDefines standard patterns and project boundary rules.\n");
         }
     }
 }
