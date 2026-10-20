@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.7');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.8');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.8',
+      name: 'Hermes Hub Gateway v0.6.8 (Synchronous Git Pull & Clean Header Toolbar)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menghilangkan tombol duplikat Sync Rules Now di top header, menyempurnakan alur backend Rust trigger_manual_sync agar menunggu proses git pull selesai sebelum me-refresh hirarki, dan otomatis memfilter direktori sistem internal (.git).',
+      features: [
+        'Single Source Sync Action: Tombol "Sync Rules Now" kini terpusat eksklusif di tab Skills Hierarchy & Reader.',
+        'Synchronous Git Pull Response: Backend Rust kini menggunakan async/await untuk memastikan unduhan git selesai 100% sebelum memuat daftar berkas baru.',
+        'Hidden Folder Filter: Mengabaikan folder direktori sistem seperti .git agar tidak muncul sebagai item SOP di daftar skill.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Tombol Sync Rules ganda di header atas.',
+        'Folder sistem .git yang muncul di daftar SOP.',
+        'Data hirarki rules yang terlambat ter-refresh saat menekan Sync Rules Now.'
+      ],
+      architecture: [
+        'Synchronous Repository Orchestration & Streamlined Header UI.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.8/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.8/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.7',
       name: 'Hermes Hub Gateway v0.6.7 (Full-Fledged Skill & Reference Reader)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan fitur Full File Viewer pada SOP & Aturan Koding, memungkinkan inspeksi berkas referensi fisik (.sql, .json, .md) secara utuh langsung dari disk/Git dengan tab selector berkas interaktif di dalam modal reader.',
       features: [
         'Multi-File Tab Selector: Modal reader kini dilengkapi pill-selector untuk berpindah instan antara SKILL.md utama dan berkas-berkas di direktori references/.',
@@ -1982,7 +2008,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.7</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.8</span>
             </div>
           </div>
 
@@ -2136,15 +2162,6 @@ export default function App() {
                 <span className="hidden sm:inline">Sistem</span>
               </button>
             </div>
-
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="flex items-center gap-2 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-              Sync Rules Now
-            </button>
           </div>
         </header>
 
