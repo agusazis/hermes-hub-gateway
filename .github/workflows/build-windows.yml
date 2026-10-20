@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.7.3
-          releaseName: "Hermes Hub Gateway v0.7.3"
-          releaseBody: "Release v0.7.3: Official MCP Handshake & Seamless Antigravity IDE Integration. Adds full MCP 2024-11-05 protocol compliance (initialize and notifications/initialized handlers) on Windows Named Pipe \\\\.\\pipe\\hhg-bridge, enabling instant and error-free handshake from Antigravity IDE."
+          tagName: v0.7.6
+          releaseName: "Hermes Hub Gateway v0.7.6"
+          releaseBody: "Release v0.7.6: Native Windows Folder Picker & Unified Semantic Theme System. Features a native folder picker button for desktop project selection, full deduplicated workspace provisioning, clean modal form reset, and 9Router-aligned semantic design tokens."
           releaseDraft: false
           prerelease: false
