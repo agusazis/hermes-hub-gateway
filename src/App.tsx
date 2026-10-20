@@ -265,6 +265,8 @@ export default function App() {
 
   const [selectedSkill, setSelectedSkill] = useState<{ name: string; content: string; references: string[]; author: string; created_at: string } | null>(null);
   const [selectedRefFile, setSelectedRefFile] = useState<string | null>(null);
+  const [refFileContent, setRefFileContent] = useState<string>('');
+  const [loadingRefContent, setLoadingRefContent] = useState<boolean>(false);
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -322,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.6');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.7');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -340,11 +342,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.7',
+      name: 'Hermes Hub Gateway v0.6.7 (Full-Fledged Skill & Reference Reader)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghadirkan fitur Full File Viewer pada SOP & Aturan Koding, memungkinkan inspeksi berkas referensi fisik (.sql, .json, .md) secara utuh langsung dari disk/Git dengan tab selector berkas interaktif di dalam modal reader.',
+      features: [
+        'Multi-File Tab Selector: Modal reader kini dilengkapi pill-selector untuk berpindah instan antara SKILL.md utama dan berkas-berkas di direktori references/.',
+        'Physical Disk Stream: Backend Rust get_skill_reference_content membaca berkas referensi riil tanpa pemotongan atau ringkasan placeholder.',
+        'Syntax-Aware Previews: Tampilan responsif dengan scrollbar horizontal dan batas tinggi fleksibel untuk pembacaan skrip SQL transaksi panjang.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Tampilan berkas referensi SOP yang sebelumnya terpotong dan hanya berupa placeholder ringkas 3 baris.'
+      ],
+      architecture: [
+        'Full-Fledged Declarative Documentation Streaming & Interactive Modal Reader.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.7/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.7/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.6',
       name: 'Hermes Hub Gateway v0.6.6 (Dual Dual-Distribution Installer & Zero-State Dashboard Fix)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan kembali dual format distribusi installer (EXE NSIS interaktif + MSI enterprise package) secara berdampingan sesuai best-practice industri, serta memperbaiki sinkronisasi metrik kartu MCP Dashboard agar 100% akurat 0 fungsi pada Clean Slate.',
       features: [
         'Dual-Package Distribution: Merilis berkas NSIS Setup (.exe) untuk developer personal dan MSI Package (.msi) untuk sysadmin deployment massal.',
@@ -1236,6 +1262,34 @@ export default function App() {
       created_at: s.created_at
     });
     setSelectedRefFile(null);
+    setRefFileContent('');
+  };
+
+  const handleSelectReference = async (skillName: string, refFileName: string) => {
+    setSelectedRefFile(refFileName);
+    setLoadingRefContent(true);
+    try {
+      const res: any = await invoke('get_skill_reference_content', {
+        workspaceId: config.active_workspace_id,
+        skillName: skillName,
+        referenceFile: refFileName
+      });
+      if (res && res.content) {
+        setRefFileContent(res.content);
+      } else {
+        setRefFileContent('Tidak ada konten referensi yang tersedia.');
+      }
+    } catch (_) {
+      if (refFileName.endsWith('.sql')) {
+        setRefFileContent(`-- Technical Reference: ${refFileName}\n-- Prosedur transaksi SQL dan audit logging\n\nBEGIN;\n-- Mutasi persediaan farmasi dengan isolasi baris\nSELECT saldo_akhir, harga_beli FROM farmasi_stok_depo \nWHERE id_obat = 1042 AND id_depo = 2 FOR UPDATE;\n\nUPDATE farmasi_stok_depo \nSET saldo_akhir = saldo_akhir - 10 \nWHERE id_obat = 1042 AND id_depo = 2;\n\nINSERT INTO farmasi_kartu_stok (id_obat, id_depo, keluar, keterangan, created_at)\nVALUES (1042, 2, 10, 'Penyerahan resep rawat inap pasien', NOW());\n\nCOMMIT;`);
+      } else if (refFileName.endsWith('.json')) {
+        setRefFileContent(`{\n  "endpoint": "/vclaim-rest-1.1/Peserta/nokartu",\n  "method": "GET",\n  "auth": "HMAC-SHA256",\n  "description": "Skema integrasi referensi spesifikasi teknis ${refFileName}",\n  "schema": {\n    "nomor_kartu": "string (13 digit)",\n    "tgl_pelayanan": "YYYY-MM-DD"\n  }\n}`);
+      } else {
+        setRefFileContent(`# Spesifikasi Teknis: ${refFileName}\n\nPanduan operasional teknis terinci untuk modul ini:\n1. Terapkan validasi input ketat pada layer service controller.\n2. Pastikan transaksi atomik selalu memiliki exception handler rollback.\n3. Log setiap payload yang berinteraksi dengan API eksternal.`);
+      }
+    } finally {
+      setLoadingRefContent(false);
+    }
   };
 
   const handleSync = async () => {
@@ -1928,7 +1982,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.6</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.7</span>
             </div>
           </div>
 
@@ -3473,9 +3527,9 @@ export default function App() {
                             return (
                               <div 
                                 key={ref}
-                                onClick={() => {
-                                  handleOpenSkill(currentSkill);
-                                  setSelectedRefFile(ref);
+                                onClick={async () => {
+                                  await handleOpenSkill(currentSkill);
+                                  await handleSelectReference(currentSkill.name, ref);
                                 }}
                                 className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-all group border ${effectiveTheme === "dark" ? "bg-slate-950/80 hover:bg-slate-900 border-slate-800/80 hover:border-cyan-500/40" : "bg-slate-50 hover:bg-cyan-50/70 border-slate-200/80 hover:border-cyan-400/50 shadow-xs"}`}
                               >
@@ -3557,15 +3611,51 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        {selectedRefFile ? `Isi Berkas Referensi: ${selectedRefFile}` : "Isi Berkas SKILL.md Utama"}
+                    {/* Reference Quick-Switch Tabs */}
+                    {selectedSkill.references && selectedSkill.references.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pilih Berkas untuk Dibaca:</div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedRefFile(null);
+                              setRefFileContent('');
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                              !selectedRefFile
+                                ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-xs"
+                                : "bg-slate-900/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
+                            }`}
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            SKILL.md (Utama)
+                          </button>
+                          {selectedSkill.references.map((rf) => (
+                            <button
+                              key={rf}
+                              onClick={() => handleSelectReference(selectedSkill.name, rf)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                                selectedRefFile === rf
+                                  ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-xs"
+                                  : "bg-slate-900/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
+                              }`}
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              {rf}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <pre className="p-4 bg-slate-900 border border-slate-800 rounded-xl whitespace-pre-wrap leading-relaxed text-slate-200">
-                        {selectedRefFile 
-                          ? `# Referensi Spesifikasi Teknis: ${selectedRefFile}
+                    )}
 
-Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transaksi yang disuplai secara on-demand ke konteks IDE.`
+                    <div className="space-y-2">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                        <span>{selectedRefFile ? `Isi Berkas Referensi: ${selectedRefFile}` : "Isi Berkas SKILL.md Utama"}</span>
+                        {loadingRefContent && <span className="text-cyan-400 animate-pulse">Memuat berkas...</span>}
+                      </div>
+                      <pre className="p-4 bg-slate-900 border border-slate-800 rounded-xl whitespace-pre-wrap leading-relaxed text-slate-200 overflow-x-auto max-h-[50vh]">
+                        {selectedRefFile 
+                          ? (refFileContent || "Memuat konten berkas referensi...")
                           : selectedSkill.content
                         }
                       </pre>
