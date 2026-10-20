@@ -354,7 +354,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.7');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.8');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -372,11 +372,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.8',
+      name: 'Hermes Hub Gateway v0.5.8 (Total Theme Consistency & Empty-State Polish)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menuntaskan kartu daftar SOP tidak terpilih (unselected cards) yang sebelumnya tertinggal berwarna gelap di tab Skills Hierarchy, menyempurnakan badge metadata judul, serta menyediakan tampilan empty state yang rapi saat direktori references/ kosong.',
+      features: [
+        'Skills Master List Light Harmonization: Kartu-kartu SOP yang tidak sedang dipilih di kolom kiri kini 100% menggunakan latar slate-50 yang bersih di mode terang.',
+        'Adaptive Empty-State Box: Menampilkan ilustrasi status rapi jika suatu SOP tidak memiliki berkas lampiran di references/.',
+        'MCP Hub Item Card Polish: Menyelaraskan daftar item server MCP di kolom kiri pada mode terang.',
+        'Zero-Error Fast Bundler: Lolos verifikasi tipe ketat TypeScript dan didukung pipeline kompilasi terakselerasi.'
+      ],
+      fixes: [
+        'Kartu SOP tidak terpilih di kolom kiri Skills Hierarchy yang masih berlatar hitam pekat di mode terang.',
+        'Badge metadata author dan kategori pada panel kanan Skills Hierarchy yang masih memakai warna gelap di mode terang.'
+      ],
+      architecture: [
+        'Unified Light/Dark Theme Consistency Architecture.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.8/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.8/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.7',
       name: 'Hermes Hub Gateway v0.5.7 (Flawless Light Theme & Universal Developer Workspace)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menuntaskan seluruh sisa artefak blok hitam pada tab Evolution Logs (Inspection Trace JSON viewer) dan Settings Theme Selector (kartu pilihan tema) di Light Mode, serta menyempurnakan netralitas nama menjadi Developer Workspace secara universal.',
       features: [
         'Pure Adaptive Light Theme: Console Inspection Trace JSON pada Evolution Logs kini tampil elegan dengan latar slate-50 yang nyaman dibaca dan tidak silau.',
@@ -1740,7 +1765,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.7</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.8</span>
             </div>
           </div>
 
@@ -3188,7 +3213,7 @@ export default function App() {
                             className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                               isSelected 
                                 ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
-                                : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                                : (effectiveTheme === 'dark' ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1">
@@ -3228,15 +3253,15 @@ export default function App() {
                         <div className={`flex items-start justify-between pb-4 border-b ${effectiveTheme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-base text-cyan-300 font-mono">{currentSkill.name}</h3>
-                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-cyan-400 border border-slate-700 text-[10px] font-mono">
+                              <h3 className={`font-bold text-base font-mono ${effectiveTheme === "dark" ? "text-cyan-300" : "text-cyan-800 font-extrabold"}`}>{currentSkill.name}</h3>
+                              <span className={`px-2 py-0.5 rounded-md border text-[10px] font-mono ${effectiveTheme === "dark" ? "bg-slate-800 text-cyan-400 border-slate-700" : "bg-cyan-50 text-cyan-800 border-cyan-200 font-medium"}`}>
                                 author: @{currentSkill.author}
                               </span>
-                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-mono">
+                              <span className={`px-2 py-0.5 rounded-md border text-[10px] font-mono ${effectiveTheme === "dark" ? "bg-slate-800 text-slate-400 border-slate-700" : "bg-slate-100 text-slate-600 border-slate-200"}`}>
                                 {currentSkill.category}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-300 leading-relaxed">{currentSkill.desc}</p>
+                            <p className={`text-xs leading-relaxed ${effectiveTheme === "dark" ? "text-slate-300" : "text-slate-700"}`}>{currentSkill.desc}</p>
                             <div className="text-[11px] text-slate-500 font-mono pt-0.5">
                               Pencetus: @{currentSkill.author} • Terdaftar sejak: {currentSkill.created_at}
                             </div>
@@ -3267,7 +3292,15 @@ export default function App() {
 
                         {/* Scalable Vertical References Table (Aman untuk 10, 50, hingga 100+ files) */}
                         <div className="flex-1 max-h-[330px] overflow-y-auto space-y-2 pr-1.5">
-                          {currentSkill.references.map((ref, rIdx) => {
+                          {currentSkill.references.length === 0 ? (
+                            <div className={`p-8 text-center rounded-xl border border-dashed flex flex-col items-center justify-center gap-2 ${
+                              effectiveTheme === 'dark' ? 'bg-slate-950/40 border-slate-800 text-slate-500' : 'bg-slate-50/80 border-slate-200 text-slate-500'
+                            }`}>
+                              <FolderTree className="w-8 h-8 text-slate-400 opacity-60" />
+                              <div className="text-xs font-semibold">Tidak ada berkas tambahan di <code>references/</code></div>
+                              <p className="text-[11px] text-slate-400 max-w-sm">Seluruh instruksi, aturan kerja, dan SOP telah dirangkum secara padat di dalam file induk <code>SKILL.md</code>.</p>
+                            </div>
+                          ) : currentSkill.references.map((ref, rIdx) => {
                             const isJson = ref.endsWith(".json");
                             const isMd = ref.endsWith(".md");
                             const isSample = ref.endsWith(".sample");
