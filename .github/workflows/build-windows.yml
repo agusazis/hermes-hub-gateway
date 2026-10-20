@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.6.8
-          releaseName: "Hermes Hub Gateway v0.6.8"
-          releaseBody: "Release v0.6.8: Synchronous Git Pull & Clean Header Toolbar. Removes duplicate Sync Rules button from top header, awaits git pull execution before refreshing frontend state, and filters hidden .git folders from the SOP hierarchy."
+          tagName: v0.6.9
+          releaseName: "Hermes Hub Gateway v0.6.9"
+          releaseBody: "Release v0.6.9: Substantial Skills Discovery & Native Named Pipe MCP Server. Implements smart SKILL.md directory traversal, filters non-skill IDE folders (specialists, tools, rules), parses dynamic document headers, and activates live Windows Named Pipe IPC on pipe hhg-bridge."
           releaseDraft: false
           prerelease: false
