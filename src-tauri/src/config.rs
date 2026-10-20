@@ -85,12 +85,12 @@ pub fn save_config(cfg: &GlobalConfig) {
 pub fn generate_declarative_agents_md(target_project_dir: &Path, workspace: &Workspace) -> Result<(), String> {
     let agents_md_path = target_project_dir.join("AGENTS.md");
     let content = format!(
-        "# Autonomous AI Developer Instructions - RSUD dr. H. Jusuf SK\n\n\
-        > [!IMPORTANT]\n\
-        > **Zero-Pollution Architecture Enforcement:**\n\
-        > Proyek ini dikelola secara terpusat oleh **Hermes Hub Gateway (HHG)**.\n\
-        > DILARANG membuat folder `.agents/`, folder `skills/`, atau skrip watcher di dalam project ini.\n\n\
-        ## 1. Unified MCP Hub\n\
+        "# Autonomous AI Developer Instructions\\n\\n\
+        > [!IMPORTANT]\\n\
+        > **Zero-Pollution Architecture Enforcement:**\\n\
+        > Proyek ini dikelola secara terpusat oleh **Hermes Hub Gateway (HHG)**.\\n\
+        > DILARANG membuat folder `.agents/`, folder `skills/`, atau skrip watcher di dalam project ini.\\n\\n\
+        ## 1. Unified MCP Hub\\n\
         - Seluruh kemampuan tools koding, query database, memori Mnemosyne, dan SOP skills diakses melalui **Hermes Hub Gateway MCP**.\n\
         - Pipe Transport: `\\\\.\\pipe\\hhg-bridge`\n\n\
         ## 2. Dynamic Skill Retrieval\n\
