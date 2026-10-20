@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.7.8
-          releaseName: "Hermes Hub Gateway v0.7.8"
-          releaseBody: "Release v0.7.8: Clean Nav Footer Changelogs & Streamlined Sidebar. Relocates Changelogs out of the primary navigation bar into a minimalist footer link directly beneath the Evaluator status panel, preserving clean visual hierarchy."
+          tagName: v0.7.9
+          releaseName: "Hermes Hub Gateway v0.7.9"
+          releaseBody: "Release v0.7.9: Collapsible Navigation Sidebar & Space Optimization. Introduces interactive collapsible sidebar (toggle between full w-64 and icon-only w-18 modes), smart tooltips, and compact Evaluator LIVE indicators for increased workspace viewing area."
           releaseDraft: false
           prerelease: false
