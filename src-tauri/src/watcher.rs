@@ -41,12 +41,17 @@ pub async fn start_watcher_loop(app: AppHandle) {
         }
 
         let cfg = load_config();
-        let active_ws = cfg
-            .workspaces
-            .iter()
-            .find(|w| w.id == cfg.active_workspace_id)
-            .cloned()
-            .unwrap_or_else(|| cfg.workspaces[0].clone());
+        if cfg.workspaces.is_empty() {
+            continue;
+        }
+
+        let active_ws = match cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned() {
+            Some(w) => w,
+            None => match cfg.workspaces.first().cloned() {
+                Some(first) => first,
+                None => continue,
+            },
+        };
 
         if let Ok(entries) = fs::read_dir(&brain_dir) {
             for entry in entries.flatten() {
