@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.2');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.3');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.3',
+      name: 'Hermes Hub Gateway v0.7.3 (Official MCP Handshake & Seamless Antigravity IDE Integration)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menjamin kompatibilitas 100% dengan protokol Model Context Protocol (MCP) resmi: menambahkan dukungan method initialize dan notifications/initialized pada Named Pipe server Windows, sehingga Antigravity IDE dapat terhubung seketika tanpa timeout atau error handshake.',
+      features: [
+        'Official MCP 2024-11-05 Protocol Handshake: Implementasi penuh method initialize dan notifications/initialized pada Named Pipe \\\\.\\pipe\\hhg-bridge.',
+        'Seamless IDE Tool Calling: Antigravity IDE dapat langsung mengenali tools hermes_get_skill dan hermes_list_skills saat boot.',
+        'Cross-Platform Path Resolution: Memperbaiki separator direktori pemantau transkrip koding brain menjadi modular PathBuf.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Ketiadaan handler initialize pada JSON-RPC Named Pipe bridge yang berpotensi membuat IDE gagal handshake saat inisialisasi MCP.',
+        'Sintaks hardcoded backslash pada direktori brain Antigravity.'
+      ],
+      architecture: [
+        'Official MCP Protocol Specification (2024-11-05) Compliance & Zero-Pollution IDE Gateway.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.3/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.3/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.2',
       name: 'Hermes Hub Gateway v0.7.2 (Evaluator Standardized Folder Hierarchy & Auto-Reorganization)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menyelaraskan struktur direktori internal dengan kontrak resmi Hermes Evaluator: seluruh SOP diwajibkan berada di subfolder skills/<nama_skill>/SKILL.md dengan auto-reorganisasi fisik dan pelaporan real-time tanpa penahanan state.',
       features: [
         'Hermes Evaluator Directory Contract: Menata direktori internal internal_skills_path agar selalu mengelompokkan modul ke dalam direktori skills/<skill_name>/SKILL.md.',
@@ -2069,7 +2094,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.2</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.3</span>
             </div>
           </div>
 
