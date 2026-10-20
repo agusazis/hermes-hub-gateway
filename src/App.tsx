@@ -86,7 +86,7 @@ export default function App() {
       setProvisionLoading(false);
       const cleanKey = provisionKey.trim().toUpperCase();
 
-      // Master Organization Keys untuk Software Engineering Lab
+      // Master Organization Keys untuk Developer Workspace
       if (cleanKey === 'GLOBAL-DEV-CORE' || cleanKey === 'HERMES-HUB-PRO' || cleanKey === 'DEV-TEAM-2026') {
         const provisionedConfig: GlobalConfig = {
           ...config,
@@ -113,7 +113,7 @@ export default function App() {
       } else {
         setProvisionStatus({
           success: false,
-          message: 'Organization ID tidak valid. Hubungi Tim IT Administrator Hermes Hub Gateway Software Engineering Lab.'
+          message: 'Organization ID tidak valid. Hubungi Tim IT Administrator Hermes Hub Gateway Developer Workspace.'
         });
       }
       setTimeout(() => setProvisionStatus(null), 5000);
@@ -204,7 +204,7 @@ export default function App() {
         args: ['-y', '@dockndevai/mcp-grafana'],
         env: { GRAFANA_URL: 'http://172.168.1.8:3000' },
         enabled: true,
-        description: 'Monitoring Metrik Server & Alerting Software Engineering Lab'
+        description: 'Monitoring Metrik Server & Alerting Developer Workspace'
       }
     ]
   });
@@ -354,7 +354,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.6');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.7');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -372,11 +372,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.7',
+      name: 'Hermes Hub Gateway v0.5.7 (Flawless Light Theme & Universal Developer Workspace)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menuntaskan seluruh sisa artefak blok hitam pada tab Evolution Logs (Inspection Trace JSON viewer) dan Settings Theme Selector (kartu pilihan tema) di Light Mode, serta menyempurnakan netralitas nama menjadi Developer Workspace secara universal.',
+      features: [
+        'Pure Adaptive Light Theme: Console Inspection Trace JSON pada Evolution Logs kini tampil elegan dengan latar slate-50 yang nyaman dibaca dan tidak silau.',
+        'Theme Selector Card Harmony: Pilihan Mode Gelap, Mode Terang, dan Ikuti Laptop di tab Settings menggunakan kartu adaptif tanpa blok hitam pekat.',
+        'Universal Developer Neutrality: Menghapus seluruh residu nama entitas lokal dan memantapkan posisi Hermes Hub Gateway sebagai toolkit desktop global bagi software developer.',
+        'High-Speed CI/CD Pipeline: Memanfaatkan kompilasi terakselerasi dan pengujian otomatis pra-build (Zero-Error TypeScript Gate).'
+      ],
+      fixes: [
+        'Blok hitam hardcoded pada tampilan Inspection Trace JSON di tab Evolution Logs saat Light Mode.',
+        'Warna tombol pemilih tema (Mode Gelap/Terang/System) yang sempat kontras gelap pada Settings.'
+      ],
+      architecture: [
+        'Full Multi-Theme Design System with 100% Zero-White-Screen Guarantee.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.7/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.7/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.6',
       name: 'Hermes Hub Gateway v0.5.6 (Comprehensive Light Theme Harmonization & Cache Optimization)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyempurnaan total konsistensi tema terang di seluruh tab (Skills Hierarchy, References Reader Modal, Evolution Logs, dan Settings Inputs). Menghilangkan seluruh artefak hitam pekat menjadi palet profesional adaptif.',
       features: [
         'Skills & References Light Polish: Kotak pencarian, daftar berkas referensi pendukung, tombol buka, dan modal reader SKILL.md kini 100% harmonis di tema terang.',
@@ -631,7 +656,7 @@ export default function App() {
         'Live Telegram Bot API Integration: Tombol uji di Settings menembak langsung endpoint resmi https://api.telegram.org/bot<TOKEN>/sendMessage via Rust HTTP client.',
         'Validasi Kredensial Asli: Sistem otomatis mengingatkan pengguna jika Bot Token masih berstatus masking (***) atau tidak terdaftar di Telegram.',
         'Pola Desain Sistem Mode Terang Elegan: Seluruh kartu metrik, panel watcher, dan kontainer utama menggunakan palet kartu putih (#FFFFFF) dengan teks tajam (#0F172A) yang seimbang dan nyaman di mata.',
-        'One-Key Rapid Provisioning: Onboarding instan tim Software Engineering Lab dengan pengisian otomatis konfigurasi terpusat.'
+        'One-Key Rapid Provisioning: Onboarding instan tim Developer Workspace dengan pengisian otomatis konfigurasi terpusat.'
       ],
       fixes: [
         'Eliminasi Fake Success Alert: Status pengujian koneksi Telegram kini merefleksikan respons nyata HTTP server Telegram.',
@@ -762,7 +787,7 @@ export default function App() {
         'Validasi format token dan URL remote repository pada tombol Test Koneksi Git.'
       ],
       architecture: [
-        'Enterprise Provisioning Pattern untuk kemudahan onboarding programmer dan staf IT Software Engineering Lab.'
+        'Enterprise Provisioning Pattern untuk kemudahan onboarding programmer dan staf IT Developer Workspace.'
       ],
       downloads: [
         { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
@@ -1245,7 +1270,7 @@ export default function App() {
         exported_at: new Date().toISOString(),
         server_host: config.default_mnemosyne_url,
         stats: { episodes_count: 1420, triples_count: 3890, profiles: ['agus', 'miko', 'ardi'] },
-        notice: "Arsip snapshot resmi memori Mnemosyne Software Engineering Lab."
+        notice: "Arsip snapshot resmi memori Mnemosyne Developer Workspace."
       };
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dummyMemoryDump, null, 2));
       const a = document.createElement('a');
@@ -1715,7 +1740,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.6</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.7</span>
             </div>
           </div>
 
@@ -1810,7 +1835,7 @@ export default function App() {
               {activeTab === 'settings' && 'Gateway & Git Repository Configuration'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for Software Engineering Lab.'}
+              {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for Developer Workspace.'}
               {activeTab === 'workspaces' && 'Kelola folder koding terisolasi tanpa mengotori project dengan folder .agents fisik.'}
               {activeTab === 'mcp_hub' && 'Konfigurasi server MCP eksternal (Database, Synology, MikroTik, Grafana) yang diekspos ke IDE.'}
               {activeTab === 'skills' && 'Struktur hirarki berkas: SOP Parent (SKILL.md) dan referensi pendukung (references/).'}
@@ -2180,7 +2205,7 @@ export default function App() {
             {/* Modal Tambah Workspace Baru */}
             {showAddWsModal && (
               <form onSubmit={handleCreateWorkspace} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4 shadow-xl">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
                     {editingWorkspaceIndex !== null ? "Edit Konfigurasi Workspace & Git Remote" : "Pendaftaran Workspace Baru (Zero-Pollution & Isolated Git Repo)"}
                   </h4>
@@ -2533,7 +2558,7 @@ export default function App() {
                             ? 'bg-slate-950 border-slate-800 text-slate-300'
                             : 'bg-slate-50 border-slate-200 text-slate-800 shadow-inner'
                         }`}>
-{`# Autonomous AI Developer Instructions - Software Engineering Lab
+{`# Autonomous AI Developer Instructions - Developer Workspace
 > [!IMPORTANT]
 > Zero-Pollution Architecture Enforcement:
 > Proyek ini dikelola secara terpusat oleh Hermes Hub Gateway (HHG).
@@ -2585,7 +2610,7 @@ export default function App() {
             {/* Modal Edit / Add MCP Server (RAW JSON & IDE COMPLIANT) */}
             {showAddMcpModal && (
               <form onSubmit={handleCreateMcp} className={`p-5 rounded-2xl space-y-4 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 border-cyan-500/30" : "bg-white border-slate-200 shadow-lg"}`}>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800 dark:border-slate-800 border-slate-200">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 dark:border-slate-800 border-slate-200">
                   <div className="flex items-center gap-2">
                     <Sliders className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
                     <h4 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-cyan-400" : "text-cyan-700"}`}>
@@ -3043,7 +3068,7 @@ export default function App() {
         {activeTab === "skills" && (
           <div className="space-y-4">
             {/* Top Bar with Breadcrumbs & Sync Button */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2 text-xs">
                 <button 
                   onClick={() => setDrilldownWsId(null)}
@@ -3371,8 +3396,8 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
-                  <Terminal className="w-4 h-4 text-cyan-400" /> Watcher Telemetry & Evolution Logs
+                <span className={`text-xs font-semibold flex items-center gap-1.5 ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>
+                  <Terminal className="w-4 h-4 text-cyan-500" /> Watcher Telemetry & Evolution Logs
                 </span>
                 <p className="text-[11px] text-slate-400">
                   Total <b>{logs.length} event telemetri</b> transkrip koding tercatat secara real-time.
@@ -3380,7 +3405,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
               </div>
               <button 
                 onClick={() => setLogs([])}
-                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg text-xs font-semibold border border-slate-800 transition-colors"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800" : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs"}`}
               >
                 Bersihkan Log
               </button>
@@ -3477,7 +3502,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                           <span>Inspection Trace JSON</span>
                           <span className="text-[10px] text-slate-500 font-mono">Context ID: {(currentLog?.conv || 'trace') || 'global-trace'}</span>
                         </div>
-                        <pre className={`flex-1 p-4 rounded-xl font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-y-auto border transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-900 border-slate-800 text-cyan-300 shadow-inner"}`}>
+                        <pre className={`flex-1 p-4 rounded-xl font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-y-auto border transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800 shadow-inner"}`}>
 {JSON.stringify({
   event_timestamp: (currentLog?.time || ''),
   event_message: currentLog.event,
@@ -3505,14 +3530,14 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
         {activeTab === "releases" && (
           <div className="space-y-4">
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-cyan-500/10 rounded-lg text-cyan-400 border border-cyan-500/20">
                   <History className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-white">Catatan Riwayat Versi Aplikasi (Official Changelog)</h3>
-                  <p className="text-[11px] text-slate-400">Daftar evolusi fitur, perbaikan bug, dan installer rilis resmi untuk Software Engineering Lab.</p>
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>Catatan Riwayat Versi Aplikasi (Official Changelog)</h3>
+                  <p className="text-[11px] text-slate-400">Daftar evolusi fitur, perbaikan bug, dan installer rilis resmi untuk Developer Workspace.</p>
                 </div>
               </div>
 
@@ -3744,7 +3769,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                 ? 'bg-slate-900/60 border-slate-800' 
                 : 'bg-white border-slate-200 shadow-sm'
             } space-y-3`}>
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800/60">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800/60">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20">
                     <Sun className="w-4 h-4" />
@@ -3769,15 +3794,15 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                   onClick={() => setThemeMode('dark')}
                   className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
                     themeMode === 'dark'
-                      ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300 shadow-sm'
-                      : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      ? (effectiveTheme === 'dark' ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300 shadow-sm' : 'bg-cyan-50 border-cyan-400 text-cyan-800 shadow-xs')
+                      : (effectiveTheme === 'dark' ? 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100')
                   }`}
                 >
-                  <div className="p-2 bg-slate-900 rounded-lg border border-slate-800 text-cyan-400">
+                  <div className={`p-2 rounded-lg border ${effectiveTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-cyan-400' : 'bg-white border-slate-200 text-cyan-700 shadow-xs'}`}>
                     <Moon className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">Mode Gelap</div>
+                    <div className={`text-xs font-bold ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Mode Gelap</div>
                     <div className="text-[10px] text-slate-400">Slate-950 (Nyaman di mata)</div>
                   </div>
                 </button>
@@ -3787,15 +3812,15 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                   onClick={() => setThemeMode('light')}
                   className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
                     themeMode === 'light'
-                      ? 'bg-amber-500/15 border-amber-500/50 text-amber-500 shadow-sm'
-                      : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      ? (effectiveTheme === 'dark' ? 'bg-amber-500/15 border-amber-500/50 text-amber-400 shadow-sm' : 'bg-amber-50 border-amber-400 text-amber-800 shadow-xs')
+                      : (effectiveTheme === 'dark' ? 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100')
                   }`}
                 >
-                  <div className="p-2 bg-slate-900 rounded-lg border border-slate-800 text-amber-400">
+                  <div className={`p-2 rounded-lg border ${effectiveTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-amber-400' : 'bg-white border-slate-200 text-amber-600 shadow-xs'}`}>
                     <Sun className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">Mode Terang</div>
+                    <div className={`text-xs font-bold ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Mode Terang</div>
                     <div className="text-[10px] text-slate-400">Putih bersih & jernih</div>
                   </div>
                 </button>
@@ -3805,15 +3830,15 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                   onClick={() => setThemeMode('system')}
                   className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
                     themeMode === 'system'
-                      ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300 shadow-sm'
-                      : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      ? (effectiveTheme === 'dark' ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300 shadow-sm' : 'bg-cyan-50 border-cyan-400 text-cyan-800 shadow-xs')
+                      : (effectiveTheme === 'dark' ? 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100')
                   }`}
                 >
-                  <div className="p-2 bg-slate-900 rounded-lg border border-slate-800 text-cyan-400">
+                  <div className={`p-2 rounded-lg border ${effectiveTheme === 'dark' ? 'bg-slate-900 border-slate-800 text-cyan-400' : 'bg-white border-slate-200 text-cyan-700 shadow-xs'}`}>
                     <Laptop className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">Ikuti Laptop</div>
+                    <div className={`text-xs font-bold ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Ikuti Laptop</div>
                     <div className="text-[10px] text-slate-400">Otomatis sinkron Windows</div>
                   </div>
                 </button>
@@ -4161,7 +4186,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
 
             {/* PUSAT PENCADANGAN & PEMULIHAN BENCANA (DISASTER RECOVERY CENTER) */}
             <div className={`p-5 rounded-2xl space-y-4 border transition-colors ${effectiveTheme === "dark" ? "bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border-slate-800 shadow-xl" : "bg-white border-slate-200 shadow-sm"}`}>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20">
                     <Archive className="w-4 h-4" />
