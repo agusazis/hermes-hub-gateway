@@ -56,7 +56,15 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
             }
         }
     };
-    let skill_dir = PathBuf::from(&ws.internal_skills_path).join(&skill_name);
+    let raw_internal = PathBuf::from(&ws.internal_skills_path);
+    // Jika repositori memiliki subfolder skills/, gunakan subfolder tersebut sebagai root skills
+    let internal_path = if raw_internal.join("skills").is_dir() {
+        raw_internal.join("skills")
+    } else {
+        raw_internal
+    };
+
+    let skill_dir = internal_path.join(&skill_name);
 
     let skill_file = skill_dir.join("SKILL.md");
     let content = if skill_file.exists() {
@@ -135,7 +143,14 @@ fn get_skill_reference_content(workspace_id: String, skill_name: String, referen
         }
     };
 
-    let ref_path = PathBuf::from(&ws.internal_skills_path)
+    let raw_internal = PathBuf::from(&ws.internal_skills_path);
+    let internal_path = if raw_internal.join("skills").is_dir() {
+        raw_internal.join("skills")
+    } else {
+        raw_internal
+    };
+
+    let ref_path = internal_path
         .join(&skill_name)
         .join("references")
         .join(&reference_file);
@@ -276,7 +291,12 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
             }
         }
     };
-    let internal_path = PathBuf::from(&ws.internal_skills_path);
+    let raw_internal = PathBuf::from(&ws.internal_skills_path);
+    let internal_path = if raw_internal.join("skills").is_dir() {
+        raw_internal.join("skills")
+    } else {
+        raw_internal
+    };
 
     let mut result = Vec::new();
 
@@ -286,17 +306,39 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
                 let path = entry.path();
                 if path.is_dir() {
                     let skill_name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default().to_string();
-                    if skill_name == ".git" || skill_name.starts_with(".") {
+                    if skill_name.starts_with(".") || skill_name == "specialists" || skill_name == "tools" || skill_name == "rules" || skill_name == "memory" {
                         continue;
                     }
+
+                    let skill_md = path.join("SKILL.md");
+                    if !skill_md.exists() {
+                        continue;
+                    }
+
                     let ref_dir = path.join("references");
                     let mut references = Vec::new();
                     if ref_dir.exists() {
                         if let Ok(ref_entries) = std::fs::read_dir(ref_dir) {
                             for re in ref_entries.flatten() {
                                 if let Some(rn) = re.file_name().to_str() {
-                                    references.push(rn.to_string());
+                                    if !rn.starts_with(".") {
+                                        references.push(rn.to_string());
+                                    }
                                 }
+                            }
+                        }
+                    }
+
+                    let mut desc = format!("Aturan koding otomatis tersinkron dari repository {}", ws.name);
+                    if let Ok(content) = std::fs::read_to_string(&skill_md) {
+                        for line in content.lines() {
+                            let trimmed = line.trim();
+                            if trimmed.starts_with("# ") {
+                                desc = trimmed.trim_start_matches("# ").trim().to_string();
+                                break;
+                            } else if trimmed.starts_with("description:") {
+                                desc = trimmed.trim_start_matches("description:").trim().trim_matches('"').trim_matches('\'').to_string();
+                                break;
                             }
                         }
                     }
@@ -307,7 +349,7 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
                         "category": "core",
                         "author": "agus",
                         "created_at": "2026-10-18",
-                        "desc": format!("Aturan koding otomatis tersinkron dari repository {}", ws.name),
+                        "desc": desc,
                         "references": references
                     }));
                 }
