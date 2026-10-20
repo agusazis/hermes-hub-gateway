@@ -127,14 +127,25 @@ export default function App() {
   useEffect(() => {
     const updateTheme = () => {
       try {
+        let isDark = true;
         if (themeMode === 'system') {
-          const isDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          setEffectiveTheme(isDark ? 'dark' : 'light');
+          isDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         } else {
-          setEffectiveTheme(themeMode);
+          isDark = themeMode === 'dark';
+        }
+        setEffectiveTheme(isDark ? 'dark' : 'light');
+        if (typeof document !== 'undefined') {
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
         }
       } catch (e) {
         setEffectiveTheme('dark');
+        if (typeof document !== 'undefined') {
+          document.documentElement.classList.add('dark');
+        }
       }
     };
 
@@ -354,7 +365,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.8');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.0');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -372,11 +383,59 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.0',
+      name: 'Hermes Hub Gateway v0.6.0 (Global Design System Architecture & Theme Boundary Audit)',
+      date: '20 Oktober 2026',
+      type: 'MAJOR',
+      status: 'LATEST',
+      highlights: 'Transformasi arsitektur styling dari pendekatan tambal sulam lokal (spot patching) menjadi Centralized Design System Token. Dilengkapi class modifier .dark otomatis pada documentElement, standardisasi komponen hhg-*, serta Theme Integrity Audit Gate sebelum proses kompilasi.',
+      features: [
+        'Centralized CSS Design Tokens: Mengadopsi variabel semantik global (--color-app-bg, --color-app-surface, dll.) yang mengatur warna aplikasi di seluruh tingkatan secara deterministik.',
+        'Document Root Theme Synchronizer: Menambahkan aktivasi otomatis class .dark pada elemen <html> untuk menyelaraskan seluruh utilitas Tailwind CSS.',
+        'Theme Integrity Audit Gate: Script verify-all.mjs kini otomatis menolak commit jika ditemukan hardcoded background gelap tanpa adaptasi tema.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache Rust terakselerasi untuk rilis installer Windows super cepat.'
+      ],
+      fixes: [
+        'Inkonsistensi tema terang pada kartu Disaster Recovery Center, daftar SOP Skills, dan pemilih tema Settings.',
+        'Menghapus ketergantungan pada pengecekan kondisional lokal yang rawan terlewat.'
+      ],
+      architecture: [
+        'Enterprise Global CSS Token Architecture & Automated Pre-Build Linter Gates.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.0/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.0/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
+      version: 'v0.5.9',
+      name: 'Hermes Hub Gateway v0.5.9 (Disaster Recovery Center Light Polish & Fast Caching)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menuntaskan kartu Disaster Recovery Center di tab Settings: mengubah kotak hitam pekat Konfigurasi Laptop HHG dan Memori Mnemosyne Server menjadi kartu putih/slate-50 yang bersih, kontras, dan terpadu elegan di Light Mode.',
+      features: [
+        'Disaster Recovery Center Light Theme: Dua kartu pencadangan konfigurasi dan server memori kini berlatar slate-50 yang cerah dengan tombol Export/Import berbingkai halus.',
+        'High-Contrast Buttons: Tombol Export JSON dan Backup Memori menggunakan latar putih bersih dengan teks berwarna aksen cyan/emerald.',
+        'Accelerated Rust Caching: Memanfaatkan cache crates GitHub Actions untuk kompilasi biner Windows kilat.'
+      ],
+      fixes: [
+        'Latar belakang hitam pekat (bg-slate-950/70) pada kedua kartu Disaster Recovery Center di bagian bawah menu Settings saat Light Mode aktif.'
+      ],
+      architecture: [
+        'Full Universal Theme Integration across 100% HHG Views.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.9/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.9/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.8',
       name: 'Hermes Hub Gateway v0.5.8 (Total Theme Consistency & Empty-State Polish)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menuntaskan kartu daftar SOP tidak terpilih (unselected cards) yang sebelumnya tertinggal berwarna gelap di tab Skills Hierarchy, menyempurnakan badge metadata judul, serta menyediakan tampilan empty state yang rapi saat direktori references/ kosong.',
       features: [
         'Skills Master List Light Harmonization: Kartu-kartu SOP yang tidak sedang dipilih di kolom kiri kini 100% menggunakan latar slate-50 yang bersih di mode terang.',
@@ -1765,7 +1824,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.8</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.0</span>
             </div>
           </div>
 
@@ -4276,37 +4335,53 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
               {/* 2 Kolom: Kolom 1 (Konfigurasi HHG Laptop) & Kolom 2 (Memori Mnemosyne Server) */}
               <div className="grid grid-cols-2 gap-4">
                 {/* Kolom 1: Konfigurasi Laptop HHG */}
-                <div className="p-4 bg-slate-950/70 border border-slate-800/80 rounded-xl space-y-3 flex flex-col justify-between">
+                <div className={`p-4 rounded-xl space-y-3 flex flex-col justify-between border transition-colors ${
+                  effectiveTheme === 'dark' 
+                    ? 'bg-slate-950/70 border-slate-800/80' 
+                    : 'bg-slate-50 border-slate-200/80 shadow-xs'
+                }`}>
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-cyan-400 font-semibold text-xs">
+                    <div className={`flex items-center gap-2 font-semibold text-xs ${
+                      effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'
+                    }`}>
                       <FolderKanban className="w-4 h-4" />
                       <span>Konfigurasi Laptop HHG</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className={`text-[11px] leading-relaxed ${
+                      effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                    }`}>
                       Ekspor daftar seluruh workspace, pengaturan binding repo Git, server MCP terdaftar, dan preferensi lokal ke file JSON.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/60">
                     <button
                       type="button"
                       onClick={handleExportHhgConfig}
                       disabled={backupActionLoading !== null}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700/60 rounded-lg text-xs font-semibold transition-all"
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                        effectiveTheme === 'dark'
+                          ? 'bg-slate-900 hover:bg-slate-800 text-cyan-300 border-slate-700/60'
+                          : 'bg-white hover:bg-cyan-50 text-cyan-700 border-slate-200 shadow-xs'
+                      }`}
                     >
                       {backupActionLoading === 'export_config' ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Download className="w-3.5 h-3.5 text-cyan-400" />
+                        <Download className="w-3.5 h-3.5 text-cyan-500" />
                       )}
                       <span>Export JSON</span>
                     </button>
 
-                    <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 rounded-lg text-xs font-semibold cursor-pointer transition-all">
+                    <label className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer border transition-all ${
+                      effectiveTheme === 'dark'
+                        ? 'bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border-cyan-700/50'
+                        : 'bg-cyan-600 hover:bg-cyan-500 text-white border-transparent shadow-xs'
+                    }`}>
                       {backupActionLoading === 'import_config' ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                        <Upload className="w-3.5 h-3.5 text-white dark:text-cyan-400" />
                       )}
                       <span>Import JSON</span>
                       <input 
@@ -4320,37 +4395,53 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                 </div>
 
                 {/* Kolom 2: Memori Mnemosyne Server */}
-                <div className="p-4 bg-slate-950/70 border border-slate-800/80 rounded-xl space-y-3 flex flex-col justify-between">
+                <div className={`p-4 rounded-xl space-y-3 flex flex-col justify-between border transition-colors ${
+                  effectiveTheme === 'dark' 
+                    ? 'bg-slate-950/70 border-slate-800/80' 
+                    : 'bg-slate-50 border-slate-200/80 shadow-xs'
+                }`}>
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
+                    <div className={`flex items-center gap-2 font-semibold text-xs ${
+                      effectiveTheme === 'dark' ? 'text-emerald-400' : 'text-emerald-700'
+                    }`}>
                       <Database className="w-4 h-4" />
                       <span>Memori Mnemosyne Server</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className={`text-[11px] leading-relaxed ${
+                      effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                    }`}>
                       Ekstrak seluruh ingatan jangka panjang agen (episodes & triples) dari server atau pulihkan ke server Hermes baru.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/60">
                     <button
                       type="button"
                       onClick={handleExportMnemosyneMemory}
                       disabled={backupActionLoading !== null}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-slate-700/60 rounded-lg text-xs font-semibold transition-all"
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                        effectiveTheme === 'dark'
+                          ? 'bg-slate-900 hover:bg-slate-800 text-emerald-300 border-slate-700/60'
+                          : 'bg-white hover:bg-emerald-50 text-emerald-700 border-slate-200 shadow-xs'
+                      }`}
                     >
                       {backupActionLoading === 'export_mnemosyne' ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Download className="w-3.5 h-3.5 text-emerald-400" />
+                        <Download className="w-3.5 h-3.5 text-emerald-500" />
                       )}
                       <span>Backup Memori</span>
                     </button>
 
-                    <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/50 rounded-lg text-xs font-semibold cursor-pointer transition-all">
+                    <label className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer border transition-all ${
+                      effectiveTheme === 'dark'
+                        ? 'bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border-emerald-700/50'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white border-transparent shadow-xs'
+                    }`}>
                       {backupActionLoading === 'import_mnemosyne' ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                        <Upload className="w-3.5 h-3.5 text-white dark:text-emerald-400" />
                       )}
                       <span>Restore Memori</span>
                       <input 
