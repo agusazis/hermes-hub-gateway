@@ -337,6 +337,9 @@ export default function App() {
   const [newMcpCmd, setNewMcpCmd] = useState('');
   const [newMcpArgs, setNewMcpArgs] = useState('');
   const [newMcpDesc, setNewMcpDesc] = useState('');
+  const [newMcpType, setNewMcpType] = useState<'stdio' | 'sse'>('stdio');
+  const [newMcpServerUrl, setNewMcpServerUrl] = useState('');
+  const [newMcpEnvList, setNewMcpEnvList] = useState<{ key: string; val: string }[]>([{ key: '', val: '' }]);
   const [mcpInputMode, setMcpInputMode] = useState<'form' | 'raw'>('raw');
   const [mcpRawJson, setMcpRawJson] = useState<string>('{\n  "postman-mcp": {\n    "command": "npx",\n    "args": ["-y", "@postman/mcp-server"],\n    "env": {},\n    "description": "Integrasi testing API Postman koleksi SIMRS"\n  }\n}');
   const [mcpJsonError, setMcpJsonError] = useState<string>('');
@@ -350,7 +353,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.1');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.2');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -368,11 +371,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.2',
+      name: 'Hermes Hub Gateway v0.5.2 (Dynamic Multi-Protocol MCP Registration Suite)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menyediakan sistem registrasi MCP dinamis yang mengakomodasi seluruh bentuk arsitektur MCP: Local CLI (cmd.exe, npx, uvx, binary path), Remote SSE Endpoint (Mnemosyne / OmniRoute), Environment Variables Key-Value builder dinamis, dan IDE Raw JSON mode.',
+      features: [
+        'Multi-Protocol Selector: Pilihan arsitektur seketika antara Local Process (stdio/CLI) dan Remote Server (SSE / HTTP stream).',
+        'Dynamic Environment Builder: Form dinamis untuk menambah/menghapus variabel lingkungan dan kredensial jaringan (IP target, token API, host DB) tanpa batas.',
+        'Antigravity IDE Compatibility: Sepenuhnya mendukung skema mcpServers Antigravity termasuk serverUrl, flag disabled, dan Windows cmd.exe wrapper.',
+        'Seamless Bi-Directional State: Sinkronisasi instan antara tab Formulir Dinamis dan tab Raw JSON editor.'
+      ],
+      fixes: [
+        'Koreksi parsing flag serverUrl pada server remote SSE.',
+        'Penyelarasan layout responsif modal pendaftaran MCP.'
+      ],
+      architecture: [
+        'Universal Protocol-Agnostic MCP Registry & Industrial Dynamic Form Engine.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.2/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.2/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.1',
       name: 'Hermes Hub Gateway v0.5.1 (Raw JSON IDE-Compliant MCP Editor)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan editor Raw JSON MCP standar industri (Antigravity IDE / VS Code / Claude Desktop JSON) dengan validasi sintaks instan, tombol template kilat, serta opsi toggle ke formulir konvensional.',
       features: [
         'Raw JSON Configuration Mode: Pengguna dapat langsung menempelkan (paste) konfigurasi JSON mcpServers dari VS Code, Antigravity, atau Claude Desktop tanpa harus mengisi form satu per satu.',
@@ -1346,9 +1374,42 @@ export default function App() {
     const handleOpenEditMcp = (index: number) => {
     const item = config.mcp_servers[index];
     setNewMcpName(item.name);
-    setNewMcpCmd(item.command);
-    setNewMcpArgs(item.args.join(' '));
+    const isSse = item.command === 'remote-sse' || (item.args && item.args[0] && item.args[0].startsWith('http'));
+    if (isSse) {
+      setNewMcpType('sse');
+      setNewMcpServerUrl(item.args[0] || '');
+      setNewMcpCmd('');
+      setNewMcpArgs('');
+    } else {
+      setNewMcpType('stdio');
+      setNewMcpCmd(item.command);
+      setNewMcpArgs(item.args ? item.args.join(' ') : '');
+      setNewMcpServerUrl('');
+    }
     setNewMcpDesc(item.description);
+    
+    // Environment variables to list
+    const envEntries = Object.entries(item.env || {}).map(([k, v]) => ({ key: k, val: v }));
+    setNewMcpEnvList(envEntries.length > 0 ? envEntries : [{ key: '', val: '' }]);
+
+    // Raw JSON format
+    const rawObj = isSse ? {
+      [item.name]: {
+        serverUrl: item.args[0] || '',
+        description: item.description,
+        disabled: !item.enabled
+      }
+    } : {
+      [item.name]: {
+        command: item.command,
+        args: item.args,
+        env: item.env || {},
+        description: item.description,
+        disabled: !item.enabled
+      }
+    };
+    setMcpRawJson(JSON.stringify(rawObj, null, 2));
+    setMcpJsonError('');
     setEditingMcpIndex(index);
     setShowAddMcpModal(true);
   };
@@ -1387,13 +1448,21 @@ export default function App() {
         
         for (const [name, val] of Object.entries<any>(rootServers)) {
           if (typeof val === 'object' && val !== null) {
+            // Support both standard stdio (command/args) and remote SSE/HTTP (serverUrl / url)
+            const isRemote = Boolean(val.serverUrl || val.url);
+            const cmd = val.command || (isRemote ? 'remote-sse' : 'npx');
+            const args = isRemote 
+              ? [val.serverUrl || val.url]
+              : (Array.isArray(val.args) ? val.args : (val.args ? String(val.args).split(' ') : []));
+            const isEnabled = val.disabled !== undefined ? !val.disabled : (val.enabled !== undefined ? Boolean(val.enabled) : true);
+
             entriesToAdd.push({
               name,
-              command: val.command || 'npx',
-              args: Array.isArray(val.args) ? val.args : (val.args ? String(val.args).split(' ') : []),
+              command: cmd,
+              args: args,
               env: val.env || {},
-              enabled: val.enabled !== undefined ? Boolean(val.enabled) : true,
-              description: val.description || `${name} MCP Server`
+              enabled: isEnabled,
+              description: val.description || (isRemote ? `Remote SSE Endpoint: ${val.serverUrl || val.url}` : `${name} MCP Tool`)
             });
           }
         }
@@ -1436,15 +1505,43 @@ export default function App() {
     }
 
     // Form Mode Fallback
-    if (!newMcpName || !newMcpCmd) return;
+    if (!newMcpName) {
+      setMcpJsonError('Nama identifier MCP wajib diisi.');
+      return;
+    }
 
-    const newMcp: McpServerEntry = {
-      name: newMcpName,
-      command: newMcpCmd,
-      args: newMcpArgs ? newMcpArgs.split(' ') : [],
-      env: {},
+    if (newMcpType === 'stdio' && !newMcpCmd) {
+      setMcpJsonError('Command eksekusi lokal wajib diisi untuk tipe Local Process.');
+      return;
+    }
+
+    if (newMcpType === 'sse' && !newMcpServerUrl) {
+      setMcpJsonError('URL Server SSE wajib diisi untuk tipe Remote SSE.');
+      return;
+    }
+
+    // Convert env list to object
+    const envObj: Record<string, string> = {};
+    for (const item of newMcpEnvList) {
+      if (item.key.trim()) {
+        envObj[item.key.trim()] = item.val;
+      }
+    }
+
+    const newMcp: McpServerEntry = newMcpType === 'sse' ? {
+      name: newMcpName.trim(),
+      command: 'remote-sse',
+      args: [newMcpServerUrl.trim()],
+      env: envObj,
       enabled: true,
-      description: newMcpDesc || 'Custom MCP Server Tool'
+      description: newMcpDesc.trim() || `Remote SSE Server: ${newMcpServerUrl.trim()}`
+    } : {
+      name: newMcpName.trim(),
+      command: newMcpCmd.trim(),
+      args: newMcpArgs.trim() ? newMcpArgs.trim().split(/\s+/) : [],
+      env: envObj,
+      enabled: true,
+      description: newMcpDesc.trim() || `${newMcpName.trim()} MCP Tool`
     };
 
     let updatedList = [...config.mcp_servers];
@@ -1502,7 +1599,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.1</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.2</span>
             </div>
           </div>
 
@@ -2401,48 +2498,159 @@ export default function App() {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs text-slate-400">Nama Identifier MCP</label>
-                      <input 
-                        type="text" 
-                        placeholder="Contoh: postman-mcp"
-                        value={newMcpName}
-                        onChange={(e) => setNewMcpName(e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
-                        required={mcpInputMode === 'form'}
-                      />
+                  <div className="space-y-4">
+                    {/* MCP Protocol Type Selector */}
+                    <div className="grid grid-cols-2 gap-3 p-1 rounded-xl border border-slate-800 bg-slate-950/60">
+                      <button
+                        type="button"
+                        onClick={() => setNewMcpType('stdio')}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                          newMcpType === 'stdio'
+                            ? (effectiveTheme === 'dark' ? 'bg-cyan-600/30 border border-cyan-500/50 text-cyan-300 shadow-sm' : 'bg-cyan-600 text-white shadow-sm')
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <Terminal className="w-3.5 h-3.5" />
+                        <span>Local Process (stdio / CLI)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewMcpType('sse')}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                          newMcpType === 'sse'
+                            ? (effectiveTheme === 'dark' ? 'bg-cyan-600/30 border border-cyan-500/50 text-cyan-300 shadow-sm' : 'bg-cyan-600 text-white shadow-sm')
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>Remote Server (SSE / HTTP Endpoint)</span>
+                      </button>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-slate-400">Command Eksekusi</label>
-                      <input 
-                        type="text" 
-                        placeholder="npx atau python"
-                        value={newMcpCmd}
-                        onChange={(e) => setNewMcpCmd(e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
-                        required={mcpInputMode === 'form'}
-                      />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-300">Nama Identifier MCP</label>
+                        <input 
+                          type="text" 
+                          placeholder="misal: gitlab, mnemosyne, grafana, database-simrs"
+                          value={newMcpName}
+                          onChange={(e) => setNewMcpName(e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                          required={mcpInputMode === 'form'}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-300">Deskripsi / Peran Tool</label>
+                        <input 
+                          type="text" 
+                          placeholder="Peran alat dalam ekosistem SIMGOS / RSUD"
+                          value={newMcpDesc}
+                          onChange={(e) => setNewMcpDesc(e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-1 col-span-2">
-                      <label className="text-xs text-slate-400">Argumen (Spasi dipisahkan)</label>
-                      <input 
-                        type="text" 
-                        placeholder="-y @postman/mcp-server"
-                        value={newMcpArgs}
-                        onChange={(e) => setNewMcpArgs(e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
-                      />
-                    </div>
-                    <div className="space-y-1 col-span-2">
-                      <label className="text-xs text-slate-400">Deskripsi / Peran Tool</label>
-                      <input 
-                        type="text" 
-                        placeholder="Integrasi testing API Postman koleksi SIMRS"
-                        value={newMcpDesc}
-                        onChange={(e) => setNewMcpDesc(e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
-                      />
+
+                    {/* Dynamic Fields Based on Protocol Type */}
+                    {newMcpType === 'stdio' ? (
+                      <div className="space-y-3 p-3 rounded-xl border border-slate-800/80 bg-slate-950/40">
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-xs font-semibold text-slate-300">Command Eksekusi</label>
+                            <input 
+                              type="text" 
+                              placeholder="cmd.exe, npx, uvx, python, atau path biner .exe"
+                              value={newMcpCmd}
+                              onChange={(e) => setNewMcpCmd(e.target.value)}
+                              className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                              required={mcpInputMode === 'form' && newMcpType === 'stdio'}
+                            />
+                            <p className="text-[10px] text-slate-500">Gunakan cmd.exe untuk Windows CLI atau path penuh binary tabularis</p>
+                          </div>
+                          <div className="space-y-1 col-span-2">
+                            <label className="text-xs font-semibold text-slate-300">Argumen Eksekusi (Args)</label>
+                            <input 
+                              type="text" 
+                              placeholder="misal: /c npx -y @zereight/mcp-gitlab atau mcp-grafana"
+                              value={newMcpArgs}
+                              onChange={(e) => setNewMcpArgs(e.target.value)}
+                              className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                            />
+                            <p className="text-[10px] text-slate-500">Argumen CLI dipisahkan dengan spasi.</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 p-3 rounded-xl border border-slate-800/80 bg-slate-950/40">
+                        <label className="text-xs font-semibold text-slate-300">Remote Server URL (SSE Endpoint)</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            placeholder="http://172.168.1.202:8080/sse atau https://remote-mcp.jusufsk.id/sse"
+                            value={newMcpServerUrl}
+                            onChange={(e) => setNewMcpServerUrl(e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                            required={mcpInputMode === 'form' && newMcpType === 'sse'}
+                          />
+                        </div>
+                        <p className="text-[10px] text-slate-500">Endpoint streaming SSE remote untuk service seperti Mnemosyne Shared Memory Server atau OmniRoute Gateway.</p>
+                      </div>
+                    )}
+
+                    {/* Dynamic Environment Variables Key-Value Builder */}
+                    <div className="space-y-2 p-3 rounded-xl border border-slate-800/80 bg-slate-950/40">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                          <Key className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Environment Variables & IP / Kredensial Jaringan</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setNewMcpEnvList([...newMcpEnvList, { key: '', val: '' }])}
+                          className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 font-mono"
+                        >
+                          <Plus className="w-3 h-3" /> Tambah Variabel
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
+                        {newMcpEnvList.map((envItem, envIdx) => (
+                          <div key={envIdx} className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              placeholder="KEY (contoh: GITLAB_API_URL, GRAFANA_URL)"
+                              value={envItem.key}
+                              onChange={(e) => {
+                                const updated = [...newMcpEnvList];
+                                updated[envIdx].key = e.target.value;
+                                setNewMcpEnvList(updated);
+                              }}
+                              className={`w-1/2 px-2.5 py-1.5 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                            />
+                            <input
+                              type="text"
+                              placeholder="VALUE (contoh: http://172.168.1.33/api/v4)"
+                              value={envItem.val}
+                              onChange={(e) => {
+                                const updated = [...newMcpEnvList];
+                                updated[envIdx].val = e.target.value;
+                                setNewMcpEnvList(updated);
+                              }}
+                              className={`w-1/2 px-2.5 py-1.5 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                            />
+                            {newMcpEnvList.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setNewMcpEnvList(newMcpEnvList.filter((_, i) => i !== envIdx))}
+                                className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
+                                title="Hapus Variabel"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
