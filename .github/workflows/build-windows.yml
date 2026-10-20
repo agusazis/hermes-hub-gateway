@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.6.5
-          releaseName: "Hermes Hub Gateway v0.6.5"
-          releaseBody: "Release v0.6.5: Crash-Proof Clean Slate & Security Hardening. Fixes crash on startup when workspace list is empty. Removes high-risk reset button from public UI."
+          tagName: v0.6.6
+          releaseName: "Hermes Hub Gateway v0.6.6"
+          releaseBody: "Release v0.6.6: Dual Distribution (EXE + MSI) & Zero-State Dashboard Fix. Delivers both NSIS Setup and MSI packages for enterprise/developer compatibility. Fixes dashboard MCP metric to 0 Functions in Clean Slate state."
           releaseDraft: false
           prerelease: false
