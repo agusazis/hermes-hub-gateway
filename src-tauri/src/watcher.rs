@@ -146,7 +146,6 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
     println!("[Git Sync] Synchronizing rules for workspace {} at {:?}", ws.id, internal_path);
 
     if let Some(git) = &ws.git_target {
-        // Jika folder internal sudah ada dan berisi .git lama yang tidak sinkron, lakukan pull
         let git_dir_check = internal_path.join(".git");
         let mut git_success = false;
 
@@ -183,13 +182,27 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
             }
         }
 
-        // Jika clone/pull via Git CLI gagal, atau berkas skills tidak lengkap,
-        // jalankan sinkronisasi REST API langsung ke GitLab
-        let skills_root = if internal_path.join("skills").is_dir() {
-            internal_path.join("skills")
-        } else {
-            internal_path.clone()
-        };
+        // STANDAR STRUKTUR HERMES EVALUATOR:
+        // Seluruh skill harus berada di subfolder `skills/<skill_name>/SKILL.md`
+        let skills_root = internal_path.join("skills");
+        let _ = fs::create_dir_all(&skills_root);
+
+        // Jika git clone meletakkan skill langsung di internal_path (tanpa subfolder skills/),
+        // reorganisasi otomatis agar selalu sesuai standar Evaluator:
+        if let Ok(entries) = std::fs::read_dir(&internal_path) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    let dir_name = p.file_name().and_then(|n| n.to_str()).unwrap_or_default();
+                    if dir_name != "skills" && dir_name != ".git" && p.join("SKILL.md").exists() {
+                        let target = skills_root.join(dir_name);
+                        if !target.exists() {
+                            let _ = std::fs::rename(&p, &target);
+                        }
+                    }
+                }
+            }
+        }
 
         let skill_count = std::fs::read_dir(&skills_root)
             .map(|entries| {
@@ -200,9 +213,9 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
             })
             .unwrap_or(0);
 
-        if !git_success || skill_count < 5 {
-            println!("[Git Sync] Local skill count is {} (low/missing). Triggering direct GitLab REST API sync...", skill_count);
-            if let Ok(client) = reqwest::Client::builder().timeout(Duration::from_secs(15)).build() {
+        if !git_success || skill_count < 10 {
+            println!("[Git Sync] Local skill count in standard skills/ is {} (< 10). Fetching via GitLab REST API...", skill_count);
+            if let Ok(client) = reqwest::Client::builder().timeout(Duration::from_secs(20)).build() {
                 let host = git.repo_url.split("/").take(3).collect::<Vec<&str>>().join("/");
                 let project_identifier = if !git.project_id.trim().is_empty() {
                     git.project_id.clone()
@@ -226,6 +239,7 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
                         for item in tree {
                             if item.get("type").and_then(|t| t.as_str()) == Some("blob") {
                                 if let Some(path_str) = item.get("path").and_then(|p| p.as_str()) {
+                                    // path_str contoh: "skills/simgos2-db-audit/SKILL.md"
                                     let rel_sub = path_str.strip_prefix("skills/").unwrap_or(path_str);
                                     let dest_file = skills_root.join(rel_sub);
                                     if let Some(parent) = dest_file.parent() {
@@ -246,7 +260,7 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
                                 }
                             }
                         }
-                        println!("[Git Sync] REST API sync completed into {:?}", skills_root);
+                        println!("[Git Sync] Direct REST API sync completed into standard {:?}", skills_root);
                     }
                 }
             }
