@@ -40,8 +40,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.5.4
-          releaseName: "Hermes Hub Gateway v0.5.4"
-          releaseBody: "Release v0.5.4: Neutral Developer Architecture & In-Page Save Feedback. Neutralized all local organization references into a global developer desktop gateway. Added instant in-page visual confirmation on saving settings, backed by automated pre-build TypeScript and build test gates."
+          tagName: v0.5.5
+          releaseName: "Hermes Hub Gateway v0.5.5"
+          releaseBody: "Release v0.5.5: Harmonized Light Mode & Zero-Clash Visual Theme. Eliminates hardcoded dark blocks across the Isolated Workspaces Manager (IDE bridge helper banner, Git connection card, and AGENTS.md contract preview), adopting high-contrast, eye-friendly light styling backed by verified pre-build test gates."
           releaseDraft: false
           prerelease: false
