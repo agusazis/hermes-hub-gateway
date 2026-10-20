@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.5');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.6');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.6',
+      name: 'Hermes Hub Gateway v0.7.6 (Native Windows Folder Picker & Unified Semantic Theme System)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghadirkan fitur Native Windows Folder Picker pada form registrasi/edit workspace dan mengadopsi standar arsitektur tema semantik 9Router (Inter typography, reactive system sync, eliminasi hardcoded contrast leak, dan integrasi dialog desktop Windows).',
+      features: [
+        'Native Windows Folder Picker: Tombol Pilih Folder memanggil System.Windows.Forms.FolderBrowserDialog via Rust command select_project_folder.',
+        'Unified 9Router Theme System: Standarisasi kontras teks dan kanvas adaptif (slate-900 di mode terang, pure white di mode gelap).',
+        'Clean Modal State Isolation: Modal Tambah Workspace secara deterministik mereset state editing dan input path.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Input direktori proyek yang sebelumnya harus diketik manual layaknya form web.',
+        'Potensi kontras bocor (hardcoded text-white pada elemen sidebar di mode terang).'
+      ],
+      architecture: [
+        'Native Windows Shell Invocation & 9Router-Aligned Semantic Tokens.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.6/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.6/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.5',
       name: 'Hermes Hub Gateway v0.7.5 (Deduplicated Workspace Provisioning & Clean Slate Persistence)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Mencegah duplikasi data workspace saat install ulang atau registrasi ulang: menyematkan deduplikasi ID workspace baik di sisi Rust backend maupun state React frontend, serta memperkuat uninstaller custom NSIS agar tidak meninggalkan residu konfigurasi lama.',
       features: [
         'Idempotent Workspace Provisioning: Pendaftaran workspace yang sama otomatis melakukan update in-place dan tidak lagi menggandakan entri pada config.json.',
@@ -2147,8 +2172,8 @@ export default function App() {
               H
             </div>
             <div>
-              <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.5</span>
+              <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">Hermes Hub</h1>
+              <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.6</span>
             </div>
           </div>
 
@@ -2645,14 +2670,34 @@ export default function App() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs text-slate-400 font-medium">Direktori Project Target di Laptop</label>
-                    <input 
-                      type="text" 
-                      placeholder="Contoh: D:\\7. Project\\Billing"
-                      value={newWsPath}
-                      onChange={(e) => setNewWsPath(e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs"}`}
-                      required
-                    />
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="Contoh: D:\7. Project\Billing"
+                        value={newWsPath}
+                        onChange={(e) => setNewWsPath(e.target.value)}
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs"}`}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const selected = await invoke<string | null>("select_project_folder");
+                            if (selected) {
+                              setNewWsPath(selected);
+                            }
+                          } catch (err) {
+                            console.error("Gagal membuka folder picker:", err);
+                          }
+                        }}
+                        className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border shadow-xs ${effectiveTheme === "dark" ? "bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700" : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"}`}
+                        title="Buka Windows Explorer untuk memilih folder target"
+                      >
+                        <Folder className="w-4 h-4 text-cyan-500" />
+                        <span>Pilih Folder</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
