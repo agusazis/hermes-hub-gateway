@@ -37,8 +37,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.5.0
-          releaseName: "Hermes Hub Gateway v0.5.0"
-          releaseBody: "Release v0.5.0: Tauri v2 Schema Compliance & Stable Enterprise Release. Fixes tauri.conf.json window schema validation error ('icon' property removal in window object), uses global bundle.icon array, includes dynamic Git auto-sync on boot, real Git/Gateway/Telegram verification, and uniform high-contrast design system."
+          tagName: v0.5.1
+          releaseName: "Hermes Hub Gateway v0.5.1"
+          releaseBody: "Release v0.5.1: Raw JSON IDE-Compliant MCP Configuration Mode. Allows pasting raw JSON configs directly from VS Code / Antigravity IDE / Claude Desktop into MCP Servers Hub, features syntax validation, quick IDE template helper, schema compliance with Tauri v2, and verified background sync."
           releaseDraft: false
           prerelease: false
