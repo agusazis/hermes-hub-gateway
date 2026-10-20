@@ -321,7 +321,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.1');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.2');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -339,11 +339,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.2',
+      name: 'Hermes Hub Gateway v0.6.2 (One-Click Clean Slate Factory Reset & Neutral Identifier)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menghadirkan fitur Hapus Total Data Tersisa (Factory Reset to Clean Slate) langsung dari antarmuka Settings Disaster Recovery Center, serta memperbarui app identifier Windows tauri menjadi com.hermeshub.gateway yang murni universal.',
+      features: [
+        'One-Click Factory Reset: Tombol "Hapus Total Data" pada Disaster Recovery Center secara instan membersihkan seluruh file config.json, riwayat workspace lama, dan cache tersisa di AppData lokal.',
+        'Sanitized Neutral Identifier: Mengubah bundle ID aplikasi menjadi com.hermeshub.gateway bebas dari rujukan institusi.',
+        'Seamless In-App Reset: Tidak perlu mencari folder AppData secara manual di Windows Explorer untuk membersihkan jejak konfigurasi lama.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Ketiadaan opsi pembersihan data lokal tersisa saat aplikasi diinstall ulang.',
+        'App identifier tauri yang sebelumnya masih memuat nama domain lokal.'
+      ],
+      architecture: [
+        'Atomic Clean Slate Reset via Backend Tauri IPC.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.2/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.2/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.1',
       name: 'Hermes Hub Gateway v0.6.1 (Pristine Clean Slate & Hashed Organization Provisioning)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghapus 100% residu konfigurasi internal, path project lokal, dan nama institusi dari kode sumber bawaan. Aplikasi kini terbit sebagai kanvas bersih (Clean Slate) bagi developer global, dengan satu-satunya pintu konfigurasi otomatis berbasis verifikasi cryptographic SHA-256 hash.',
       features: [
         'Pristine Clean Slate: Instalasi baru kini dibuka dalam keadaan bersih (workspaces kosong, mcp_servers kosong, endpoint netral) tanpa data dummy spesifik.',
@@ -1319,6 +1344,41 @@ export default function App() {
     e.target.value = '';
   };
 
+  // 4. Reset Total ke Clean Slate (Hapus Seluruh Data Tersisa)
+  const handleResetToCleanSlate = async () => {
+    if (!window.confirm("PERINGATAN: Apakah Anda yakin ingin MENGHAPUS TOTAL seluruh workspace, server MCP, kredensial, dan konfigurasi lokal? Aplikasi akan kembali kosong bersih seperti baru pertama kali diinstall.")) {
+      return;
+    }
+
+    try {
+      setBackupActionLoading('export_config');
+      const cleanCfg = await invoke<GlobalConfig>('reset_system_config');
+      setConfig(cleanCfg || {
+        active_profile: 'default',
+        default_hermes_evaluator_url: '',
+        default_mnemosyne_url: '',
+        active_workspace_id: '',
+        workspaces: [],
+        mcp_servers: []
+      });
+      setSkillsHierarchy([]);
+      setDrilldownWsId(null);
+      setActiveSkillName('');
+      setBackupNotice({
+        success: true,
+        message: '✓ Reset Sukses! Seluruh data tersisa di AppData/Local telah dibersihkan total ke kondisi kosong (Clean Slate).'
+      });
+    } catch (e: any) {
+      setBackupNotice({
+        success: false,
+        message: 'Gagal melakukan reset total: ' + (e?.toString() || 'Unknown error')
+      });
+    } finally {
+      setBackupActionLoading(null);
+      setTimeout(() => setBackupNotice(null), 6000);
+    }
+  };
+
   // 3. Export Backup Memori Mnemosyne (Server)
   const handleExportMnemosyneMemory = async () => {
     if (!config.default_mnemosyne_url) {
@@ -1805,7 +1865,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.1</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.2</span>
             </div>
           </div>
 
@@ -4432,6 +4492,38 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                         className="hidden"
                       />
                     </label>
+                  </div>
+                </div>
+
+                {/* Kolom 3: Clean Slate (Hapus Total Data Lokal Tersisa) */}
+                <div className={`p-4 rounded-xl space-y-3 flex flex-col justify-between border transition-colors md:col-span-2 ${
+                  effectiveTheme === 'dark' 
+                    ? 'bg-rose-950/20 border-rose-900/40' 
+                    : 'bg-rose-50/50 border-rose-200/80 shadow-xs'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className={`flex items-center gap-2 font-semibold text-xs ${
+                        effectiveTheme === 'dark' ? 'text-rose-400' : 'text-rose-700'
+                      }`}>
+                        <Trash2 className="w-4 h-4" />
+                        <span>Hapus Total Data Tersisa (Factory Reset to Clean Slate)</span>
+                      </div>
+                      <p className={`text-[11px] leading-relaxed ${
+                        effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                      }`}>
+                        Bersihkan seluruh file <code>config.json</code>, daftar workspace lama, riwayat SOP, dan kredensial yang tersisa di AppData lokal. Mengembalikan aplikasi persis seperti baru pertama kali diinstall.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleResetToCleanSlate}
+                      disabled={backupActionLoading !== null}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 whitespace-nowrap ml-4"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus Total Data</span>
+                    </button>
                   </div>
                 </div>
               </div>
