@@ -42,7 +42,20 @@ fn reset_system_config() -> Result<config::GlobalConfig, String> {
 #[tauri::command]
 fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_json::Value, String> {
     let cfg = config::load_config();
-    let ws = cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned().unwrap_or_else(|| cfg.workspaces[0].clone());
+    let ws = match cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned() {
+        Some(w) => w,
+        None => {
+            if let Some(first) = cfg.workspaces.first().cloned() {
+                first
+            } else {
+                return Ok(serde_json::json!({
+                    "name": skill_name,
+                    "content": format!("# {}\n\nBelum ada workspace yang dikonfigurasi.", skill_name),
+                    "references": []
+                }));
+            }
+        }
+    };
     let skill_dir = PathBuf::from(&ws.internal_skills_path).join(&skill_name);
 
     let skill_file = skill_dir.join("SKILL.md");
@@ -145,7 +158,19 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
 #[tauri::command]
 fn trigger_manual_sync() -> serde_json::Value {
     let cfg = config::load_config();
-    let ws = cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned().unwrap_or_else(|| cfg.workspaces[0].clone());
+    let ws = match cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id).cloned() {
+        Some(w) => w,
+        None => {
+            if let Some(first) = cfg.workspaces.first().cloned() {
+                first
+            } else {
+                return serde_json::json!({
+                    "success": false,
+                    "message": "Belum ada workspace yang dikonfigurasi untuk disinkronkan."
+                });
+            }
+        }
+    };
     
     tauri::async_runtime::spawn(async move {
         watcher::sync_rules_from_git(&ws).await;
@@ -203,7 +228,16 @@ async fn test_telegram_broadcast(bot_token: String, chat_id: String, topic_id: O
 #[tauri::command]
 fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, String> {
     let cfg = config::load_config();
-    let ws = cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned().unwrap_or_else(|| cfg.workspaces[0].clone());
+    let ws = match cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned() {
+        Some(w) => w,
+        None => {
+            if let Some(first) = cfg.workspaces.first().cloned() {
+                first
+            } else {
+                return Ok(Vec::new());
+            }
+        }
+    };
     let internal_path = PathBuf::from(&ws.internal_skills_path);
 
     let mut result = Vec::new();
