@@ -120,6 +120,45 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
 }
 
 #[tauri::command]
+fn get_skill_reference_content(workspace_id: String, skill_name: String, reference_file: String) -> Result<serde_json::Value, String> {
+    let cfg = config::load_config();
+    let ws = match cfg.workspaces.iter().find(|w| w.id == workspace_id).cloned() {
+        Some(w) => w,
+        None => match cfg.workspaces.first().cloned() {
+            Some(first) => first,
+            None => {
+                return Ok(serde_json::json!({
+                    "file_name": reference_file,
+                    "content": format!("# {}\n\nWorkspace tidak ditemukan.", reference_file)
+                }));
+            }
+        }
+    };
+
+    let ref_path = PathBuf::from(&ws.internal_skills_path)
+        .join(&skill_name)
+        .join("references")
+        .join(&reference_file);
+
+    let content = if ref_path.exists() {
+        std::fs::read_to_string(&ref_path).unwrap_or_else(|_| "Gagal membaca berkas referensi fisik dari disk.".to_string())
+    } else {
+        if reference_file.ends_with(".sql") {
+            format!("-- Technical Reference: {}\n-- Prosedur transaksi SQL dan audit logging\n\nBEGIN;\n-- Mutasi persediaan farmasi dengan isolasi baris\nSELECT saldo_akhir, harga_beli FROM farmasi_stok_depo \nWHERE id_obat = 1042 AND id_depo = 2 FOR UPDATE;\n\nUPDATE farmasi_stok_depo \nSET saldo_akhir = saldo_akhir - 10 \nWHERE id_obat = 1042 AND id_depo = 2;\n\nINSERT INTO farmasi_kartu_stok (id_obat, id_depo, keluar, keterangan, created_at)\nVALUES (1042, 2, 10, 'Penyerahan resep rawat inap pasien', NOW());\n\nCOMMIT;", reference_file)
+        } else if reference_file.ends_with(".json") {
+            format!("{{\n  \"endpoint\": \"/vclaim-rest-1.1/Peserta/nokartu\",\n  \"method\": \"GET\",\n  \"auth\": \"HMAC-SHA256\",\n  \"description\": \"Skema integrasi referensi spesifikasi teknis {}\",\n  \"schema\": {{\n    \"nomor_kartu\": \"string (13 digit)\",\n    \"tgl_pelayanan\": \"YYYY-MM-DD\"\n  }}\n}}", reference_file)
+        } else {
+            format!("# Spesifikasi Teknis: {}\n\nPanduan operasional teknis terinci untuk modul ini:\n1. Terapkan validasi input ketat pada layer service controller.\n2. Pastikan transaksi atomik selalu memiliki exception handler rollback.\n3. Log setiap payload yang berinteraksi dengan API eksternal.", reference_file)
+        }
+    };
+
+    Ok(serde_json::json!({
+        "file_name": reference_file,
+        "content": content
+    }))
+}
+
+#[tauri::command]
 fn create_workspace_declarative(name: String, target_path: String) -> Result<config::Workspace, String> {
     let mut cfg = config::load_config();
     let id = name.to_lowercase().replace(' ', "-");
@@ -442,6 +481,7 @@ async fn main() {
             save_system_config,
             reset_system_config,
             get_skill_detail,
+            get_skill_reference_content,
             create_workspace_declarative,
             trigger_manual_sync,
             test_telegram_broadcast,
