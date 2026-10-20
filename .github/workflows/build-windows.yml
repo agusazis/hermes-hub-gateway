@@ -31,14 +31,17 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
+      - name: Run Pre-Build Verification Test Gates
+        run: npm run verify
+
       - name: Build Tauri Desktop Application
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.5.2
-          releaseName: "Hermes Hub Gateway v0.5.2"
-          releaseBody: "Release v0.5.2: Dynamic Multi-Protocol MCP Registration Suite. Accommodates all MCP architectures: Local CLI (cmd.exe, npx, uvx, binary path), Remote SSE Endpoint (Mnemosyne / OmniRoute), dynamic Environment Variables Key-Value builder, and full Antigravity IDE Raw JSON compatibility."
+          tagName: v0.5.3
+          releaseName: "Hermes Hub Gateway v0.5.3"
+          releaseBody: "Release v0.5.3: Pre-Build Test Gates & Zero-White-Screen Architecture. Features strict TypeScript pre-build validation, Global React Error Boundary preventing empty white screens, dynamic multi-protocol MCP registration suite (Local CLI, Remote SSE, and Env Variables Key-Value builder), verified against full DOM interaction test suite."
           releaseDraft: false
           prerelease: false
