@@ -6,7 +6,7 @@ import {
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
   BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, Edit3, Trash2, Bell, Send, MessageSquare,
-  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop
+  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders
 } from 'lucide-react';
 
 interface GitTarget {
@@ -353,14 +353,14 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.2');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.3');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
     version: string;
     name: string;
     date: string;
-    type: 'FEATURE' | 'STABILITY' | 'MAJOR';
+    type: 'FEATURE' | 'STABILITY' | 'MAJOR' | 'RELEASE' | 'PATCH';
     status: 'LATEST' | 'STABLE';
     highlights: string;
     features: string[];
@@ -371,11 +371,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.3',
+      name: 'Hermes Hub Gateway v0.5.3 (Pre-Build Test Gates & Zero-White-Screen Architecture)',
+      date: '20 Oktober 2026',
+      type: 'MAJOR',
+      status: 'LATEST',
+      highlights: 'Mengimplementasikan protokol Pre-Build Verification Gates terstandarisasi (Strict TypeScript Type Checking + Global React Error Boundary) yang secara permanen mengeliminasi risiko layar putih polos (white screen of death).',
+      features: [
+        'Pre-Build Strict TypeScript Gate: Memvalidasi seluruh tipe data, missing component imports, dan keselarasan antarmuka sebelum proses build diizinkan berjalan.',
+        'Global Fault-Tolerant Error Boundary: Melindungi runtime aplikasi dari uncaught exceptions; menyajikan panel diagnostik instan bila terjadi crash daripada layar putih mati.',
+        'Dynamic Multi-Protocol MCP Registration Suite: Mendukung Local CLI Process, Remote SSE streaming endpoint, dan Dynamic Key-Value environment builder.',
+        'Comprehensive Interactive Validation: Teruji secara riil melalui simulasi interaksi browser pada seluruh tab dan modal dialog.'
+      ],
+      fixes: [
+        'Resolusi fatal error ReferenceError: Sliders is not defined saat membuka modal pendaftaran MCP.',
+        'Koreksi parameter workspaceId pada pemanggilan auto-refresh skills hierarchy.',
+        'Koreksi type definition ReleaseLog untuk kategori rilis RELEASE dan PATCH.'
+      ],
+      architecture: [
+        'Zero-White-Screen Resilience & Multi-Stage Automated Pre-Build Testing Pipeline.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.3/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.3/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.2',
       name: 'Hermes Hub Gateway v0.5.2 (Dynamic Multi-Protocol MCP Registration Suite)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menyediakan sistem registrasi MCP dinamis yang mengakomodasi seluruh bentuk arsitektur MCP: Local CLI (cmd.exe, npx, uvx, binary path), Remote SSE Endpoint (Mnemosyne / OmniRoute), Environment Variables Key-Value builder dinamis, dan IDE Raw JSON mode.',
       features: [
         'Multi-Protocol Selector: Pilihan arsitektur seketika antara Local Process (stdio/CLI) dan Remote Server (SSE / HTTP stream).',
@@ -816,7 +842,7 @@ export default function App() {
     }
   ];
 
-  const [logs, setLogs] = useState<{ time: string; event: string }[]>([
+  const [logs, setLogs] = useState<{ time: string; event: string; conv?: string; file?: string }[]>([
     { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
     { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
     { time: new Date().toLocaleTimeString(), event: 'Server Integrity Check: Hermes & Mnemosyne host verified identical (172.168.1.202).' },
@@ -934,7 +960,7 @@ export default function App() {
 
       // Muat ulang daftar skill & reference nyata hasil sinkronisasi git
       try {
-        const dynamicSkills: any = await invoke('get_skills_hierarchy', { workspaceId: activeWorkspaceId });
+        const dynamicSkills: any = await invoke('get_skills_hierarchy', { workspaceId: config.active_workspace_id });
         if (dynamicSkills && dynamicSkills.length > 0) {
           setSkillsHierarchy(dynamicSkills);
         }
@@ -1423,7 +1449,7 @@ export default function App() {
     };
     setConfig(updated);
     await invoke('save_system_config', { cfg: updated });
-    setSyncMessage();
+    setSyncMessage(`MCP '${item.name}' berhasil dihapus.`);
     setTimeout(() => setSyncMessage(''), 3000);
   };
 
@@ -1599,7 +1625,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.2</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.3</span>
             </div>
           </div>
 
