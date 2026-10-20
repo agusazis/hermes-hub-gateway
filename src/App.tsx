@@ -65,7 +65,8 @@ interface SkillHierarchyItem {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'skills' | 'logs' | 'releases' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
+  const [wsDetailTab, setWsDetailTab] = useState<'overview' | 'skills'>('overview');
 
   // Provisioning Token / Organization Setup Key State
   const [provisionKey, setProvisionKey] = useState('');
@@ -324,7 +325,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.6');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.7');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +343,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.7',
+      name: 'Hermes Hub Gateway v0.7.7 (Unified Workspaces & Integrated Skills Explorer)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menggabungkan menu Workspaces dan Skills Hierarchy menjadi satu Menu Workspaces & Skills Manager yang terpadu, ringkas, dan berorientasi proyek. Memperbaiki alur reset bersih pada form pendaftaran workspace (tanpa pre-filled mock/token).',
+      features: [
+        'Unified Workspaces & Skills Manager: Akses SOP dan dokumen referensi langsung di dalam sub-tab workspace terkait tanpa berpindah menu.',
+        'Clean Zero Pre-Fill Form: Kolom pendaftaran workspace baru benar-benar diinisialisasi kosong tanpa ada token atau URL yang tersisip otomatis.',
+        'Deterministic Cancel/Close Reset: Tombol Batal dan Close (X) mereset state form secara total ke kondisi awal.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Fragmentasi menu di mana pengguna harus berpindah antara Workspaces dan Skills secara terpisah.',
+        'Nilai form lama atau mock token yang tertahan saat membuka form tambah workspace baru.'
+      ],
+      architecture: [
+        'Project-Scoped Document Exploration & Clean State Form Lifecycle.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.7/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.7/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.6',
       name: 'Hermes Hub Gateway v0.7.6 (Native Windows Folder Picker & Unified Semantic Theme System)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghadirkan fitur Native Windows Folder Picker pada form registrasi/edit workspace dan mengadopsi standar arsitektur tema semantik 9Router (Inter typography, reactive system sync, eliminasi hardcoded contrast leak, dan integrasi dialog desktop Windows).',
       features: [
         'Native Windows Folder Picker: Tombol Pilih Folder memanggil System.Windows.Forms.FolderBrowserDialog via Rust command select_project_folder.',
@@ -2173,7 +2199,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.6</span>
+              <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.7</span>
             </div>
           </div>
 
@@ -2201,14 +2227,6 @@ export default function App() {
               }`}
             >
               <Layers className="w-4 h-4" /> MCP Servers Hub
-            </button>
-            <button 
-              onClick={() => setActiveTab('skills')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'skills' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-              }`}
-            >
-              <Shield className="w-4 h-4" /> Skills Hierarchy & Reader
             </button>
             <button 
               onClick={() => setActiveTab('logs')}
@@ -2260,18 +2278,16 @@ export default function App() {
               effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
             }`}>
               {activeTab === 'dashboard' && 'System Status & Overview'}
-              {activeTab === 'workspaces' && 'Isolated Workspaces Manager'}
-              {activeTab === 'mcp_hub' && 'Unified MCP Servers Hub (Gudang Terpusat MCP)'}
-              {activeTab === 'skills' && 'Knowledge & Skills Hierarchy (Parent & References)'}
+              {activeTab === 'workspaces' && 'Workspaces & Skills Manager'}
+              {activeTab === 'mcp_hub' && 'MCP Servers Hub & Infrastructure'}
               {activeTab === 'logs' && 'Continuous Evolution Live Logs'}
               {activeTab === 'releases' && 'Version Logs & Official Changelog'}
               {activeTab === 'settings' && 'Gateway & Git Repository Configuration'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for Developer Workspace.'}
-              {activeTab === 'workspaces' && 'Kelola folder koding terisolasi tanpa mengotori project dengan folder .agents fisik.'}
-              {activeTab === 'mcp_hub' && 'Konfigurasi server MCP eksternal (Database, Synology, MikroTik, Grafana) yang diekspos ke IDE.'}
-              {activeTab === 'skills' && 'Struktur hirarki berkas: SOP Parent (SKILL.md) dan referensi pendukung (references/).'}
+              {activeTab === 'workspaces' && 'Kelola folder koding terisolasi, kontrak AGENTS.md, dan katalog hirarki SOP/Skills.'}
+              {activeTab === 'mcp_hub' && 'Akses seluruh tools MCP tanpa konfigurasi terpisah.'}
               {activeTab === 'logs' && 'Telemetri evaluasi real-time antara IDE watcher dan server evaluator.'}
               {activeTab === 'releases' && 'Catatan resmi pembaruan fitur, perbaikan bug, dan riwayat installer rilis Hermes Hub Gateway.'}
               {activeTab === 'settings' && 'Pengaturan koneksi repositori skills Git (GitLab/GitHub) dan endpoint server terpusat.'}
@@ -2392,7 +2408,10 @@ export default function App() {
               </div>
 
               <div 
-                onClick={() => setActiveTab("skills")}
+                onClick={() => {
+                  setWsDetailTab("skills");
+                  setActiveTab("workspaces");
+                }}
                 className={`p-5 rounded-2xl space-y-2 cursor-pointer transition-all border group ${
                   effectiveTheme === 'dark'
                     ? 'bg-slate-900/60 border-slate-800/80 hover:border-cyan-500/40'
@@ -2612,7 +2631,7 @@ export default function App() {
                 <span className={`text-xs font-semibold flex items-center gap-1.5 ${
                   effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
                 }`}>
-                  <FolderKanban className="w-4 h-4 text-cyan-500" /> Isolated Workspaces Manager
+                  <FolderKanban className="w-4 h-4 text-cyan-500" /> Workspaces & Skills Manager
                 </span>
                 <p className={`text-[11px] ${
                   effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
@@ -2626,10 +2645,11 @@ export default function App() {
                   setNewWsName('');
                   setNewWsPath('');
                   setNewWsGitProvider('gitlab');
-                  setNewWsGitRepoUrl('http://172.168.1.33/simrs/ai-agents.git');
-                  setNewWsGitProjectId('84');
+                  setNewWsGitRepoUrl('');
+                  setNewWsGitProjectId('');
                   setNewWsGitBranch('main');
                   setNewWsGitToken('');
+                  setGitTestResult(null);
                   setShowAddWsModal(true);
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
@@ -2650,6 +2670,12 @@ export default function App() {
                     onClick={() => {
                       setShowAddWsModal(false);
                       setEditingWorkspaceIndex(null);
+                      setNewWsName('');
+                      setNewWsPath('');
+                      setNewWsGitRepoUrl('');
+                      setNewWsGitProjectId('');
+                      setNewWsGitToken('');
+                      setGitTestResult(null);
                     }}
                     className="text-slate-400 hover:text-white"
                   >
@@ -2827,7 +2853,16 @@ export default function App() {
                 <div className="flex items-center justify-end gap-2 pt-1">
                   <button 
                     type="button" 
-                    onClick={() => setShowAddWsModal(false)}
+                    onClick={() => {
+                      setShowAddWsModal(false);
+                      setEditingWorkspaceIndex(null);
+                      setNewWsName('');
+                      setNewWsPath('');
+                      setNewWsGitRepoUrl('');
+                      setNewWsGitProjectId('');
+                      setNewWsGitToken('');
+                      setGitTestResult(null);
+                    }}
                     className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
                   >
                     Batal
@@ -2956,64 +2991,80 @@ export default function App() {
                           </div>
                         </div>
 
-                        <button 
-                          onClick={() => {
-                            setDrilldownWsId(currentWs.id);
-                            setActiveTab("skills");
-                          }}
-                          className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-                        >
-                          <BookOpen className="w-3.5 h-3.5" /> Buka SOP Workspace
-                        </button>
-                      </div>
-
-                      {/* Repositori Git Binding Card */}
-                      <div className={`p-4 rounded-xl space-y-2 border transition-colors ${
-                        effectiveTheme === 'dark' 
-                          ? 'bg-slate-950/70 border-slate-800' 
-                          : 'bg-slate-50 border-slate-200/80 shadow-xs'
-                      }`}>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className={`font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-                            effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'
-                          }`}>
-                            <GitBranch className="w-3.5 h-3.5" /> Koneksi Git Terisolasi
-                          </span>
-                          <span className={`font-mono text-[11px] ${
-                            effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-                          }`}>
-                            Branch: <b className={effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{currentWs.git_target?.target_branch || "main"}</b>
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-                          <div className="space-y-0.5">
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Remote Repo:</span>
-                            <div className={`font-mono truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
-                              {currentWs.git_target?.repo_url || "Belum dikonfigurasi"}
-                            </div>
-                          </div>
-                          <div className="space-y-0.5">
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Provider & Project ID:</span>
-                            <div className={`font-mono ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
-                              {currentWs.git_target?.provider || "gitlab"} (ID: {currentWs.git_target?.project_id || "-"})
-                            </div>
-                          </div>
+                        <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+                          <button
+                            onClick={() => setWsDetailTab('overview')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                              wsDetailTab === 'overview'
+                                ? 'bg-cyan-600 text-white shadow-sm'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <FileText className="w-3.5 h-3.5" /> AGENTS.md & Git
+                          </button>
+                          <button
+                            onClick={() => setWsDetailTab('skills')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                              wsDetailTab === 'skills'
+                                ? 'bg-cyan-600 text-white shadow-sm'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Shield className="w-3.5 h-3.5" /> SOP & Skills ({skillsHierarchy.filter(s => s.workspace_id === currentWs.id).length || skillsHierarchy.length})
+                          </button>
                         </div>
                       </div>
 
-                      {/* Kontrak Deklaratif AGENTS.md */}
-                      <div className="space-y-1.5 flex-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                            <FileText className="w-3.5 h-3.5 text-cyan-400" /> Kontrak Deklaratif AGENTS.md (Root Project)
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-mono">D:\...\AGENTS.md</span>
-                        </div>
-                        <pre className={`p-4 rounded-xl font-mono text-[11px] whitespace-pre-wrap max-h-[190px] overflow-y-auto leading-relaxed border transition-colors ${
-                          effectiveTheme === 'dark'
-                            ? 'bg-slate-950 border-slate-800 text-slate-300'
-                            : 'bg-slate-50 border-slate-200 text-slate-800 shadow-inner'
-                        }`}>
+                      {/* Konten Tab: OVERVIEW (AGENTS.md & Git Remote) */}
+                      {wsDetailTab === 'overview' && (
+                        <div className="space-y-4 flex-1 flex flex-col">
+                          {/* Repositori Git Binding Card */}
+                          <div className={`p-4 rounded-xl space-y-2 border transition-colors ${
+                            effectiveTheme === 'dark' 
+                              ? 'bg-slate-950/70 border-slate-800' 
+                              : 'bg-slate-50 border-slate-200/80 shadow-xs'
+                          }`}>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className={`font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                                effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'
+                              }`}>
+                                <GitBranch className="w-3.5 h-3.5" /> Koneksi Git Terisolasi
+                              </span>
+                              <span className={`font-mono text-[11px] ${
+                                effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                              }`}>
+                                Branch: <b className={effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{currentWs.git_target?.target_branch || "main"}</b>
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
+                              <div className="space-y-0.5">
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Remote Repo:</span>
+                                <div className={`font-mono truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
+                                  {currentWs.git_target?.repo_url || "Belum dikonfigurasi"}
+                                </div>
+                              </div>
+                              <div className="space-y-0.5">
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Provider & Project ID:</span>
+                                <div className={`font-mono ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
+                                  {currentWs.git_target?.provider || "gitlab"} (ID: {currentWs.git_target?.project_id || "-"})
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Kontrak Deklaratif AGENTS.md */}
+                          <div className="space-y-1.5 flex-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5 text-cyan-400" /> Kontrak Deklaratif AGENTS.md (Root Project)
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-mono">D:\...\AGENTS.md</span>
+                            </div>
+                            <pre className={`p-4 rounded-xl font-mono text-[11px] whitespace-pre-wrap max-h-[190px] overflow-y-auto leading-relaxed border transition-colors ${
+                              effectiveTheme === 'dark'
+                                ? 'bg-slate-950 border-slate-800 text-slate-300'
+                                : 'bg-slate-50 border-slate-200 text-slate-800 shadow-inner'
+                            }`}>
 {`# Autonomous AI Developer Instructions - Developer Workspace
 > [!IMPORTANT]
 > Zero-Pollution Architecture Enforcement:
@@ -3021,12 +3072,94 @@ export default function App() {
 > DILARANG membuat folder .agents/, folder skills/, atau skrip watcher di dalam project ini.
 
 ## 1. Unified MCP Hub
-- Seluruh kemampuan tools koding diakses via Named Pipe: \\.\pipe\hhg-bridge
+- Seluruh kemampuan tools koding diakses via Named Pipe: \\\\.\\pipe\\hhg-bridge
 
 ## 2. Dynamic Skill Retrieval
 - Panggil hermes_get_skill(name: "...") untuk memuat SOP workspace ${currentWs.name}.`}
-                        </pre>
-                      </div>
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Konten Tab: SKILLS (Hirarki SOP & Pembaca Referensi Markdown) */}
+                      {wsDetailTab === 'skills' && (
+                        <div className="space-y-3 flex-1 flex flex-col">
+                          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                            <div className="relative flex-1 max-w-sm">
+                              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                              <input 
+                                type="text" 
+                                placeholder="Cari SOP / aturan koding..." 
+                                value={skillSearchQuery}
+                                onChange={(e) => setSkillSearchQuery(e.target.value)}
+                                className={`w-full pl-8 pr-3 py-1.5 rounded-lg text-xs font-mono focus:outline-none transition-colors ${
+                                  effectiveTheme === 'dark' 
+                                    ? 'bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500' 
+                                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs'
+                                }`}
+                              />
+                            </div>
+                            <button
+                              onClick={handleSync}
+                              disabled={syncing}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} /> Sync Rules Now
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-12 gap-3 flex-1 min-h-[300px]">
+                            {/* Sub-Panel Kiri: List SOP (Col 5) */}
+                            <div className="col-span-5 space-y-1.5 max-h-[340px] overflow-y-auto pr-1">
+                              {skillsHierarchy
+                                .filter(s => s.name.toLowerCase().includes(skillSearchQuery.toLowerCase()))
+                                .map((skill) => (
+                                  <div
+                                    key={skill.name}
+                                    onClick={() => handleOpenSkill(skill)}
+                                    className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                                      selectedSkill?.name === skill.name
+                                        ? (effectiveTheme === 'dark' ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300" : "bg-cyan-50/80 border-cyan-400/60 text-cyan-900 shadow-xs")
+                                        : (effectiveTheme === 'dark' ? "bg-slate-950/60 border-slate-800/80 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-bold text-xs truncate font-mono">{skill.name}</span>
+                                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900/60 border border-slate-800 text-cyan-400">
+                                        {skill.references?.length || 0} ref
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                                      {skill.desc || 'Aturan koding otomatis'}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+
+                            {/* Sub-Panel Kanan: Markdown Viewer (Col 7) */}
+                            <div className={`col-span-7 border rounded-xl p-3 flex flex-col justify-between max-h-[340px] overflow-y-auto ${
+                              effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200 shadow-inner'
+                            }`}>
+                              {selectedSkill ? (
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+                                    <span className="font-bold font-mono text-xs text-cyan-400">{selectedSkill.name}/SKILL.md</span>
+                                    <span className="text-[10px] text-emerald-400 font-mono">LIVE DISK SYNC</span>
+                                  </div>
+                                  <pre className="font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed">
+                                    {selectedSkill.content}
+                                  </pre>
+                                </div>
+                              ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs py-12">
+                                  <Shield className="w-8 h-8 text-slate-600 mb-2 opacity-50" />
+                                  <span>Pilih salah satu SOP di samping untuk membaca detail.</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -3521,7 +3654,7 @@ export default function App() {
         )}
 
         {/* TAB 4: SKILLS HIERARCHY & READER (IDE-STYLE MASTER-DETAIL EXPLORER) */}
-        {activeTab === "skills" && (
+        {false && (
           <div className="space-y-4">
             {/* Top Bar with Breadcrumbs & Sync Button */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -3889,8 +4022,7 @@ export default function App() {
             )}
           </div>
         )}
-
-        {/* TAB 5: EVOLUTION LOGS (UNIFORM SPLIT-PANE HIERARCHY) */}
+        {/* TAB 4: EVOLUTION LOGS (UNIFORM SPLIT-PANE HIERARCHY) */}
         {activeTab === "logs" && (
           <div className="space-y-4">
             {/* Top Toolbar */}
