@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub fn encrypt_credential(plain: &str) -> Result<String, String> {
     #[cfg(windows)]
     {
@@ -9,6 +10,7 @@ pub fn encrypt_credential(plain: &str) -> Result<String, String> {
     }
 }
 
+#[allow(dead_code)]
 pub fn decrypt_credential(cipher: &str) -> Result<String, String> {
     #[cfg(windows)]
     {
