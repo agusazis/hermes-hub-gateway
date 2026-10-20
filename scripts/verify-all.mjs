@@ -1,62 +1,51 @@
-import http from 'http';
 import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
-const testScript = `
-import urllib.request, json, time
-
-# Helper via browser harness API
-from browser_harness.helpers import goto_url, js, wait_for_load
-
-goto_url('http://127.0.0.1:25173/')
-wait_for_load()
-time.sleep(1)
-
-js("""
-window.testErrors = [];
-window.addEventListener('error', e => window.testErrors.push(e.message));
-""")
-
-tabs = ['Dashboard', 'Workspaces', 'MCP Servers Hub', 'Skills Hierarchy & Reader', 'Evolution Logs', 'Version Logs / Changelog', 'Settings & Repos']
-for t in tabs:
-    js(f"Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('{t}')).click()")
-    time.sleep(0.2)
-
-# MCP Modal Test
-js("Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('MCP Servers Hub')).click()")
-time.sleep(0.2)
-js("Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Daftarkan Server MCP Baru') || el.textContent.includes('Tambah Server MCP')).click()")
-time.sleep(0.3)
-js("Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Formulir Field')).click()")
-time.sleep(0.2)
-js("Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Remote Server')).click()")
-time.sleep(0.2)
-js("Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Batal')).click()")
-time.sleep(0.2)
-
-errs = js("window.testErrors")
-if len(errs) > 0:
-    print('FAIL:', errs)
-    exit(1)
-print('SUCCESS_ALL_PASSED')
-`;
-
-console.log('Menjalankan Static Type Checking (tsc --noEmit)...');
+console.log('=== [HHG VERIFICATION GATE 1/3]: Static Type Checking (tsc --noEmit) ===');
 try {
   execSync('npx tsc --noEmit', { stdio: 'inherit' });
-  console.log('✓ TypeScript check PASSED (0 errors).');
+  console.log('✓ TypeScript check PASSED (0 errors).\n');
 } catch (e) {
-  console.error('❌ TypeScript check FAILED!');
+  console.error('❌ TypeScript check FAILED!\n');
   process.exit(1);
 }
 
-console.log('\nMenjalankan Vite Production Build Check...');
+console.log('=== [HHG VERIFICATION GATE 2/3]: Architectural Theme Token & Boundary Audit ===');
+// Memeriksa bahwa tidak ada pelanggaran hardcoded dark background di komponen global
+const appSrcPath = path.resolve('./src/App.tsx');
+const appContent = fs.readFileSync(appSrcPath, 'utf8');
+
+// Rules: Dilarang hardcode bg-slate-950/70 tanpa boundary adaptif pada surface & cards
+const forbiddenPatterns = [
+  { regex: /className="[^"]*bg-slate-950\/70[^"]*"/g, desc: "Hardcoded dark container (bg-slate-950/70) without theme adapter" },
+  { regex: /className="[^"]*bg-slate-900\/60 border-slate-800[^"]*"/g, desc: "Hardcoded unselected dark card without light theme variant" }
+];
+
+let violations = 0;
+for (const rule of forbiddenPatterns) {
+  const matches = appContent.match(rule.regex);
+  if (matches && matches.length > 0) {
+    console.error(`❌ Pelanggaran Desain Terdeteksi: ${rule.desc} (${matches.length} kemunculan)`);
+    violations += matches.length;
+  }
+}
+
+if (violations > 0) {
+  console.error(`\n❌ Total ${violations} pelanggaran batas arsitektur tema ditemukan. Tolong gunakan token tema atau hhg-* standard class!`);
+  process.exit(1);
+} else {
+  console.log('✓ Theme Design System & Boundary Audit PASSED (100% Compliant).\n');
+}
+
+console.log('=== [HHG VERIFICATION GATE 3/3]: Production Vite Bundler Check ===');
 try {
   execSync('npm run build', { stdio: 'inherit' });
-  console.log('✓ Vite build check PASSED.');
+  console.log('✓ Vite build check PASSED.\n');
 } catch (e) {
-  console.error('❌ Vite build FAILED!');
+  console.error('❌ Vite build FAILED!\n');
   process.exit(1);
 }
 
-console.log('\n🎉 ALL LOCAL TEST GATES COMPLETED SUCCESSFULLY!');
+console.log('🎉 SELURUH PINTU PENGUJIAN PRE-BUILD LOLOS DENGAN SEMPURNA!');
 process.exit(0);
