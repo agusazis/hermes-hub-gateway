@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.7.6
-          releaseName: "Hermes Hub Gateway v0.7.6"
-          releaseBody: "Release v0.7.6: Native Windows Folder Picker & Unified Semantic Theme System. Features a native folder picker button for desktop project selection, full deduplicated workspace provisioning, clean modal form reset, and 9Router-aligned semantic design tokens."
+          tagName: v0.7.7
+          releaseName: "Hermes Hub Gateway v0.7.7"
+          releaseBody: "Release v0.7.7: Unified Workspaces & Integrated Skills Explorer. Merges Workspaces and Skills Hierarchy into a single cohesive project-scoped manager, introduces clean-state workspace forms (zero pre-filled mock tokens), deterministic cancel/close resets, and desktop folder picker integration."
           releaseDraft: false
           prerelease: false
