@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.8');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.9');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.9',
+      name: 'Hermes Hub Gateway v0.6.9 (Substantial Skills Discovery & Native Named Pipe MCP Server)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Pembenahan substansial arsitektur gateway: penguraian direktori repositori cerdas berbasis berkas SKILL.md nyata (menghilangkan folder internal seperti specialists/tools/skills dari daftar SOP), ekstraksi dinamis metadata dari header dokumen, dan penyambungan bridge Named Pipe Windows aktual ke MCP Antigravity IDE.',
+      features: [
+        'Substantial Skill File Discovery: Backend Rust secara otomatis membedah subfolder skills/ dan hanya mendaftarkan direktori yang benar-benar memiliki berkas SKILL.md.',
+        'Real Windows Named Pipe Server: Implementasi listener Tokio Named Pipe pada \\\\.\\pipe\\hhg-bridge untuk pertukaran pesan JSON-RPC MCP aktif.',
+        'Dynamic Header Parsing: Membaca judul SOP dan deskripsi langsung dari baris markdown SKILL.md lokal.',
+        'IDE Folder Filtering: Mengeliminasi folder penampung agen non-SOP seperti specialists/, tools/, dan rules/ dari panel SOP.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Daftar SOP yang menampilkan nama folder mentah (skills, specialists, tools) alih-alih daftar aturan koding aktual.',
+        'Ketiadaan listener Named Pipe riil di Windows.'
+      ],
+      architecture: [
+        'Substantial Contract Discovery & Native Windows IPC Named Pipe Server.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.9/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.9/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.8',
       name: 'Hermes Hub Gateway v0.6.8 (Synchronous Git Pull & Clean Header Toolbar)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghilangkan tombol duplikat Sync Rules Now di top header, menyempurnakan alur backend Rust trigger_manual_sync agar menunggu proses git pull selesai sebelum me-refresh hirarki, dan otomatis memfilter direktori sistem internal (.git).',
       features: [
         'Single Source Sync Action: Tombol "Sync Rules Now" kini terpusat eksklusif di tab Skills Hierarchy & Reader.',
@@ -2008,7 +2034,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.8</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.9</span>
             </div>
           </div>
 
