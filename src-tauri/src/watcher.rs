@@ -170,6 +170,22 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
                 .args(&["clone", "-b", &git.target_branch, &clone_url, &internal_path.to_string_lossy()])
                 .output()
                 .await;
+
+            // Jika repository meletakkan skill di subfolder "skills/", pindahkan isinya langsung ke internal_path agar terbaca rapi
+            let nested_skills = internal_path.join("skills");
+            if nested_skills.exists() && nested_skills.is_dir() {
+                if let Ok(entries) = std::fs::read_dir(&nested_skills) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_dir() {
+                            let target = internal_path.join(entry.file_name());
+                            if !target.exists() {
+                                let _ = std::fs::rename(&path, &target);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // 2. Jika clone via git CLI tidak menghasilkan folder (atau git tidak ada di PATH),
