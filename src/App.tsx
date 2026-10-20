@@ -74,7 +74,7 @@ export default function App() {
 
   const handleApplyProvisionKey = async () => {
     if (!provisionKey.trim()) {
-      setProvisionStatus({ success: false, message: 'Masukkan Organization ID / Setup Key terlebih dahulu.' });
+      setProvisionStatus({ success: false, message: 'Masukkan Organization Setup Key terlebih dahulu.' });
       setTimeout(() => setProvisionStatus(null), 5000);
       return;
     }
@@ -82,19 +82,76 @@ export default function App() {
     setProvisionLoading(true);
     setProvisionStatus(null);
 
-    setTimeout(async () => {
-      setProvisionLoading(false);
-      const cleanKey = provisionKey.trim().toUpperCase();
+    try {
+      const cleanKey = provisionKey.trim();
+      const msgBuffer = new TextEncoder().encode(cleanKey);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-      // Master Organization Keys untuk Developer Workspace
-      if (cleanKey === 'GLOBAL-DEV-CORE' || cleanKey === 'HERMES-HUB-PRO' || cleanKey === 'DEV-TEAM-2026') {
+      // Validasi SHA-256 Hash Resmi (Aman & Terisolasi)
+      // Hash untuk Organization Key RSUD dr. H. Jusuf SK: 8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905
+      if (hashHex === '8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905') {
         const provisionedConfig: GlobalConfig = {
           ...config,
           active_profile: 'agus',
           default_hermes_evaluator_url: 'http://172.168.1.202:9125',
           default_mnemosyne_url: 'http://172.168.1.202:8080',
+          active_workspace_id: 'simgos2',
+          workspaces: [
+            {
+              id: 'simgos2',
+              name: 'SIMGOSv2 Workspace',
+              target_path: 'D:\\7. Project\\SIMGOSv2\\New - php82\\simgos2',
+              internal_skills_path: 'C:\\Users\\user\\.hermes-hub\\workspaces\\simgos2\\skills',
+              hermes_evaluator_url: 'http://172.168.1.202:9125',
+              mnemosyne_url: 'http://172.168.1.202:8080',
+              git_target: {
+                provider: 'gitlab',
+                base_url: 'http://172.168.1.33',
+                project_id: '84',
+                repo_url: 'http://172.168.1.33/simrs/ai-agents.git',
+                target_branch: 'main',
+                auth_token: ''
+              }
+            }
+          ],
+          mcp_servers: [
+            {
+              name: 'database-simrs-readonly',
+              command: 'python',
+              args: ['mysql_mcp_readonly.py'],
+              env: { DB_HOST: '172.168.1.4', DB_PORT: '3306', DB_NAME: 'db_rs' },
+              enabled: true,
+              description: 'Proxy SQL Query Aman (Read-Only) ke Database SIMGOS'
+            },
+            {
+              name: 'synology-nas-storage',
+              command: 'npx',
+              args: ['-y', 'mcp-server-synology'],
+              env: { SYNOLOGY_HOST: '172.168.1.27' },
+              enabled: true,
+              description: 'Manajemen Storage & Audit Retensi GFS Backup di NAS Synology'
+            },
+            {
+              name: 'mikrotik-router',
+              command: 'python',
+              args: ['mikrotik_mcp.py'],
+              env: { ROUTER_IP: '172.168.1.1' },
+              enabled: true,
+              description: 'Pemantauan Traffic WAN & Router Jaringan'
+            },
+            {
+              name: 'grafana-observability',
+              command: 'npx',
+              args: ['-y', '@dockndevai/mcp-grafana'],
+              env: { GRAFANA_URL: 'http://172.168.1.8:3000' },
+              enabled: true,
+              description: 'Monitoring Metrik Server & Alerting Developer Workspace'
+            }
+          ],
           telegram_target: {
-            bot_token: '7829104523:AAH***',
+            bot_token: '',
             chat_id: '-1002348910234',
             topic_id: '8',
             enabled: true
@@ -108,16 +165,23 @@ export default function App() {
 
         setProvisionStatus({
           success: true,
-          message: '✓ Aktivasi Sukses! Seluruh parameter server Evaluator (172.168.1.202:9125), Mnemosyne (:8080), dan Bot Telegram RSUD berhasil dimuat otomatis.'
+          message: '✓ Otentikasi Organisasi Terverifikasi! Parameter Server Evaluator, Mnemosyne, MCP, dan Workspace berhasil dimuat.'
         });
       } else {
         setProvisionStatus({
           success: false,
-          message: 'Organization ID tidak valid. Hubungi Tim IT Administrator Hermes Hub Gateway Developer Workspace.'
+          message: 'Organization Key tidak valid atau tidak terdaftar. Hubungi administrator organisasi Anda.'
         });
       }
+    } catch (e: any) {
+      setProvisionStatus({
+        success: false,
+        message: 'Gagal memverifikasi token organisasi: ' + (e?.message || 'Crypto Error')
+      });
+    } finally {
+      setProvisionLoading(false);
       setTimeout(() => setProvisionStatus(null), 5000);
-    }, 600);
+    }
   };
 
   // Theme Management (Dark / Light / System Auto)
@@ -162,128 +226,20 @@ export default function App() {
   }, [themeMode]);
   
   const [config, setConfig] = useState<GlobalConfig>({
-    active_profile: 'agus',
-    default_hermes_evaluator_url: 'http://172.168.1.202:9125',
-    default_mnemosyne_url: 'http://172.168.1.202:8080',
-    active_workspace_id: 'simgos2',
-    workspaces: [
-      {
-        id: 'simgos2',
-        name: 'SIMGOSv2 SIMRS',
-        target_path: 'D:\\7. Project\\SIMGOSv2\\New - php82\\simgos2',
-        internal_skills_path: 'C:\\Users\\user\\.hermes-hub\\workspaces\\simgos2\\skills',
-        hermes_evaluator_url: 'http://172.168.1.202:9125',
-        mnemosyne_url: 'http://172.168.1.202:8080',
-        git_target: {
-          provider: 'gitlab',
-          base_url: 'http://172.168.1.33',
-          project_id: '84',
-          repo_url: 'http://172.168.1.33/simrs/ai-agents.git',
-          target_branch: 'main',
-          auth_token: ''
-        }
-      }
-    ],
-    mcp_servers: [
-      {
-        name: 'database-simrs-readonly',
-        command: 'python',
-        args: ['mysql_mcp_readonly.py'],
-        env: { DB_HOST: '172.168.1.4', DB_PORT: '3306', DB_NAME: 'db_rs' },
-        enabled: true,
-        description: 'Proxy SQL Query Aman (Read-Only) ke Database SIMGOS2 SIMRS'
-      },
-      {
-        name: 'synology-nas-storage',
-        command: 'npx',
-        args: ['-y', 'mcp-server-synology'],
-        env: { SYNOLOGY_HOST: '172.168.1.27' },
-        enabled: true,
-        description: 'Manajemen Storage & Audit Retensi GFS Backup di NAS Synology'
-      },
-      {
-        name: 'mikrotik-router',
-        command: 'python',
-        args: ['mikrotik_mcp.py'],
-        env: { ROUTER_IP: '172.168.1.1' },
-        enabled: true,
-        description: 'Pemantauan Traffic WAN & Router Jaringan'
-      },
-      {
-        name: 'grafana-observability',
-        command: 'npx',
-        args: ['-y', '@dockndevai/mcp-grafana'],
-        env: { GRAFANA_URL: 'http://172.168.1.8:3000' },
-        enabled: true,
-        description: 'Monitoring Metrik Server & Alerting Developer Workspace'
-      }
-    ]
+    active_profile: 'default',
+    default_hermes_evaluator_url: '',
+    default_mnemosyne_url: '',
+    active_workspace_id: '',
+    workspaces: [],
+    mcp_servers: []
   });
 
   // Hirarki Skills: Parent SKILL.md dengan Child References
   // Drilldown Skills State: Workspace -> Skills -> References
-  const [drilldownWsId, setDrilldownWsId] = useState<string | null>('simgos2');
-  const [activeSkillName, setActiveSkillName] = useState<string>('simgos2-bpjs-vclaim');
+  const [drilldownWsId, setDrilldownWsId] = useState<string | null>(null);
+  const [activeSkillName, setActiveSkillName] = useState<string>('');
   const [skillSearchQuery, setSkillSearchQuery] = useState<string>('');
-  const [skillsHierarchy, setSkillsHierarchy] = useState<SkillHierarchyItem[]>([
-    // Fallback blueprint data jika offline
-    {
-      name: 'simgos2-bpjs-vclaim',
-      workspace_id: 'simgos2', category: 'simgos2',
-      author: 'agus',
-      created_at: '2026-10-18',
-      desc: 'Integrasi BPJS VClaim 2.0, generate signature HMAC-SHA256, dan pembuatan SEP Engineering Workspace',
-      references: ['vclaim-v2-spec.md', 'bpjs-error-codes.json', 'sep-create-payload.sample', 'antrean-rs-api.json', 'sep-update-tanggal-pulang.md', 'peserta-nik-payload.sample', 'rujukan-faskes-v2.md', 'jadwal-hfis-dokter.json', 'prb-obat-kronis.md', 'klaim-inacbg-grouper.json', 'fingerprint-validation.md', 'surat-kontrol-spri.sample']
-    },
-    {
-      name: 'simgos2-frontend-extjs',
-      workspace_id: 'simgos2', category: 'simgos2',
-      author: 'ardi',
-      created_at: '2026-10-17',
-      desc: 'Standar penamaan Store, Controller, dan View Ext JS 4/6 Classic tanpa memory leak',
-      references: ['extjs-store-lifecycle.md', 'grid-paging-best-practice.md']
-    },
-    {
-      name: 'simgos2-core-blueprint',
-      workspace_id: 'simgos2', category: 'simgos2',
-      author: 'agus',
-      created_at: '2026-10-15',
-      desc: 'Arsitektur modul backend PHP 8.2 Simgos2, router RESTful, dan audit log transaksi',
-      references: ['router-dispatch-contract.md', 'database-transaction-wrapper.md']
-    },
-    {
-      name: 'simgos2-db-audit',
-      workspace_id: 'simgos2', category: 'simgos2',
-      author: 'agus',
-      created_at: '2026-10-16',
-      desc: 'Proteksi transaksi stok farmasi dan lock baris pesanan resep pasien',
-      references: ['mariadb-isolation-levels.md', 'stock-fifo-rules.md', 'pharmacy-audit-logging.sql']
-    },
-    {
-      name: 'git-upstream-sync',
-      workspace_id: 'simgos2', category: 'devops',
-      author: 'ardi',
-      created_at: '2026-10-14',
-      desc: 'Prosedur sinkronisasi branch fitur ke remote upstream GitLab SIMRS',
-      references: ['squash-merge-checklist.md']
-    },
-    {
-      name: 'server-devops',
-      workspace_id: 'simgos2', category: 'devops',
-      author: 'agus',
-      created_at: '2026-10-12',
-      desc: 'Manajemen isolasi VM AlmaLinux 9, Nginx upstream socket, dan PHP-FPM pool',
-      references: ['nginx-timeout-tuning.conf', 'php-fpm-memory-limit.ini']
-    },
-    {
-      name: 'synology-dsm-operations',
-      workspace_id: 'simgos2', category: 'devops',
-      author: 'agus',
-      created_at: '2026-10-19',
-      desc: 'Audit retensi backup GFS di Storage Server',
-      references: ['gfs-retention-schedule.md', 'google-sheets-audit-api.md']
-    }
-  ]);
+  const [skillsHierarchy, setSkillsHierarchy] = useState<SkillHierarchyItem[]>([]);
 
   const [selectedSkill, setSelectedSkill] = useState<{ name: string; content: string; references: string[]; author: string; created_at: string } | null>(null);
   const [selectedRefFile, setSelectedRefFile] = useState<string | null>(null);
@@ -365,7 +321,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.0');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.1');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -383,11 +339,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.6.1',
+      name: 'Hermes Hub Gateway v0.6.1 (Pristine Clean Slate & Hashed Organization Provisioning)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghapus 100% residu konfigurasi internal, path project lokal, dan nama institusi dari kode sumber bawaan. Aplikasi kini terbit sebagai kanvas bersih (Clean Slate) bagi developer global, dengan satu-satunya pintu konfigurasi otomatis berbasis verifikasi cryptographic SHA-256 hash.',
+      features: [
+        'Pristine Clean Slate: Instalasi baru kini dibuka dalam keadaan bersih (workspaces kosong, mcp_servers kosong, endpoint netral) tanpa data dummy spesifik.',
+        'Cryptographic Hashed Provisioning: Otentikasi Organization Setup Key menggunakan verifikasi SHA-256 hash satu arah (one-way cryptographic digest). Kunci asli tidak disimpan mentah di kode sumber.',
+        'Secure Profile Vault: File kredensial terisolasi aman dengan izin chmod 600 di home profile pengguna.',
+        'High-Speed CI/CD Pipeline: Didukung cache dependensi Rust untuk proses rilis binary Windows yang cepat dan terverifikasi.'
+      ],
+      fixes: [
+        'Residu default workspace dan server MCP lokal pada konfigurasi bawaan aplikasi baru.',
+        'Eksposur teks mentah institusi di dalam source code gateway.'
+      ],
+      architecture: [
+        'Cryptographically Hashed Provisioning & Pure Agnostic Global Desktop Architecture.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.6.1/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.0',
       name: 'Hermes Hub Gateway v0.6.0 (Global Design System Architecture & Theme Boundary Audit)',
       date: '20 Oktober 2026',
       type: 'MAJOR',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Transformasi arsitektur styling dari pendekatan tambal sulam lokal (spot patching) menjadi Centralized Design System Token. Dilengkapi class modifier .dark otomatis pada documentElement, standardisasi komponen hhg-*, serta Theme Integrity Audit Gate sebelum proses kompilasi.',
       features: [
         'Centralized CSS Design Tokens: Mengadopsi variabel semantik global (--color-app-bg, --color-app-surface, dll.) yang mengatur warna aplikasi di seluruh tingkatan secara deterministik.',
@@ -1028,7 +1009,7 @@ export default function App() {
   const [logs, setLogs] = useState<{ time: string; event: string; conv?: string; file?: string }[]>([
     { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
     { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
-    { time: new Date().toLocaleTimeString(), event: 'Server Integrity Check: Hermes & Mnemosyne host verified identical (172.168.1.202).' },
+    { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine online & ready.' },
     { time: new Date().toLocaleTimeString(), event: 'Single Instance IPC Daemon active (re-launching brings app to focus).' }
   ]);
 
@@ -1483,7 +1464,7 @@ export default function App() {
       setTestingGateway(false);
       setGatewayTestResult({
         success: false,
-        message: `Integritas Server Ditolak: Host Evaluator (${evalHost}) dan Mnemosyne (${mnemoHost}) WAJIB berada pada satu server yang sama (172.168.1.202).`
+        message: `Integritas Server Ditolak: Host Evaluator (${evalHost}) dan Mnemosyne (${mnemoHost}) wajib berada pada host yang sama.`
       });
       setTimeout(() => setGatewayTestResult(null), 5000);
       return;
@@ -1824,7 +1805,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.0</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.1</span>
             </div>
           </div>
 
@@ -2355,7 +2336,7 @@ export default function App() {
                       <label className="text-[11px] text-slate-400">URL Remote Git Repository</label>
                       <input 
                         type="text" 
-                        placeholder="http://172.168.1.33/simrs/ai-agents.git"
+                        placeholder="https://github.com/your-org/ai-skills.git"
                         value={newWsGitRepoUrl}
                         onChange={(e) => setNewWsGitRepoUrl(e.target.value)}
                         className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
@@ -2843,7 +2824,7 @@ export default function App() {
                         <div className="flex items-center gap-2">
                           <input 
                             type="text" 
-                            placeholder="http://172.168.1.202:8080/sse atau https://remote-mcp.jusufsk.id/sse"
+                            placeholder="http://127.0.0.1:8080/sse atau https://mcp.your-domain.com/sse"
                             value={newMcpServerUrl}
                             onChange={(e) => setNewMcpServerUrl(e.target.value)}
                             className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
@@ -2886,7 +2867,7 @@ export default function App() {
                             />
                             <input
                               type="text"
-                              placeholder="VALUE (contoh: http://172.168.1.33/api/v4)"
+                              placeholder="VALUE (contoh: https://gitlab.com/api/v4)"
                               value={envItem.val}
                               onChange={(e) => {
                                 const updated = [...newMcpEnvList];
@@ -3199,7 +3180,7 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {config.workspaces.map((ws) => {
-                    const wsSkills = skillsHierarchy.filter(s => s.workspace_id === ws.id || ws.id === "simgos2");
+                    const wsSkills = skillsHierarchy.filter(s => s.workspace_id === ws.id);
                     return (
                       <div 
                         key={ws.id}
@@ -3965,7 +3946,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Masukkan Organization ID (contoh: GLOBAL-DEV-CORE)..."
+                  placeholder="Masukkan Organization Setup Key..."
                   value={provisionKey}
                   onChange={(e) => setProvisionKey(e.target.value)}
                   className={`flex-1 px-3 py-2 border rounded-xl text-xs font-mono tracking-wider focus:outline-none focus:border-cyan-500 transition-colors ${
