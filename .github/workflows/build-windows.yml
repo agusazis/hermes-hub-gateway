@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.6.7
-          releaseName: "Hermes Hub Gateway v0.6.7"
-          releaseBody: "Release v0.6.7: Full-Fledged Skill & Reference Reader. Adds multi-file tab selector in the reader modal, and backend physical disk stream via get_skill_reference_content for inspecting SQL, JSON, and MD references without truncation."
+          tagName: v0.6.8
+          releaseName: "Hermes Hub Gateway v0.6.8"
+          releaseBody: "Release v0.6.8: Synchronous Git Pull & Clean Header Toolbar. Removes duplicate Sync Rules button from top header, awaits git pull execution before refreshing frontend state, and filters hidden .git folders from the SOP hierarchy."
           releaseDraft: false
           prerelease: false
