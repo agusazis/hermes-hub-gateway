@@ -36,7 +36,7 @@ pub fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> JsonRpc
                         "properties": {
                             "name": {
                                 "type": "string",
-                                "description": "Nama skill (contoh: 'simgos2-bpjs-vclaim', 'simgos2-frontend-extjs')"
+                                "description": "Nama skill (contoh: 'core-blueprint', 'git-workflow')"
                             }
                         },
                         "required": ["name"]
