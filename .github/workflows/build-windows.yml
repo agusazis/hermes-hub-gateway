@@ -37,8 +37,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.5.1
-          releaseName: "Hermes Hub Gateway v0.5.1"
-          releaseBody: "Release v0.5.1: Raw JSON IDE-Compliant MCP Configuration Mode. Allows pasting raw JSON configs directly from VS Code / Antigravity IDE / Claude Desktop into MCP Servers Hub, features syntax validation, quick IDE template helper, schema compliance with Tauri v2, and verified background sync."
+          tagName: v0.5.2
+          releaseName: "Hermes Hub Gateway v0.5.2"
+          releaseBody: "Release v0.5.2: Dynamic Multi-Protocol MCP Registration Suite. Accommodates all MCP architectures: Local CLI (cmd.exe, npx, uvx, binary path), Remote SSE Endpoint (Mnemosyne / OmniRoute), dynamic Environment Variables Key-Value builder, and full Antigravity IDE Raw JSON compatibility."
           releaseDraft: false
           prerelease: false
