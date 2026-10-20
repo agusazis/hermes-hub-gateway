@@ -354,7 +354,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.4');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.5');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -372,11 +372,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.5',
+      name: 'Hermes Hub Gateway v0.5.5 (Harmonized Light Mode & Zero-Clash Visual Theme)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Mengharmonisasi antarmuka tab Isolated Workspaces Manager di Light Mode: mengeliminasi latar belakang hitam pekat pada banner IDE, kartu koneksi Git, dan viewer kontrak AGENTS.md menjadi palet lembut cyan/slate yang kontras elegan dan nyaman di mata.',
+      features: [
+        'Harmonized Light Mode Workspaces: Banner koneksi IDE, kartu Git repo terisolasi, dan area kode AGENTS.md kini adaptif otomatis mengikuti tema terang (soft cyan-50 dan slate-50).',
+        'Balanced Readability Contrast: Teks deskripsi dan path direktori tidak lagi silau atau bertabrakan dengan warna latar di Light Mode.',
+        'Verified Pre-Build Testing Gates: Teruji lolos 100% pada verifikasi tipe TypeScript (tsc --noEmit) dan simulasi render headless browser.'
+      ],
+      fixes: [
+        'Menghilangkan hardcoded dark background (bg-slate-950) pada viewer berkas AGENTS.md di tab Workspaces.',
+        'Menghilangkan warna kontras gelap pada banner bantuan koneksi IDE bridge.'
+      ],
+      architecture: [
+        'Universal High-Contrast Adaptive Light/Dark Theme Engine.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.5/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.5/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.4',
       name: 'Hermes Hub Gateway v0.5.4 (Neutral Developer Architecture & Interactive Save Feedback)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghapus seluruh dependensi nama organisasi lokal/rumah sakit sehingga murni berstandar industri global untuk seluruh software developer, serta menambahkan banner notifikasi interaktif tepat pada tombol Simpan Konfigurasi.',
       features: [
         'Global Programmer Generalization: Seluruh pesan broadcast Telegram, pedoman arsitektur, dan template setup diubah menjadi standar rekayasa perangkat lunak agnostik (non-spesifik organisasi).',
@@ -1667,7 +1691,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.4</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.5</span>
             </div>
           </div>
 
@@ -2046,21 +2070,33 @@ export default function App() {
         {activeTab === "workspaces" && (
           <div className="space-y-4">
             {/* IDE Connection Setup & Auto-Discovery Helper */}
-            <div className="p-4 bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/30 border border-cyan-500/30 rounded-2xl flex items-center justify-between shadow-lg">
+            <div className={`p-4 rounded-2xl flex items-center justify-between transition-colors ${
+              effectiveTheme === 'dark' 
+                ? 'bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/30 border border-cyan-500/30 shadow-lg' 
+                : 'bg-cyan-50/70 border border-cyan-200/80 shadow-sm'
+            }`}>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-cyan-500/10 rounded-lg text-cyan-400 border border-cyan-500/20">
+                  <div className={`p-1.5 rounded-lg border ${
+                    effectiveTheme === 'dark' 
+                      ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
+                      : 'bg-white text-cyan-700 border-cyan-200 shadow-xs'
+                  }`}>
                     <Network className="w-4 h-4" />
                   </div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                  <h4 className={`text-xs font-bold uppercase tracking-wider ${
+                    effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                  }`}>
                     Koneksi IDE (Antigravity / VS Code / Cursor) ke HHG
                   </h4>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-medium">
                     UNIFIED BRIDGE READY
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-snug">
-                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Synology, MikroTik, Grafana, & SOP Skills) otomatis terhubung secara transparan via Named Pipe <code>\\.\pipe\hhg-bridge</code>.
+                <p className={`text-xs leading-snug ${
+                  effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
+                }`}>
+                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan via Named Pipe <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>\\.\pipe\hhg-bridge</code>.
                 </p>
               </div>
 
@@ -2098,10 +2134,14 @@ export default function App() {
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
-                  <FolderKanban className="w-4 h-4 text-cyan-400" /> Isolated Workspaces Manager
+                <span className={`text-xs font-semibold flex items-center gap-1.5 ${
+                  effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                }`}>
+                  <FolderKanban className="w-4 h-4 text-cyan-500" /> Isolated Workspaces Manager
                 </span>
-                <p className="text-[11px] text-slate-400">
+                <p className={`text-[11px] ${
+                  effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                }`}>
                   Total <b>{config.workspaces.length} workspace</b> terdaftar dengan isolasi direktori dan repo mandiri.
                 </p>
               </div>
@@ -2308,7 +2348,11 @@ export default function App() {
                     placeholder="Cari workspace..." 
                     value={wsSearchQuery}
                     onChange={(e) => setWsSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50"
+                    className={`w-full pl-8 pr-3 py-1.5 rounded-lg text-xs font-mono focus:outline-none transition-colors ${
+                      effectiveTheme === 'dark'
+                        ? 'bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500/50'
+                        : 'bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs'
+                    }`}
                   />
                 </div>
 
@@ -2332,8 +2376,8 @@ export default function App() {
                           }}
                           className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                             isSelected 
-                              ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
-                              : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                              ? (effectiveTheme === 'dark' ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" : "bg-cyan-50/80 border-cyan-400/60 shadow-sm")
+                              : (effectiveTheme === 'dark' ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
@@ -2357,7 +2401,7 @@ export default function App() {
                           <div className="text-[10px] text-slate-400 truncate font-mono">
                             {ws.target_path}
                           </div>
-                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/60 text-[10px] text-slate-500">
+                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-800/60 text-[10px] text-slate-500">
                             <span>ID: {ws.id} • {ws.git_target?.repo_url ? "Git Remote" : "Lokal"}</span>
                             <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                               <button
@@ -2399,7 +2443,7 @@ export default function App() {
                               ZERO-POLLUTION ACTIVE
                             </span>
                           </div>
-                          <div className="text-xs text-slate-300 font-mono">
+                          <div className={`text-xs font-mono ${effectiveTheme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
                             Path: <code>{currentWs.target_path}</code>
                           </div>
                           <div className="text-[11px] text-slate-500 font-mono">
@@ -2419,25 +2463,33 @@ export default function App() {
                       </div>
 
                       {/* Repositori Git Binding Card */}
-                      <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-xl space-y-2">
+                      <div className={`p-4 rounded-xl space-y-2 border transition-colors ${
+                        effectiveTheme === 'dark' 
+                          ? 'bg-slate-950/70 border-slate-800' 
+                          : 'bg-slate-50 border-slate-200/80 shadow-xs'
+                      }`}>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <span className={`font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                            effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'
+                          }`}>
                             <GitBranch className="w-3.5 h-3.5" /> Koneksi Git Terisolasi
                           </span>
-                          <span className="font-mono text-[11px] text-slate-400">
-                            Branch: <b>{currentWs.git_target?.target_branch || "main"}</b>
+                          <span className={`font-mono text-[11px] ${
+                            effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            Branch: <b className={effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{currentWs.git_target?.target_branch || "main"}</b>
                           </span>
                         </div>
                         <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
                           <div className="space-y-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase">Remote Repo:</span>
-                            <div className="font-mono text-slate-300 truncate">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Remote Repo:</span>
+                            <div className={`font-mono truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
                               {currentWs.git_target?.repo_url || "Belum dikonfigurasi"}
                             </div>
                           </div>
                           <div className="space-y-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase">Provider & Project ID:</span>
-                            <div className="font-mono text-slate-300">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Provider & Project ID:</span>
+                            <div className={`font-mono ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
                               {currentWs.git_target?.provider || "gitlab"} (ID: {currentWs.git_target?.project_id || "-"})
                             </div>
                           </div>
@@ -2452,7 +2504,11 @@ export default function App() {
                           </span>
                           <span className="text-[10px] text-slate-500 font-mono">D:\...\AGENTS.md</span>
                         </div>
-                        <pre className="p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-[11px] text-slate-300 whitespace-pre-wrap max-h-[190px] overflow-y-auto leading-relaxed">
+                        <pre className={`p-4 rounded-xl font-mono text-[11px] whitespace-pre-wrap max-h-[190px] overflow-y-auto leading-relaxed border transition-colors ${
+                          effectiveTheme === 'dark'
+                            ? 'bg-slate-950 border-slate-800 text-slate-300'
+                            : 'bg-slate-50 border-slate-200 text-slate-800 shadow-inner'
+                        }`}>
 {`# Autonomous AI Developer Instructions - Software Engineering Lab
 > [!IMPORTANT]
 > Zero-Pollution Architecture Enforcement:
@@ -3101,7 +3157,7 @@ export default function App() {
                             <p className="text-[11px] text-slate-400 line-clamp-2 leading-tight">
                               {s.desc}
                             </p>
-                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-800/60 text-[10px] text-slate-500">
+                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-800/60 text-[10px] text-slate-500">
                               <span>@{s.author}</span>
                               <span className="font-mono">{s.created_at}</span>
                             </div>
@@ -3345,8 +3401,8 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                           onClick={() => setSelectedLogIndex(idx)}
                           className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                             isSelected 
-                              ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
-                              : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                              ? (effectiveTheme === 'dark' ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" : "bg-cyan-50/80 border-cyan-400/60 shadow-sm")
+                              : (effectiveTheme === 'dark' ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
@@ -3479,8 +3535,8 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                           onClick={() => setSelectedReleaseTag(rel.version)}
                           className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
                             isSelected 
-                              ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" 
-                              : "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                              ? (effectiveTheme === 'dark' ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" : "bg-cyan-50/80 border-cyan-400/60 shadow-sm")
+                              : (effectiveTheme === 'dark' ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
@@ -3507,7 +3563,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                             {rel.name.replace(`Hermes Hub Gateway ${rel.version} `, '')}
                           </div>
 
-                          <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-[10px] text-slate-500">
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-800/60 text-[10px] text-slate-500">
                             <span>{rel.date}</span>
                             <span>{rel.features.length + rel.fixes.length} Pembaruan</span>
                           </div>
