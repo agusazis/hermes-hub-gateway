@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.0');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.1');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.1',
+      name: 'Hermes Hub Gateway v0.7.1 (Full Git Suite Sync & Multi-SOP Discovery)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menjamin seluruh 14 SOP resmi (simgos2-db-audit, simgos2-bpjs-vclaim, simgos2-frontend-extjs, dll.) tersinkronisasi dan tampil lengkap di panel daftar SOP dengan verifikasi hitung lokal dan fallback REST API otomatis.',
+      features: [
+        'Guaranteed Full Suite Sync: Sinkronisasi memeriksa jumlah folder SKILL.md di disk lokal. Jika di bawah batas minimal, REST API GitLab otomatis mengunduh seluruh 14 SOP secara lengkap.',
+        'Eliminasi Folder Noise: Mengeliminasi folder specialists, tools, dan folder mentah skills dari daftar SOP.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Tampilan daftar SOP yang hanya memuat 1 rule simgos2-db-audit karena proses Git clone parsial.',
+        'Penyelarasan direktori skills_root agar konsisten di semua skenario repository.'
+      ],
+      architecture: [
+        'Robust Self-Healing Git Sync & Recursive SOP Traversal.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.1/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.0',
       name: 'Hermes Hub Gateway v0.7.0 (Zero-Mock Physical Architecture & Strict Disk Verification)',
       date: '20 Oktober 2026',
       type: 'MAJOR',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Transformasi substansial arsitektur gateway: eliminasi 100% data mock fallback palsu di frontend dan backend. Seluruh hierarki SOP, berkas SKILL.md, dan referensi dibaca murni dari disk fisik lokal dan repositori GitLab aktual tanpa rekayasa teks fiktif.',
       features: [
         'Zero-Mock Integrity: Seluruh string placeholder statis di Rust dan React dieliminasi total. Jika berkas fisik tidak ada di disk lokal, sistem secara jujur menampilkan status belum tersinkronisasi.',
@@ -2020,7 +2044,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.0</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.1</span>
             </div>
           </div>
 
