@@ -96,6 +96,31 @@ pub fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> JsonRpc
     let method = request.method.as_str();
 
     match method {
+        "initialize" => {
+            JsonRpcResponse {
+                jsonrpc: "2.0".to_string(),
+                id: request.id,
+                result: Some(serde_json::json!({
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "hermes-hub-gateway",
+                        "version": "0.7.2"
+                    }
+                })),
+                error: None,
+            }
+        }
+        "notifications/initialized" => {
+            JsonRpcResponse {
+                jsonrpc: "2.0".to_string(),
+                id: request.id,
+                result: Some(serde_json::json!({})),
+                error: None,
+            }
+        }
         "tools/list" => {
             let tools = serde_json::json!([
                 {
