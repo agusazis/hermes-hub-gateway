@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.3');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.5');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,57 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.5',
+      name: 'Hermes Hub Gateway v0.7.5 (Deduplicated Workspace Provisioning & Clean Slate Persistence)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Mencegah duplikasi data workspace saat install ulang atau registrasi ulang: menyematkan deduplikasi ID workspace baik di sisi Rust backend maupun state React frontend, serta memperkuat uninstaller custom NSIS agar tidak meninggalkan residu konfigurasi lama.',
+      features: [
+        'Idempotent Workspace Provisioning: Pendaftaran workspace yang sama otomatis melakukan update in-place dan tidak lagi menggandakan entri pada config.json.',
+        'Uninstaller Clean Slate Hardening: Memastikan uninstaller NSIS membersihkan seluruh direktori data %USERPROFILE%\\.hermes-hub dan AppData.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Masalah workspace yang terduplikasi atau tidak terhapus bersih setelah uninstall dan install ulang aplikasi.'
+      ],
+      architecture: [
+        'Idempotent Storage Provisioning & Complete Uninstallation Lifecycle.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.5/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.5/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
+      version: 'v0.7.4',
+      name: 'Hermes Hub Gateway v0.7.4 (Workspace State Reset & Clean Modal Isolation)',
+      date: '20 Oktober 2026',
+      type: 'PATCH',
+      status: 'STABLE',
+      highlights: 'Memperbaiki siklus hidup state modal form workspace: tombol Tambah Workspace Baru kini secara deterministik membersihkan editingWorkspaceIndex dan menginisialisasi form ke state kosong, mencegah form tertahan dalam mode edit dari aksi sebelumnya.',
+      features: [
+        'Deterministic Form Lifecycle: Reset eksplisit state editingWorkspaceIndex dan seluruh field input saat tombol Tambah Workspace Baru ditekan.',
+        'Clean Modal Isolation: Menjamin pemisahan murni antara alur pendaftaran workspace baru dan penyuntingan workspace yang sudah ada.',
+        'High-Speed CI/CD Pipeline: Tetap didukung cache dependensi Rust untuk proses kompilasi rilis kilat.'
+      ],
+      fixes: [
+        'Bug di mana modal Tambah Workspace Baru berubah menjadi modal Edit jika pengguna sebelumnya pernah mengklik tombol edit pada workspace lain.'
+      ],
+      architecture: [
+        'Deterministic UI State Transitions & Robust Modal State Isolation.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.4/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.4/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.7.3',
       name: 'Hermes Hub Gateway v0.7.3 (Official MCP Handshake & Seamless Antigravity IDE Integration)',
       date: '20 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menjamin kompatibilitas 100% dengan protokol Model Context Protocol (MCP) resmi: menambahkan dukungan method initialize dan notifications/initialized pada Named Pipe server Windows, sehingga Antigravity IDE dapat terhubung seketika tanpa timeout atau error handshake.',
       features: [
         'Official MCP 2024-11-05 Protocol Handshake: Implementasi penuh method initialize dan notifications/initialized pada Named Pipe \\\\.\\pipe\\hhg-bridge.',
@@ -1526,10 +1572,18 @@ export default function App() {
 
       created.git_target = gitTarget;
 
+      const existingIndex = config.workspaces.findIndex(w => w.id === created.id);
+      let updatedWsList = [...config.workspaces];
+      if (existingIndex >= 0) {
+        updatedWsList[existingIndex] = created;
+      } else {
+        updatedWsList.push(created);
+      }
+
       const updated = {
         ...config,
         active_workspace_id: created.id,
-        workspaces: [...config.workspaces, created]
+        workspaces: updatedWsList
       };
 
       setConfig(updated);
@@ -2094,7 +2148,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.3</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.5</span>
             </div>
           </div>
 
@@ -2542,7 +2596,17 @@ export default function App() {
                 </p>
               </div>
               <button 
-                onClick={() => setShowAddWsModal(true)}
+                onClick={() => {
+                  setEditingWorkspaceIndex(null);
+                  setNewWsName('');
+                  setNewWsPath('');
+                  setNewWsGitProvider('gitlab');
+                  setNewWsGitRepoUrl('http://172.168.1.33/simrs/ai-agents.git');
+                  setNewWsGitProjectId('84');
+                  setNewWsGitBranch('main');
+                  setNewWsGitToken('');
+                  setShowAddWsModal(true);
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
               >
                 <Plus className="w-3.5 h-3.5" /> Tambah Workspace Baru
