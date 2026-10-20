@@ -337,6 +337,9 @@ export default function App() {
   const [newMcpCmd, setNewMcpCmd] = useState('');
   const [newMcpArgs, setNewMcpArgs] = useState('');
   const [newMcpDesc, setNewMcpDesc] = useState('');
+  const [mcpInputMode, setMcpInputMode] = useState<'form' | 'raw'>('raw');
+  const [mcpRawJson, setMcpRawJson] = useState<string>('{\n  "postman-mcp": {\n    "command": "npx",\n    "args": ["-y", "@postman/mcp-server"],\n    "env": {},\n    "description": "Integrasi testing API Postman koleksi SIMRS"\n  }\n}');
+  const [mcpJsonError, setMcpJsonError] = useState<string>('');
 
   // Live Telemetry Logs
     const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
@@ -347,7 +350,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.0');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.1');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -365,11 +368,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.1',
+      name: 'Hermes Hub Gateway v0.5.1 (Raw JSON IDE-Compliant MCP Editor)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghadirkan editor Raw JSON MCP standar industri (Antigravity IDE / VS Code / Claude Desktop JSON) dengan validasi sintaks instan, tombol template kilat, serta opsi toggle ke formulir konvensional.',
+      features: [
+        'Raw JSON Configuration Mode: Pengguna dapat langsung menempelkan (paste) konfigurasi JSON mcpServers dari VS Code, Antigravity, atau Claude Desktop tanpa harus mengisi form satu per satu.',
+        'Multi-Server Auto Extraction: Mendukung pendaftaran banyak server MCP sekaligus dalam satu kali paste JSON array atau root object.',
+        'Syntax Error Highlighter: Menampilkan kotak peringatan merah jika terdapat kesalahan koma atau tanda kurung pada JSON yang di-paste.',
+        'Quick Template Helper: Tombol satu klik untuk memuat contoh format resmi MCP Server (seperti Postman, Database, atau Filesystem).'
+      ],
+      fixes: [
+        'Penyelarasan Skema Pendaftaran MCP Server dengan Antigravity IDE .agents/tools.',
+        'Koreksi State Form Terbuka saat Edit MCP Terpilih.'
+      ],
+      architecture: [
+        'Developer-First Raw Configuration Protocol & Dual-Mode MCP Registry.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.1/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.0',
       name: 'Hermes Hub Gateway v0.5.0 (Tauri v2 Schema Validation Fix & Stable Release)',
       date: '20 Oktober 2026',
       type: 'RELEASE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menuntaskan error kompilasi CI/CD Windows: menghapus properti invalid icon pada app > windows > 0 yang melanggar skema ketat Tauri v2 CLI, memastikan bundle ikon global tervalidasi 100%, serta menyatukan seluruh fitur audit koneksi riil dan sinkronisasi Git otomatis.',
       features: [
         'Strict Schema Compliance: Mengoreksi tauri.conf.json agar sepenuhnya valid terhadap skema JSON resmi Tauri v2 CLI (menghilangkan error Additional properties are not allowed icon).',
@@ -1347,6 +1375,67 @@ export default function App() {
 
   const handleCreateMcp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMcpJsonError('');
+
+    if (mcpInputMode === 'raw') {
+      try {
+        const parsed = JSON.parse(mcpRawJson);
+        let entriesToAdd: McpServerEntry[] = [];
+
+        // Check if user provided { "mcpServers": { ... } } (VS Code / Claude format) or direct { "server-name": { ... } }
+        const rootServers = parsed.mcpServers || parsed;
+        
+        for (const [name, val] of Object.entries<any>(rootServers)) {
+          if (typeof val === 'object' && val !== null) {
+            entriesToAdd.push({
+              name,
+              command: val.command || 'npx',
+              args: Array.isArray(val.args) ? val.args : (val.args ? String(val.args).split(' ') : []),
+              env: val.env || {},
+              enabled: val.enabled !== undefined ? Boolean(val.enabled) : true,
+              description: val.description || `${name} MCP Server`
+            });
+          }
+        }
+
+        if (entriesToAdd.length === 0) {
+          setMcpJsonError('Format JSON tidak memuat server MCP yang valid.');
+          return;
+        }
+
+        let updatedServers = [...config.mcp_servers];
+
+        if (editingMcpIndex !== null) {
+          // Replace single edited server
+          const first = entriesToAdd[0];
+          updatedServers[editingMcpIndex] = first;
+        } else {
+          // Merge or add new servers
+          for (const newEntry of entriesToAdd) {
+            const existingIdx = updatedServers.findIndex(s => s.name === newEntry.name);
+            if (existingIdx >= 0) {
+              updatedServers[existingIdx] = newEntry;
+            } else {
+              updatedServers.push(newEntry);
+            }
+          }
+        }
+
+        const updated = { ...config, mcp_servers: updatedServers };
+        setConfig(updated);
+        await invoke('save_system_config', { cfg: updated });
+        setShowAddMcpModal(false);
+        setEditingMcpIndex(null);
+        setSyncMessage(`✓ Berhasil mendaftarkan ${entriesToAdd.length} konfigurasi MCP Server ke Unified Bridge!`);
+        setTimeout(() => setSyncMessage(''), 4000);
+        return;
+      } catch (err: any) {
+        setMcpJsonError(`Sintaks JSON tidak valid: ${err.message}`);
+        return;
+      }
+    }
+
+    // Form Mode Fallback
     if (!newMcpName || !newMcpCmd) return;
 
     const newMcp: McpServerEntry = {
@@ -1358,18 +1447,26 @@ export default function App() {
       description: newMcpDesc || 'Custom MCP Server Tool'
     };
 
+    let updatedList = [...config.mcp_servers];
+    if (editingMcpIndex !== null) {
+      updatedList[editingMcpIndex] = newMcp;
+    } else {
+      updatedList.push(newMcp);
+    }
+
     const updated = {
       ...config,
-      mcp_servers: [...config.mcp_servers, newMcp]
+      mcp_servers: updatedList
     };
     setConfig(updated);
     await invoke('save_system_config', { cfg: updated });
     setShowAddMcpModal(false);
+    setEditingMcpIndex(null);
     setNewMcpName('');
     setNewMcpCmd('');
     setNewMcpArgs('');
     setNewMcpDesc('');
-    setSyncMessage(`MCP '${newMcp.name}' berhasil ditambahkan ke Unified Bridge!`);
+    setSyncMessage(`MCP '${newMcp.name}' berhasil disimpan ke Unified Bridge!`);
     setTimeout(() => setSyncMessage(''), 4000);
   };
 
@@ -1405,7 +1502,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.0</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.1</span>
             </div>
           </div>
 
@@ -2240,67 +2337,130 @@ export default function App() {
               </button>
             </div>
 
-            {/* Modal Edit / Add MCP Server */}
+            {/* Modal Edit / Add MCP Server (RAW JSON & IDE COMPLIANT) */}
             {showAddMcpModal && (
-              <form onSubmit={handleCreateMcp} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
-                  {editingMcpIndex !== null ? "Edit Konfigurasi Server MCP" : "Daftarkan MCP Server Baru"}
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Nama Identifier MCP</label>
-                    <input 
-                      type="text" 
-                      placeholder="Contoh: postman-mcp"
-                      value={newMcpName}
-                      onChange={(e) => setNewMcpName(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                      required
-                    />
+              <form onSubmit={handleCreateMcp} className={`p-5 rounded-2xl space-y-4 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 border-cyan-500/30" : "bg-white border-slate-200 shadow-lg"}`}>
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800 dark:border-slate-800 border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                    <h4 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-cyan-400" : "text-cyan-700"}`}>
+                      {editingMcpIndex !== null ? "Edit Konfigurasi Server MCP" : "Daftarkan MCP Server Baru"}
+                    </h4>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Command Eksekusi</label>
-                    <input 
-                      type="text" 
-                      placeholder="npx atau python"
-                      value={newMcpCmd}
-                      onChange={(e) => setNewMcpCmd(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <label className="text-xs text-slate-400">Argumen (Spasi dipisahkan)</label>
-                    <input 
-                      type="text" 
-                      placeholder="-y @postman/mcp-server"
-                      value={newMcpArgs}
-                      onChange={(e) => setNewMcpArgs(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <label className="text-xs text-slate-400">Deskripsi / Peran Tool</label>
-                    <input 
-                      type="text" 
-                      placeholder="Integrasi testing API Postman koleksi SIMRS"
-                      value={newMcpDesc}
-                      onChange={(e) => setNewMcpDesc(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-cyan-500"
-                    />
+                  {/* Mode Selector Toggle: Raw JSON (IDE) vs Form */}
+                  <div className={`flex items-center p-0.5 rounded-lg border text-[11px] font-mono ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-100 border-slate-300"}`}>
+                    <button
+                      type="button"
+                      onClick={() => setMcpInputMode('raw')}
+                      className={`px-3 py-1 rounded-md transition-all font-semibold ${mcpInputMode === 'raw' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white text-cyan-700 shadow-sm border border-slate-200') : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      Raw JSON (IDE Format)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMcpInputMode('form')}
+                      className={`px-3 py-1 rounded-md transition-all font-semibold ${mcpInputMode === 'form' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white text-cyan-700 shadow-sm border border-slate-200') : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      Formulir Field
+                    </button>
                   </div>
                 </div>
+
+                {mcpInputMode === 'raw' ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] text-slate-400 font-mono">
+                        Format standar IDE (Antigravity / VS Code / Claude Desktop JSON):
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMcpRawJson(`{\n  "mcpServers": {\n    "postman-mcp": {\n      "command": "npx",\n      "args": ["-y", "@postman/mcp-server"],\n      "env": {\n        "POSTMAN_API_KEY": "YOUR_KEY_HERE"\n      }\n    }\n  }\n}`);
+                          setMcpJsonError('');
+                        }}
+                        className="text-[10px] text-cyan-500 hover:underline font-mono"
+                      >
+                        Pakai Contoh Template IDE
+                      </button>
+                    </div>
+                    <textarea
+                      rows={10}
+                      value={mcpRawJson}
+                      onChange={(e) => {
+                        setMcpRawJson(e.target.value);
+                        setMcpJsonError('');
+                      }}
+                      placeholder={`{\n  "server-name": {\n    "command": "npx",\n    "args": ["-y", "@modelcontextprotocol/server-example"],\n    "env": {}\n  }\n}`}
+                      className={`w-full p-3 font-mono text-xs rounded-xl border focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-900 border-slate-700 text-cyan-300 shadow-inner"}`}
+                      spellCheck={false}
+                    />
+                    {mcpJsonError && (
+                      <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400 font-mono">
+                        {mcpJsonError}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400">Nama Identifier MCP</label>
+                      <input 
+                        type="text" 
+                        placeholder="Contoh: postman-mcp"
+                        value={newMcpName}
+                        onChange={(e) => setNewMcpName(e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                        required={mcpInputMode === 'form'}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400">Command Eksekusi</label>
+                      <input 
+                        type="text" 
+                        placeholder="npx atau python"
+                        value={newMcpCmd}
+                        onChange={(e) => setNewMcpCmd(e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                        required={mcpInputMode === 'form'}
+                      />
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                      <label className="text-xs text-slate-400">Argumen (Spasi dipisahkan)</label>
+                      <input 
+                        type="text" 
+                        placeholder="-y @postman/mcp-server"
+                        value={newMcpArgs}
+                        onChange={(e) => setNewMcpArgs(e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg text-xs font-mono focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                      />
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                      <label className="text-xs text-slate-400">Deskripsi / Peran Tool</label>
+                      <input 
+                        type="text" 
+                        placeholder="Integrasi testing API Postman koleksi SIMRS"
+                        value={newMcpDesc}
+                        onChange={(e) => setNewMcpDesc(e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-end gap-2 pt-2">
                   <button 
                     type="button" 
-                    onClick={() => setShowAddMcpModal(false)}
+                    onClick={() => {
+                      setShowAddMcpModal(false);
+                      setEditingMcpIndex(null);
+                    }}
                     className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
                   >
                     Batal
                   </button>
                   <button 
                     type="submit"
-                    className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold"
+                    className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-cyan-600/20"
                   >
                     {editingMcpIndex !== null ? "Simpan Perubahan" : "Simpan MCP Server"}
                   </button>
