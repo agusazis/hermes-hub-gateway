@@ -3,7 +3,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
@@ -189,20 +189,57 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
         }
 
         // 2. Jika clone via git CLI tidak menghasilkan folder (atau git tidak ada di PATH),
-        // gunakan API GitLab/GitHub REST via reqwest untuk sinkronisasi folder skills
-        if !internal_path.join("developer-guidelines").exists() {
-            let sample_skill_dir = internal_path.join("developer-guidelines");
-            let _ = fs::create_dir_all(&sample_skill_dir);
-            let ref_dir = sample_skill_dir.join("references");
-            let _ = fs::create_dir_all(&ref_dir);
+        // gunakan API GitLab/GitHub REST via reqwest untuk sinkronisasi folder skills langsung
+        if !internal_path.join(".git").exists() || std::fs::read_dir(&internal_path).map(|r| r.count()).unwrap_or(0) <= 1 {
+            println!("[Git Sync] Falling back to GitLab REST API sync for project_id: {:?}", git.project_id);
+            if let Ok(client) = reqwest::Client::builder().timeout(Duration::from_secs(10)).build() {
+                let host = git.repo_url.split("/").take(3).collect::<Vec<&str>>().join("/");
+                let project_identifier = if !git.project_id.trim().is_empty() {
+                    git.project_id.clone()
+                } else {
+                    let parts: Vec<&str> = git.repo_url.trim_end_matches(".git").split('/').collect();
+                    if parts.len() >= 2 {
+                        format!("{}%2F{}", parts[parts.len()-2], parts[parts.len()-1])
+                    } else {
+                        "84".to_string()
+                    }
+                };
 
-            let _ = fs::write(
-                sample_skill_dir.join("SKILL.md"),
-                "# Skill: developer-guidelines\n\n## Standar Operasional Prosedur (SOP)\nProteksi transaksi stok farmasi dan lock baris pesanan resep pasien.\n"
-            );
-            let _ = fs::write(ref_dir.join("database-isolation-levels.md"), "# MariaDB Isolation Levels\nPanduan REPEATABLE-READ dan READ-COMMITTED.\n");
-            let _ = fs::write(ref_dir.join("coding-standards.md"), "# Stock FIFO Rules\nProject coding standards and conventions.\n");
-            let _ = fs::write(ref_dir.join("architecture-blueprint.md"), "# Architecture Blueprint\nDefines standard patterns and project boundary rules.\n");
+                let tree_url = format!("{}/api/v4/projects/{}/repository/tree?path=skills&ref={}&recursive=true&per_page=100", host, project_identifier, git.target_branch);
+                let mut req = client.get(&tree_url);
+                if !git.auth_token.trim().is_empty() {
+                    req = req.header("PRIVATE-TOKEN", git.auth_token.trim());
+                }
+
+                if let Ok(resp) = req.send().await {
+                    if let Ok(tree) = resp.json::<Vec<serde_json::Value>>().await {
+                        for item in tree {
+                            if item.get("type").and_then(|t| t.as_str()) == Some("blob") {
+                                if let Some(path_str) = item.get("path").and_then(|p| p.as_str()) {
+                                    let rel_sub = path_str.strip_prefix("skills/").unwrap_or(path_str);
+                                    let dest_file = internal_path.join(rel_sub);
+                                    if let Some(parent) = dest_file.parent() {
+                                        let _ = fs::create_dir_all(parent);
+                                    }
+
+                                    let encoded_file = path_str.replace('/', "%2F");
+                                    let raw_url = format!("{}/api/v4/projects/{}/repository/files/{}/raw?ref={}", host, project_identifier, encoded_file, git.target_branch);
+                                    let mut f_req = client.get(&raw_url);
+                                    if !git.auth_token.trim().is_empty() {
+                                        f_req = f_req.header("PRIVATE-TOKEN", git.auth_token.trim());
+                                    }
+                                    if let Ok(f_resp) = f_req.send().await {
+                                        if let Ok(bytes) = f_resp.bytes().await {
+                                            let _ = fs::write(&dest_file, &bytes);
+                                            println!("[Git Sync] Downloaded: {:?}", dest_file);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
