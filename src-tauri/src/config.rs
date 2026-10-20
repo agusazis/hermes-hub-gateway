@@ -13,14 +13,6 @@ pub struct GitTarget {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TelegramTarget {
-    pub bot_token: String,
-    pub chat_id: String,
-    pub topic_id: Option<String>,
-    pub enabled: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct McpServerEntry {
     pub name: String,
     pub command: String,
@@ -47,7 +39,6 @@ pub struct GlobalConfig {
     pub default_hermes_evaluator_url: String,
     pub default_mnemosyne_url: String,
     pub active_workspace_id: String,
-    pub telegram_target: Option<TelegramTarget>,
     pub workspaces: Vec<Workspace>,
     pub mcp_servers: Vec<McpServerEntry>,
 }
@@ -109,7 +100,7 @@ impl Default for GlobalConfig {
                     ("ROUTER_IP".to_string(), "172.168.1.1".to_string()),
                 ]),
                 enabled: true,
-                description: "Pemantauan Traffic WAN & Antrean Bandwidth Router Jaringan RSUD".to_string(),
+                description: "Pemantauan Traffic WAN & Antrean Bandwidth Router Jaringan".to_string(),
             },
             McpServerEntry {
                 name: "grafana-observability".to_string(),
@@ -119,7 +110,7 @@ impl Default for GlobalConfig {
                     ("GRAFANA_URL".to_string(), "http://172.168.1.8:3000".to_string()),
                 ]),
                 enabled: true,
-                description: "Monitoring Metrik Server & Alerting RSUD dr. H. Jusuf SK".to_string(),
+                description: "Monitoring Metrik Server & Alerting Infrastruktur".to_string(),
             },
         ];
 
@@ -128,12 +119,6 @@ impl Default for GlobalConfig {
             default_hermes_evaluator_url: "http://172.168.1.202:9125".to_string(),
             default_mnemosyne_url: "http://172.168.1.202:8080".to_string(),
             active_workspace_id: "simgos2".to_string(),
-            telegram_target: Some(TelegramTarget {
-                bot_token: "".to_string(),
-                chat_id: "".to_string(),
-                topic_id: None,
-                enabled: false,
-            }),
             workspaces: vec![default_ws],
             mcp_servers: default_mcps,
         }
