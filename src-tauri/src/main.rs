@@ -16,6 +16,33 @@ fn get_system_config() -> config::GlobalConfig {
 }
 
 #[tauri::command]
+async fn select_project_folder() -> Result<Option<String>, String> {
+    #[cfg(windows)]
+    {
+        let output = tokio::process::Command::new("powershell")
+            .args(&[
+                "-NoProfile",
+                "-Command",
+                "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Pilih Folder Project Target'; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }"
+            ])
+            .output()
+            .await;
+
+        if let Ok(out) = output {
+            let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !res.is_empty() {
+                return Ok(Some(res));
+            }
+        }
+        Ok(None)
+    }
+    #[cfg(not(windows))]
+    {
+        Ok(None)
+    }
+}
+
+#[tauri::command]
 fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
     // ATURAN TEGAS: Server Hermes Evaluator dan Server Mnemosyne WAJIB satu host IP yang sama!
     let eval_host = cfg.default_hermes_evaluator_url.split(':').nth(1).unwrap_or("").trim_start_matches('/');
@@ -489,6 +516,7 @@ async fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             get_system_config,
+            select_project_folder,
             save_system_config,
             reset_system_config,
             get_skill_detail,
