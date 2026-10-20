@@ -324,7 +324,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.6.9');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.7.0');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -342,11 +342,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.7.0',
+      name: 'Hermes Hub Gateway v0.7.0 (Zero-Mock Physical Architecture & Strict Disk Verification)',
+      date: '20 Oktober 2026',
+      type: 'MAJOR',
+      status: 'LATEST',
+      highlights: 'Transformasi substansial arsitektur gateway: eliminasi 100% data mock fallback palsu di frontend dan backend. Seluruh hierarki SOP, berkas SKILL.md, dan referensi dibaca murni dari disk fisik lokal dan repositori GitLab aktual tanpa rekayasa teks fiktif.',
+      features: [
+        'Zero-Mock Integrity: Seluruh string placeholder statis di Rust dan React dieliminasi total. Jika berkas fisik tidak ada di disk lokal, sistem secara jujur menampilkan status belum tersinkronisasi.',
+        'Substantial Skill Traversal: Pemindaian folder skills/ kini berbasis keberadaan berkas fisik SKILL.md dan memfilter folder penampung non-SOP.',
+        'Real References Streaming: Tiga berkas referensi nyata simgos2-db-audit (charset_and_patch_discipline.md, dbservice_param_sanitization.md, inpatient_occupancy_queries.md) kini dibaca langsung dari GitLab.',
+        'Active Windows Named Pipe Server: Listener IPC nyata pada \\\\.\\pipe\\hhg-bridge siap melayani permintaan tools MCP Antigravity IDE.'
+      ],
+      fixes: [
+        'Data dummy/mock (seperti mariadb-isolation-levels dan pharmacy-audit-logging) yang menutupi kondisi berkas sebenarnya.',
+        'Asumsi tanpa verifikasi fisik antara repositori GitLab dan aplikasi desktop.'
+      ],
+      architecture: [
+        'Strict Physical Disk Verification & Zero-Synthetic Data Policy.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.0/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.7.0/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.6.9',
       name: 'Hermes Hub Gateway v0.6.9 (Substantial Skills Discovery & Native Named Pipe MCP Server)',
       date: '20 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Pembenahan substansial arsitektur gateway: penguraian direktori repositori cerdas berbasis berkas SKILL.md nyata (menghilangkan folder internal seperti specialists/tools/skills dari daftar SOP), ekstraksi dinamis metadata dari header dokumen, dan penyambungan bridge Named Pipe Windows aktual ke MCP Antigravity IDE.',
       features: [
         'Substantial Skill File Discovery: Backend Rust secara otomatis membedah subfolder skills/ dan hanya mendaftarkan direktori yang benar-benar memiliki berkas SKILL.md.',
@@ -1259,51 +1284,18 @@ export default function App() {
   }, []);
 
   const handleOpenSkill = async (s: SkillHierarchyItem) => {
-    // Generate rich structured SOP Markdown body matching the actual RSUD production standard
-    let realisticContent = '# Skill: ' + s.name + '\n\n';
-    realisticContent += '## Ringkasan Prosedur Operasional Standar (SOP)\n' + s.desc + '\n\n';
-    realisticContent += '### Standar Koding & Best Practices Arsitektur\n';
-    realisticContent += '1. **Zero-Pollution Rule**: Dilarang membuat konfigurasi asing di folder root modul koding selain deklarasi standar AGENTS.md.\n';
-    realisticContent += '2. **Audit Trailing**: Setiap mutasi data wajib merekam user_id, timestamp, dan origin workstation ke log audit.\n';
-    realisticContent += '3. **Error Boundary & Graceful Degradation**: Kegagalan koneksi upstream atau API bridging wajib ditangkap dengan fallback yang ramah pengguna.\n\n';
-
-    if (s.name.includes('bpjs') || s.name.includes('vclaim')) {
-      realisticContent += '### Bridging BPJS Kesehatan VClaim 2.0 Contract\n';
-      realisticContent += '* **Metode Otentikasi**: Signature HMAC-SHA256 (ConsID + SecretKey + Timestamp Unix).\n';
-      realisticContent += '* **Dekompresi Response**: String terenkripsi didekripsi menggunakan LZ-String Decompress.\n';
-      realisticContent += '* **Format Tanggal SEP**: Format tanggal rujukan wajib YYYY-MM-DD dengan kode PPK rujukan 8 digit.\n\n';
-      realisticContent += '```json\n{\n  "request": {\n    "t_sep": {\n      "noKartu": "0001234567890",\n      "tglSep": "2026-10-19",\n      "ppkPelayanan": "1701R001",\n      "jnsPelayanan": "2",\n      "klsRawat": { "klsRawatHak": "3" }\n    }\n  }\n}\n```\n';
-    } else if (s.name.includes('extjs')) {
-      realisticContent += '### Standardisasi Ext JS 4/6 MVC & MVVM Pattern\n';
-      realisticContent += '* **Penamaan View**: Wajib menggunakan prefix Simgos2.view.<modul>.<namaKomponen>.\n';
-      realisticContent += '* **Store Lifecycle**: Selalu panggil store.destroy() pada event beforedestroy panel untuk mencegah memory leak.\n';
-      realisticContent += '* **PagingToolbar**: Ukuran pageSize default 25 baris dengan parameter server-side paging start dan limit.\n';
-    } else if (s.name.includes('db-audit') || s.name.includes('core')) {
-      realisticContent += '### Transaksi Database & Isolasi Lock Farmasi\n';
-      realisticContent += '* **Tingkat Isolasi**: Gunakan READ COMMITTED untuk mencegah dirty read pada mutasi stok obat.\n';
-      realisticContent += '* **Row-Level Locking**: Eksekusi SELECT ... FOR UPDATE saat memvalidasi sisa stok fisik farmasi.\n';
-      realisticContent += '* **Rollback Trigger**: Setiap exception PHP PDO wajib memanggil $db->rollBack() seketika.\n';
-    } else if (s.name.includes('synology')) {
-      realisticContent += '### Retensi Backup GFS (Grandfather-Father-Son)\n';
-      realisticContent += '* **7-Daily**: Snapshot harian disimpan selama 7 hari berturut-turut.\n';
-      realisticContent += '* **4-Weekly**: Full backup mingguan disimpan setiap hari Minggu pukul 02:00 WITA.\n';
-      realisticContent += '* **12-Monthly**: Snapshot akhir bulan diarsipkan permanen ke cold-storage NAS / Cloud.\n';
-    } else {
-      realisticContent += '### Prosedur DevOps & Remote Repository\n';
-      realisticContent += '* **Target Branch**: Seluruh branch pengembangan wajib diverifikasi sebelum di-merge ke branch utama main.\n';
-      realisticContent += '* **Review Handshake**: Evaluator port 9125 akan memeriksa kelayakan koding sebelum release disetujui.\n';
-    }
+    let realisticContent = 'Memuat isi berkas SKILL.md dari disk...';
 
     try {
       const res: any = await invoke('get_skill_detail', {
         workspaceId: config.active_workspace_id,
         skillName: s.name
       });
-      if (res && res.content && !res.content.includes('dalam antrean')) {
+      if (res && res.content) {
         realisticContent = res.content;
       }
     } catch (e) {
-      // In web or offline mode, continue using realisticContent
+      realisticContent = `# ${s.name}\n\n${s.desc}\n\n*Berkas belum tersinkronisasi ke disk lokal. Silakan tekan Sync Rules Now.*`;
     }
 
     setSelectedSkill({
@@ -1332,13 +1324,7 @@ export default function App() {
         setRefFileContent('Tidak ada konten referensi yang tersedia.');
       }
     } catch (_) {
-      if (refFileName.endsWith('.sql')) {
-        setRefFileContent(`-- Technical Reference: ${refFileName}\n-- Prosedur transaksi SQL dan audit logging\n\nBEGIN;\n-- Mutasi persediaan farmasi dengan isolasi baris\nSELECT saldo_akhir, harga_beli FROM farmasi_stok_depo \nWHERE id_obat = 1042 AND id_depo = 2 FOR UPDATE;\n\nUPDATE farmasi_stok_depo \nSET saldo_akhir = saldo_akhir - 10 \nWHERE id_obat = 1042 AND id_depo = 2;\n\nINSERT INTO farmasi_kartu_stok (id_obat, id_depo, keluar, keterangan, created_at)\nVALUES (1042, 2, 10, 'Penyerahan resep rawat inap pasien', NOW());\n\nCOMMIT;`);
-      } else if (refFileName.endsWith('.json')) {
-        setRefFileContent(`{\n  "endpoint": "/vclaim-rest-1.1/Peserta/nokartu",\n  "method": "GET",\n  "auth": "HMAC-SHA256",\n  "description": "Skema integrasi referensi spesifikasi teknis ${refFileName}",\n  "schema": {\n    "nomor_kartu": "string (13 digit)",\n    "tgl_pelayanan": "YYYY-MM-DD"\n  }\n}`);
-      } else {
-        setRefFileContent(`# Spesifikasi Teknis: ${refFileName}\n\nPanduan operasional teknis terinci untuk modul ini:\n1. Terapkan validasi input ketat pada layer service controller.\n2. Pastikan transaksi atomik selalu memiliki exception handler rollback.\n3. Log setiap payload yang berinteraksi dengan API eksternal.`);
-      }
+      setRefFileContent(`Gagal memuat berkas referensi fisik ${refFileName} dari disk.`);
     } finally {
       setLoadingRefContent(false);
     }
@@ -2034,7 +2020,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.6.9</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.7.0</span>
             </div>
           </div>
 
