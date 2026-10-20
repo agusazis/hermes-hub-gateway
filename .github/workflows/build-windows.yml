@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.6.1
-          releaseName: "Hermes Hub Gateway v0.6.1"
-          releaseBody: "Release v0.6.1: Pristine Clean Slate & Hashed Organization Provisioning. Delivers a 100% agnostic global developer desktop application without default internal workspaces or local server strings. Features secure one-way SHA-256 cryptographic hash verification for organization setup keys, verified through automated pre-build test gates and fast Rust CI/CD caching."
+          tagName: v0.6.2
+          releaseName: "Hermes Hub Gateway v0.6.2"
+          releaseBody: "Release v0.6.2: One-Click Clean Slate Factory Reset & Neutral Identifier. Features an in-app button to completely clear leftover AppData configuration and restore the pristine empty state. Sanitizes Tauri bundle identifier to com.hermeshub.gateway."
           releaseDraft: false
           prerelease: false
