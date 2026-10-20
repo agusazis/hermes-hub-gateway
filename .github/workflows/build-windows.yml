@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.7.0
-          releaseName: "Hermes Hub Gateway v0.7.0"
-          releaseBody: "Release v0.7.0: Zero-Mock Physical Architecture & Strict Disk Verification. Removes all synthetic mock fallbacks across React and Rust. Guarantees 100% fidelity between GitLab repository files and desktop UI/MCP readers."
+          tagName: v0.7.1
+          releaseName: "Hermes Hub Gateway v0.7.1"
+          releaseBody: "Release v0.7.1: Full Git Suite Sync & Multi-SOP Discovery. Guarantees download of all 14 official skills via GitLab REST API fallback when local skills count is under threshold, eliminating partial-sync anomalies."
           releaseDraft: false
           prerelease: false
