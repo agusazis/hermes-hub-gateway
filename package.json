@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "verify": "node ./scripts/verify-all.mjs",
+    "test": "node ./scripts/verify-all.mjs",
     "preview": "vite preview",
     "tauri": "tauri"
   },
