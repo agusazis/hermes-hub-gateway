@@ -68,43 +68,9 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
 
     let skill_file = skill_dir.join("SKILL.md");
     let content = if skill_file.exists() {
-        std::fs::read_to_string(&skill_file).unwrap_or_else(|_| "Gagal membaca berkas SKILL.md".to_string())
+        std::fs::read_to_string(&skill_file).unwrap_or_else(|_| "Gagal membaca berkas SKILL.md dari disk.".to_string())
     } else {
-        let mut doc = format!("# Skill: {}\n\n", skill_name);
-        doc.push_str("## Standar Operasional Prosedur (SOP) & Blueprint Koding\n");
-        doc.push_str("Pedoman arsitektur dan standar koding terverifikasi otomatis oleh Hermes Evaluator untuk lingkungan software development.\n\n");
-        doc.push_str("### 1. Prinsip Utama Arsitektur (Zero-Pollution Project Root)\n");
-        doc.push_str("- Dilarang mengotori root folder proyek dengan file konfigurasi selain deklarasi standar `AGENTS.md`.\n");
-        doc.push_str("- Seluruh dependensi dan tool calling diisolasi melalui Named Pipe bridge `\\\\.\\pipe\\hhg-bridge`.\n\n");
-        
-        if skill_name.contains("bpjs") || skill_name.contains("vclaim") {
-            doc.push_str("### 2. Protokol Integrasi BPJS Kesehatan VClaim 2.0\n");
-            doc.push_str("- **Otentikasi**: Signature HMAC-SHA256 (ConsID + SecretKey + Unix Timestamp).\n");
-            doc.push_str("- **Dekompresi Payload**: Respons terenkripsi didekripsi menggunakan LZ-String Decompress.\n");
-            doc.push_str("- **Format Tanggal SEP**: Wajib berformat `YYYY-MM-DD` dengan kode PPK rujukan 8 digit.\n\n");
-            doc.push_str("```json\n{\n  \"request\": {\n    \"t_sep\": {\n      \"noKartu\": \"0001234567890\",\n      \"tglSep\": \"2026-10-19\",\n      \"ppkPelayanan\": \"1701R001\",\n      \"jnsPelayanan\": \"2\",\n      \"klsRawat\": { \"klsRawatHak\": \"3\" }\n    }\n  }\n}\n```\n");
-        } else if skill_name.contains("extjs") {
-            doc.push_str("### 2. Standar Frontend Ext JS 4/6 MVC & MVVM Pattern\n");
-            doc.push_str("- **Penamaan Komponen**: Gunakan format terstruktur `Simgos2.view.<modul>.<namaKomponen>`.\n");
-            doc.push_str("- **Memory Leak Prevention**: Selalu jalankan `store.destroy()` pada event `beforedestroy` window.\n");
-            doc.push_str("- **Server-Side Paging**: Default `pageSize: 25` dengan parameter `start` dan `limit`.\n");
-        } else if skill_name.contains("db-audit") || skill_name.contains("core") {
-            doc.push_str("### 2. Tata Kelola Transaksi Database & Mutasi Resep Obat\n");
-            doc.push_str("- **Isolasi Mutasi**: Gunakan `READ COMMITTED` untuk mencegah dirty reads pada mutasi stok farmasi.\n");
-            doc.push_str("- **Pencegahan Race Condition**: Gunakan `SELECT ... FOR UPDATE` saat memvalidasi sisa fisik obat.\n");
-            doc.push_str("- **Audit Logging**: Catat setiap mutasi ke tabel audit dengan merekam user ID, timestamp, dan payload.\n");
-        } else if skill_name.contains("synology") {
-            doc.push_str("### 2. Kebijakan Retensi Backup GFS (Grandfather-Father-Son)\n");
-            doc.push_str("- **Harian (Daily)**: 7 snapshot harian dipertahankan untuk pemulihan cepat insidental.\n");
-            doc.push_str("- **Mingguan (Weekly)**: 4 snapshot mingguan diambil otomatis setiap Minggu pukul 02:00 WITA.\n");
-            doc.push_str("- **Bulanan (Monthly)**: 12 arsip akhir bulan disimpan permanen ke cold-storage NAS backup.\n");
-        } else {
-            doc.push_str("### 2. Tata Kelola Git & Handshake Evaluator\n");
-            doc.push_str("- Seluruh commit di branch pengembangan wajib lolos evaluasi otomatis sebelum di-merge ke `main`.\n");
-            doc.push_str("- Evaluator port 9125 memeriksa kepatuhan koding sebelum menandai status rilis terverifikasi.\n");
-        }
-        
-        doc
+        format!("# Skill: {}\n\nBerkas `SKILL.md` belum tersinkronisasi atau tidak ditemukan di direktori internal:\n`{:?}`\n\nSilakan jalankan `Sync Rules Now` untuk mengunduh berkas fisik asli dari GitLab.", skill_name, skill_dir)
     };
 
     let mut references = Vec::new();
@@ -158,13 +124,7 @@ fn get_skill_reference_content(workspace_id: String, skill_name: String, referen
     let content = if ref_path.exists() {
         std::fs::read_to_string(&ref_path).unwrap_or_else(|_| "Gagal membaca berkas referensi fisik dari disk.".to_string())
     } else {
-        if reference_file.ends_with(".sql") {
-            format!("-- Technical Reference: {}\n-- Prosedur transaksi SQL dan audit logging\n\nBEGIN;\n-- Mutasi persediaan farmasi dengan isolasi baris\nSELECT saldo_akhir, harga_beli FROM farmasi_stok_depo \nWHERE id_obat = 1042 AND id_depo = 2 FOR UPDATE;\n\nUPDATE farmasi_stok_depo \nSET saldo_akhir = saldo_akhir - 10 \nWHERE id_obat = 1042 AND id_depo = 2;\n\nINSERT INTO farmasi_kartu_stok (id_obat, id_depo, keluar, keterangan, created_at)\nVALUES (1042, 2, 10, 'Penyerahan resep rawat inap pasien', NOW());\n\nCOMMIT;", reference_file)
-        } else if reference_file.ends_with(".json") {
-            format!("{{\n  \"endpoint\": \"/vclaim-rest-1.1/Peserta/nokartu\",\n  \"method\": \"GET\",\n  \"auth\": \"HMAC-SHA256\",\n  \"description\": \"Skema integrasi referensi spesifikasi teknis {}\",\n  \"schema\": {{\n    \"nomor_kartu\": \"string (13 digit)\",\n    \"tgl_pelayanan\": \"YYYY-MM-DD\"\n  }}\n}}", reference_file)
-        } else {
-            format!("# Spesifikasi Teknis: {}\n\nPanduan operasional teknis terinci untuk modul ini:\n1. Terapkan validasi input ketat pada layer service controller.\n2. Pastikan transaksi atomik selalu memiliki exception handler rollback.\n3. Log setiap payload yang berinteraksi dengan API eksternal.", reference_file)
-        }
+        format!("# Referensi Teknis: {}\n\nBerkas referensi belum tersinkronisasi ke disk lokal:\n`{:?}`\n\nSilakan jalankan `Sync Rules Now`.", reference_file, ref_path)
     };
 
     Ok(serde_json::json!({
