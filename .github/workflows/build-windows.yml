@@ -40,8 +40,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.5.3
-          releaseName: "Hermes Hub Gateway v0.5.3"
-          releaseBody: "Release v0.5.3: Pre-Build Test Gates & Zero-White-Screen Architecture. Features strict TypeScript pre-build validation, Global React Error Boundary preventing empty white screens, dynamic multi-protocol MCP registration suite (Local CLI, Remote SSE, and Env Variables Key-Value builder), verified against full DOM interaction test suite."
+          tagName: v0.5.4
+          releaseName: "Hermes Hub Gateway v0.5.4"
+          releaseBody: "Release v0.5.4: Neutral Developer Architecture & In-Page Save Feedback. Neutralized all local organization references into a global developer desktop gateway. Added instant in-page visual confirmation on saving settings, backed by automated pre-build TypeScript and build test gates."
           releaseDraft: false
           prerelease: false
