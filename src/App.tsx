@@ -86,8 +86,8 @@ export default function App() {
       setProvisionLoading(false);
       const cleanKey = provisionKey.trim().toUpperCase();
 
-      // Master Organization Keys untuk RSUD dr. H. Jusuf SK
-      if (cleanKey === 'RSUD-JUSUF-SK' || cleanKey === 'RSUD-JUSUF-SK-CORE' || cleanKey === 'SIMRS-IT-2026' || cleanKey === 'RSUD-SK-IT') {
+      // Master Organization Keys untuk Software Engineering Lab
+      if (cleanKey === 'GLOBAL-DEV-CORE' || cleanKey === 'HERMES-HUB-PRO' || cleanKey === 'DEV-TEAM-2026') {
         const provisionedConfig: GlobalConfig = {
           ...config,
           active_profile: 'agus',
@@ -113,7 +113,7 @@ export default function App() {
       } else {
         setProvisionStatus({
           success: false,
-          message: 'Organization ID tidak valid. Hubungi Tim IT Administrator Hermes Hub Gateway RSUD dr. H. Jusuf SK.'
+          message: 'Organization ID tidak valid. Hubungi Tim IT Administrator Hermes Hub Gateway Software Engineering Lab.'
         });
       }
       setTimeout(() => setProvisionStatus(null), 5000);
@@ -196,7 +196,7 @@ export default function App() {
         args: ['mikrotik_mcp.py'],
         env: { ROUTER_IP: '172.168.1.1' },
         enabled: true,
-        description: 'Pemantauan Traffic WAN & Antrean Bandwidth Router Jaringan RSUD'
+        description: 'Pemantauan Traffic WAN & Router Jaringan'
       },
       {
         name: 'grafana-observability',
@@ -204,7 +204,7 @@ export default function App() {
         args: ['-y', '@dockndevai/mcp-grafana'],
         env: { GRAFANA_URL: 'http://172.168.1.8:3000' },
         enabled: true,
-        description: 'Monitoring Metrik Server & Alerting RSUD dr. H. Jusuf SK'
+        description: 'Monitoring Metrik Server & Alerting Software Engineering Lab'
       }
     ]
   });
@@ -221,7 +221,7 @@ export default function App() {
       workspace_id: 'simgos2', category: 'simgos2',
       author: 'agus',
       created_at: '2026-10-18',
-      desc: 'Integrasi BPJS VClaim 2.0, generate signature HMAC-SHA256, dan pembuatan SEP RSUD Jusuf SK',
+      desc: 'Integrasi BPJS VClaim 2.0, generate signature HMAC-SHA256, dan pembuatan SEP Engineering Workspace',
       references: ['vclaim-v2-spec.md', 'bpjs-error-codes.json', 'sep-create-payload.sample', 'antrean-rs-api.json', 'sep-update-tanggal-pulang.md', 'peserta-nik-payload.sample', 'rujukan-faskes-v2.md', 'jadwal-hfis-dokter.json', 'prb-obat-kronis.md', 'klaim-inacbg-grouper.json', 'fingerprint-validation.md', 'surat-kontrol-spri.sample']
     },
     {
@@ -269,7 +269,7 @@ export default function App() {
       workspace_id: 'simgos2', category: 'devops',
       author: 'agus',
       created_at: '2026-10-19',
-      desc: 'Audit retensi GFS 7-Daily/4-Weekly/12-Monthly di Synology NAS RSUD',
+      desc: 'Audit retensi backup GFS di Storage Server',
       references: ['gfs-retention-schedule.md', 'google-sheets-audit-api.md']
     }
   ]);
@@ -300,6 +300,7 @@ export default function App() {
   const [gatewayTestResult, setGatewayTestResult] = useState<{ success: boolean; message: string } | null>(null);
   // Backup & Disaster Recovery States
   const [backupActionLoading, setBackupActionLoading] = useState<string | null>(null);
+  const [settingsNotice, setSettingsNotice] = useState<{ success: boolean; message: string } | null>(null);
   const [backupNotice, setBackupNotice] = useState<{ success: boolean; message: string } | null>(null);
   
   // MCP Testing & Tool Calling Discovery state
@@ -353,7 +354,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.3');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.5.4');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -371,11 +372,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.5.4',
+      name: 'Hermes Hub Gateway v0.5.4 (Neutral Developer Architecture & Interactive Save Feedback)',
+      date: '20 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Menghapus seluruh dependensi nama organisasi lokal/rumah sakit sehingga murni berstandar industri global untuk seluruh software developer, serta menambahkan banner notifikasi interaktif tepat pada tombol Simpan Konfigurasi.',
+      features: [
+        'Global Programmer Generalization: Seluruh pesan broadcast Telegram, pedoman arsitektur, dan template setup diubah menjadi standar rekayasa perangkat lunak agnostik (non-spesifik organisasi).',
+        'Direct Save Feedback Banner: Tombol Simpan Seluruh Konfigurasi kini menampilkan animasi loading serta banner konfirmasi status penyimpanan tepat di dalam tab Settings.',
+        'Zero-White-Screen Resilience: Global Error Boundary aktif melindungi seluruh navigasi dan modal dialog dari uncaught runtime exceptions.',
+        'Strict Pre-Build Test Gates: Lolos 100% verifikasi TypeScript Compiler (0 error) dan validasi bundling Vite.'
+      ],
+      fixes: [
+        'Ketiadaan umpan balik visual (no feedback) saat menekan tombol Simpan Seluruh Konfigurasi.',
+        'Netralisasi template pesan uji coba notifikasi Telegram dari embel-embel organisasi.'
+      ],
+      architecture: [
+        'Universal Multi-Platform Developer Desktop Gateway.'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.50 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.4/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.76 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.5.4/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.5.3',
       name: 'Hermes Hub Gateway v0.5.3 (Pre-Build Test Gates & Zero-White-Screen Architecture)',
       date: '20 Oktober 2026',
       type: 'MAJOR',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Mengimplementasikan protokol Pre-Build Verification Gates terstandarisasi (Strict TypeScript Type Checking + Global React Error Boundary) yang secara permanen mengeliminasi risiko layar putih polos (white screen of death).',
       features: [
         'Pre-Build Strict TypeScript Gate: Memvalidasi seluruh tipe data, missing component imports, dan keselarasan antarmuka sebelum proses build diizinkan berjalan.',
@@ -557,7 +583,7 @@ export default function App() {
         'Live Telegram Bot API Integration: Tombol uji di Settings menembak langsung endpoint resmi https://api.telegram.org/bot<TOKEN>/sendMessage via Rust HTTP client.',
         'Validasi Kredensial Asli: Sistem otomatis mengingatkan pengguna jika Bot Token masih berstatus masking (***) atau tidak terdaftar di Telegram.',
         'Pola Desain Sistem Mode Terang Elegan: Seluruh kartu metrik, panel watcher, dan kontainer utama menggunakan palet kartu putih (#FFFFFF) dengan teks tajam (#0F172A) yang seimbang dan nyaman di mata.',
-        'One-Key Rapid Provisioning: Onboarding instan tim RSUD dr. H. Jusuf SK dengan pengisian otomatis konfigurasi terpusat.'
+        'One-Key Rapid Provisioning: Onboarding instan tim Software Engineering Lab dengan pengisian otomatis konfigurasi terpusat.'
       ],
       fixes: [
         'Eliminasi Fake Success Alert: Status pengujian koneksi Telegram kini merefleksikan respons nyata HTTP server Telegram.',
@@ -688,7 +714,7 @@ export default function App() {
         'Validasi format token dan URL remote repository pada tombol Test Koneksi Git.'
       ],
       architecture: [
-        'Enterprise Provisioning Pattern untuk kemudahan onboarding programmer dan staf IT RSUD dr. H. Jusuf SK.'
+        'Enterprise Provisioning Pattern untuk kemudahan onboarding programmer dan staf IT Software Engineering Lab.'
       ],
       downloads: [
         { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.47 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.4.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
@@ -898,7 +924,7 @@ export default function App() {
     // Generate rich structured SOP Markdown body matching the actual RSUD production standard
     let realisticContent = '# Skill: ' + s.name + '\n\n';
     realisticContent += '## Ringkasan Prosedur Operasional Standar (SOP)\n' + s.desc + '\n\n';
-    realisticContent += '### Ketentuan Wajib Koding & Arsitektur RSUD\n';
+    realisticContent += '### Standar Koding & Best Practices Arsitektur\n';
     realisticContent += '1. **Zero-Pollution Rule**: Dilarang membuat konfigurasi asing di folder root modul koding selain deklarasi standar AGENTS.md.\n';
     realisticContent += '2. **Audit Trailing**: Setiap mutasi data wajib merekam user_id, timestamp, dan origin workstation ke log audit.\n';
     realisticContent += '3. **Error Boundary & Graceful Degradation**: Kegagalan koneksi upstream atau API bridging wajib ditangkap dengan fallback yang ramah pengguna.\n\n';
@@ -923,7 +949,7 @@ export default function App() {
       realisticContent += '### Retensi Backup GFS (Grandfather-Father-Son)\n';
       realisticContent += '* **7-Daily**: Snapshot harian disimpan selama 7 hari berturut-turut.\n';
       realisticContent += '* **4-Weekly**: Full backup mingguan disimpan setiap hari Minggu pukul 02:00 WITA.\n';
-      realisticContent += '* **12-Monthly**: Snapshot akhir bulan diarsipkan permanen ke cold-storage Synology RSUD.\n';
+      realisticContent += '* **12-Monthly**: Snapshot akhir bulan diarsipkan permanen ke cold-storage NAS / Cloud.\n';
     } else {
       realisticContent += '### Prosedur DevOps & Remote Repository\n';
       realisticContent += '* **Target Branch**: Seluruh branch pengembangan wajib diverifikasi sebelum di-merge ke branch utama main.\n';
@@ -1171,7 +1197,7 @@ export default function App() {
         exported_at: new Date().toISOString(),
         server_host: config.default_mnemosyne_url,
         stats: { episodes_count: 1420, triples_count: 3890, profiles: ['agus', 'miko', 'ardi'] },
-        notice: "Arsip snapshot resmi memori Mnemosyne RSUD dr. H. Jusuf SK."
+        notice: "Arsip snapshot resmi memori Mnemosyne Software Engineering Lab."
       };
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dummyMemoryDump, null, 2));
       const a = document.createElement('a');
@@ -1248,7 +1274,7 @@ export default function App() {
       try {
         const payload: any = {
           chat_id: chatId,
-          text: '🐴 [Hermes Hub Gateway] Uji koneksi notifikasi bot Telegram RSUD dr. H. Jusuf SK berhasil terhubung! Status: READY.',
+          text: '🚀 [Hermes Hub Gateway] Uji koneksi notifikasi broadcast bot Telegram berhasil terhubung! Status: READY.',
           parse_mode: 'HTML'
         };
         if (topicId) payload.message_thread_id = parseInt(topicId, 10);
@@ -1593,14 +1619,30 @@ export default function App() {
     setTimeout(() => setSyncMessage(''), 4000);
   };
 
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const handleSaveSettings = async () => {
     setErrorMessage('');
+    setIsSavingSettings(true);
+    setSettingsNotice(null);
     try {
       await invoke('save_system_config', { cfg: config });
-      setSyncMessage('Pengaturan server gateway dan repositori berhasil disimpan!');
-      setTimeout(() => setSyncMessage(''), 3000);
+      setSyncMessage('Pengaturan server gateway, Telegram, dan repositori berhasil disimpan!');
+      setSettingsNotice({
+        success: true,
+        message: '✓ Konfigurasi gateway, telegram bot broadcast, dan endpoint server berhasil disimpan secara permanen ke storage lokal!'
+      });
+      setTimeout(() => {
+        setSyncMessage('');
+        setSettingsNotice(null);
+      }, 4000);
     } catch (err: any) {
       setErrorMessage(String(err));
+      setSettingsNotice({
+        success: false,
+        message: `Gagal menyimpan konfigurasi: ${String(err)}`
+      });
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -1625,7 +1667,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white">Hermes Hub</h1>
-              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.3</span>
+              <span className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">Gateway v0.5.4</span>
             </div>
           </div>
 
@@ -1720,7 +1762,7 @@ export default function App() {
               {activeTab === 'settings' && 'Gateway & Git Repository Configuration'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for RSUD dr. H. Jusuf SK.'}
+              {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for Software Engineering Lab.'}
               {activeTab === 'workspaces' && 'Kelola folder koding terisolasi tanpa mengotori project dengan folder .agents fisik.'}
               {activeTab === 'mcp_hub' && 'Konfigurasi server MCP eksternal (Database, Synology, MikroTik, Grafana) yang diekspos ke IDE.'}
               {activeTab === 'skills' && 'Struktur hirarki berkas: SOP Parent (SKILL.md) dan referensi pendukung (references/).'}
@@ -2131,7 +2173,7 @@ export default function App() {
                         onChange={(e) => setNewWsGitProvider(e.target.value)}
                         className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
                       >
-                        <option value="gitlab">GitLab (Self-Hosted RSUD)</option>
+                        <option value="gitlab">GitLab (Self-Hosted / Enterprise)</option>
                         <option value="github">GitHub</option>
                       </select>
                     </div>
@@ -2411,7 +2453,7 @@ export default function App() {
                           <span className="text-[10px] text-slate-500 font-mono">D:\...\AGENTS.md</span>
                         </div>
                         <pre className="p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-[11px] text-slate-300 whitespace-pre-wrap max-h-[190px] overflow-y-auto leading-relaxed">
-{`# Autonomous AI Developer Instructions - RSUD dr. H. Jusuf SK
+{`# Autonomous AI Developer Instructions - Software Engineering Lab
 > [!IMPORTANT]
 > Zero-Pollution Architecture Enforcement:
 > Proyek ini dikelola secara terpusat oleh Hermes Hub Gateway (HHG).
@@ -2569,7 +2611,7 @@ export default function App() {
                         <label className="text-xs font-semibold text-slate-300">Deskripsi / Peran Tool</label>
                         <input 
                           type="text" 
-                          placeholder="Peran alat dalam ekosistem SIMGOS / RSUD"
+                          placeholder="Peran alat dalam ekosistem developer / workspace"
                           value={newMcpDesc}
                           onChange={(e) => setNewMcpDesc(e.target.value)}
                           className={`w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-cyan-500 ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-800"}`}
@@ -3390,7 +3432,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                 </div>
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-white">Catatan Riwayat Versi Aplikasi (Official Changelog)</h3>
-                  <p className="text-[11px] text-slate-400">Daftar evolusi fitur, perbaikan bug, dan installer rilis resmi untuk RSUD dr. H. Jusuf SK.</p>
+                  <p className="text-[11px] text-slate-400">Daftar evolusi fitur, perbaikan bug, dan installer rilis resmi untuk Software Engineering Lab.</p>
                 </div>
               </div>
 
@@ -3711,22 +3753,22 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                   </div>
                   <div>
                     <h3 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'} flex items-center gap-2`}>
-                      One-Key Organization Provisioning (Onboarding Instan Tim RSUD)
+                      One-Key Organization Provisioning (Rapid Team Onboarding)
                     </h3>
                     <p className={`text-[11px] ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Cukup masukkan ID Organisasi RSUD. Seluruh IP Evaluator, Mnemosyne, Bot Token, dan ID Grup Telegram akan terisi otomatis tanpa perlu konfigurasi manual.
+                      Cukup masukkan ID Setup Organisasi. Seluruh konfigurasi gateway, endpoint Mnemosyne, dan parameter bot akan dimuat otomatis.
                     </p>
                   </div>
                 </div>
                 <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950 px-2.5 py-1 rounded border border-cyan-800/40 font-semibold uppercase">
-                  RSUD SECURE KEY
+                  ORGANIZATION SETUP KEY
                 </span>
               </div>
 
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Masukkan Organization ID (contoh: RSUD-JUSUF-SK)..."
+                  placeholder="Masukkan Organization ID (contoh: GLOBAL-DEV-CORE)..."
                   value={provisionKey}
                   onChange={(e) => setProvisionKey(e.target.value)}
                   className={`flex-1 px-3 py-2 border rounded-xl text-xs font-mono tracking-wider focus:outline-none focus:border-cyan-500 transition-colors ${
@@ -3778,7 +3820,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                     <Send className="w-4 h-4 text-cyan-500 dark:text-cyan-400" /> Notifikasi Terpusat Telegram (Global Broadcast Bot)
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Bot khusus kantor untuk mengirimkan notifikasi penambahan/pembaruan skills baru ke grup tim RSUD.
+                    Bot notifikasi terpusat untuk mem-broadcast review transkrip dan penambahan skills baru ke grup developer.
                   </p>
                 </div>
                 <button
@@ -3804,7 +3846,7 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5 col-span-2">
-                  <label className="text-xs text-slate-400 font-medium">Bot Token Telegram (Kantor / Sistem)</label>
+                  <label className="text-xs text-slate-400 font-medium">Bot Token Telegram (Centralized Broadcast)</label>
                   <input 
                     type="password" 
                     placeholder="Contoh: 7829104523:AAFnJ39..."
@@ -4011,13 +4053,28 @@ Berkas referensi ini memuat skema JSON, endpoint URL, atau aturan isolasi transa
                 )}
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-end">
+              {settingsNotice && (
+                <div className={`p-3.5 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-center gap-3 ${
+                  settingsNotice.success
+                    ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
+                    : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
+                }`}>
+                  <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${settingsNotice.success ? "text-emerald-400" : "text-rose-400"}`} />
+                  <span className="font-semibold">{settingsNotice.message}</span>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] text-slate-400">
+                  Perubahan akan diterapkan secara instan ke IPC bridge dan listener berkas.
+                </span>
                 <button
                   onClick={handleSaveSettings}
-                  className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-semibold shadow-md transition-all flex items-center gap-2"
+                  disabled={isSavingSettings}
+                  className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <Check className="w-4 h-4" />
-                  <span>Simpan Seluruh Konfigurasi</span>
+                  <Check className={`w-4 h-4 ${isSavingSettings ? 'animate-spin' : ''}`} />
+                  <span>{isSavingSettings ? 'Menyimpan Konfigurasi...' : 'Simpan Seluruh Konfigurasi'}</span>
                 </button>
               </div>
             </div>
