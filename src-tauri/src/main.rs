@@ -9,6 +9,7 @@ mod watcher;
 mod mcp_bridge;
 mod vault;
 mod config;
+mod workspace;
 
 #[tauri::command]
 fn get_system_config() -> config::GlobalConfig {
@@ -186,7 +187,9 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
 
     let target_dir = PathBuf::from(&target_path);
     if target_dir.exists() {
-        let _ = config::generate_declarative_agents_md(&target_dir, &ws);
+        // Fasilitasi NTFS junction ke internal_skills_path (.agents)
+        let agents_junction = target_dir.join(".agents");
+        let _ = workspace::create_ntfs_junction(&agents_junction, &internal_skills_path);
     }
 
     // Periksa apakah workspace dengan ID ini sudah ada untuk mencegah duplikasi entri
@@ -426,6 +429,28 @@ async fn test_git_remote(repo_url: String, auth_token: Option<String>) -> Result
     }
 }
 
+#[tauri::command]
+async fn list_git_projects(provider: String, base_url: String, token: String) -> Result<Vec<workspace::GitProjectItem>, String> {
+    workspace::list_remote_projects(&provider, &base_url, &token).await
+}
+
+#[tauri::command]
+fn check_workspace_readiness(project_path: String) -> workspace::WorkspaceReadinessReport {
+    workspace::audit_workspace_readiness(&PathBuf::from(project_path))
+}
+
+#[tauri::command]
+fn scaffold_new_agents_project(dest_path: String, project_name: String) -> Result<(), String> {
+    workspace::scaffold_new_agents_structure(&PathBuf::from(dest_path), &project_name)
+}
+
+#[tauri::command]
+fn link_workspace_junction(project_path: String, agents_source_path: String) -> Result<(), String> {
+    let link = PathBuf::from(project_path).join(".agents");
+    let target = PathBuf::from(agents_source_path);
+    workspace::create_ntfs_junction(&link, &target)
+}
+
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
@@ -526,7 +551,11 @@ async fn main() {
             test_telegram_broadcast,
             get_skills_hierarchy,
             test_gateway_connection,
-            test_git_remote
+            test_git_remote,
+            list_git_projects,
+            check_workspace_readiness,
+            scaffold_new_agents_project,
+            link_workspace_junction
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
