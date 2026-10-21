@@ -224,6 +224,32 @@ pub fn create_ntfs_junction(link_path: &Path, target_path: &Path) -> Result<(), 
     }
 }
 
+/// Helper to safely remove an NTFS Junction without deleting target contents
+pub fn remove_ntfs_junction(link_path: &Path) -> Result<(), String> {
+    if !link_path.exists() {
+        return Ok(());
+    }
+    #[cfg(windows)]
+    {
+        let output = Command::new("cmd")
+            .args(&["/c", "rmdir", link_path.to_str().unwrap_or("")])
+            .output()
+            .map_err(|e| format!("Gagal memanggil rmdir: {}", e))?;
+        if !output.status.success() {
+            let err = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Gagal memutus junction: {}", err));
+        }
+        Ok(())
+    }
+    #[cfg(not(windows))]
+    {
+        fs::remove_file(link_path)
+            .or_else(|_| fs::remove_dir(link_path))
+            .map_err(|e| format!("Gagal memutus symlink unix: {}", e))?;
+        Ok(())
+    }
+}
+
 /// Scaffold a brand new .agents architecture following Antigravity + Hermes conventions
 pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Result<(), String> {
     let memory_dir = dest_dir.join("memory");
