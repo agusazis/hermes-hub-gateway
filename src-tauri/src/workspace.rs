@@ -187,8 +187,8 @@ pub async fn list_remote_projects(
 pub fn create_ntfs_junction(link_path: &Path, target_path: &Path) -> Result<(), String> {
     #[cfg(windows)]
     {
-        // Remove existing link/directory if present
-        if link_path.exists() {
+        // Hapus link lama / broken junction jika path atau reparse point ada
+        if link_path.symlink_metadata().is_ok() || link_path.exists() {
             let _ = Command::new("cmd")
                 .args(&["/c", "rmdir", link_path.to_str().unwrap_or("")])
                 .output();
@@ -215,7 +215,8 @@ pub fn create_ntfs_junction(link_path: &Path, target_path: &Path) -> Result<(), 
     #[cfg(not(windows))]
     {
         // Fallback for non-windows (symlink)
-        if link_path.exists() {
+        if link_path.symlink_metadata().is_ok() || link_path.exists() {
+            let _ = fs::remove_file(link_path);
             let _ = fs::remove_dir_all(link_path);
         }
         std::os::unix::fs::symlink(target_path, link_path)
@@ -226,7 +227,7 @@ pub fn create_ntfs_junction(link_path: &Path, target_path: &Path) -> Result<(), 
 
 /// Helper to safely remove an NTFS Junction without deleting target contents
 pub fn remove_ntfs_junction(link_path: &Path) -> Result<(), String> {
-    if !link_path.exists() {
+    if link_path.symlink_metadata().is_err() && !link_path.exists() {
         return Ok(());
     }
     #[cfg(windows)]
@@ -334,7 +335,28 @@ Upon starting a new chat session:
     );
     fs::write(memory_dir.join("anchors.json"), anchors_json).map_err(|e| e.to_string())?;
 
-    // 5. Sample skill
+    // 5. mcp_config.json (Project-level MCP configuration)
+    let mcp_config_json = r##"{
+  "mcpServers": {
+    "mnemosyne": {
+      "url": "http://172.168.1.202:8080/sse"
+    },
+    "database-simrs-readonly": {
+      "command": "python",
+      "args": ["mysql_mcp_readonly.py"],
+      "env": {
+        "DB_HOST": "172.168.1.202",
+        "DB_PORT": "3306",
+        "DB_NAME": "simrs",
+        "DB_USER": "simrs_read"
+      }
+    }
+  }
+}
+"##;
+    fs::write(dest_dir.join("mcp_config.json"), mcp_config_json).map_err(|e| e.to_string())?;
+
+    // 6. Sample skill
     let sample_skill_dir = skills_dir.join("sample-clean-code");
     fs::create_dir_all(&sample_skill_dir).map_err(|e| e.to_string())?;
     let sample_skill = r##"---
