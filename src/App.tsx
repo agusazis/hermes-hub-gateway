@@ -1673,6 +1673,17 @@ export default function App() {
         }
       } catch (_) {}
 
+      // Otomatis refresh audit readiness score setelah sync selesai
+      try {
+        const activeWs = config.workspaces.find(w => w.id === config.active_workspace_id);
+        if (activeWs?.target_path) {
+          const report: any = await invoke('check_workspace_readiness', { projectPath: activeWs.target_path });
+          if (report) {
+            setWorkspaceReadiness(prev => ({ ...prev, [activeWs.id]: report }));
+          }
+        }
+      } catch (_) {}
+
       setTimeout(() => setSyncMessage(''), 4000);
     } finally {
       setSyncing(false);
