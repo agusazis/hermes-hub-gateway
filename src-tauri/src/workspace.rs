@@ -335,21 +335,11 @@ Upon starting a new chat session:
     );
     fs::write(memory_dir.join("anchors.json"), anchors_json).map_err(|e| e.to_string())?;
 
-    // 5. mcp_config.json (Project-level MCP configuration)
+    // 5. mcp_config.json (Unified Hermes Hub Gateway MCP via SSE)
     let mcp_config_json = r##"{
   "mcpServers": {
-    "mnemosyne": {
-      "url": "http://172.168.1.202:8080/sse"
-    },
-    "database-simrs-readonly": {
-      "command": "python",
-      "args": ["mysql_mcp_readonly.py"],
-      "env": {
-        "DB_HOST": "172.168.1.202",
-        "DB_PORT": "3306",
-        "DB_NAME": "simrs",
-        "DB_USER": "simrs_read"
-      }
+    "hermes-hub-gateway": {
+      "url": "http://127.0.0.1:9126/sse"
     }
   }
 }
