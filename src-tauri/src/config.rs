@@ -60,6 +60,56 @@ pub fn get_app_data_dir() -> PathBuf {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
     let dir = home.join(".hermes-hub");
     let _ = fs::create_dir_all(&dir);
+
+    // Pastikan folder scripts dan file pipe-bridge.ps1 selalu tersedia secara deterministik
+    let scripts_dir = dir.join("scripts");
+    let _ = fs::create_dir_all(&scripts_dir);
+    let bridge_ps1 = scripts_dir.join("pipe-bridge.ps1");
+    if !bridge_ps1.exists() {
+        let script_content = r#"# Hermes Hub Gateway - Named Pipe stdio Bridge for IDE MCP
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+$pipeName = "hhg-bridge"
+$pipe = New-Object System.IO.Pipes.NamedPipeClientStream(".", $pipeName, [System.IO.Pipes.PipeDirection]::InOut)
+
+try {
+    $pipe.Connect(5000)
+} catch {
+    [Console]::Error.WriteLine("[HHG-Bridge] Gagal terhubung ke \\.\pipe\hhg-bridge. Pastikan aplikasi Hermes Hub Gateway sudah berjalan.")
+    exit 1
+}
+
+$reader = New-Object System.IO.StreamReader($pipe, [System.Text.Encoding]::UTF8)
+$writer = New-Object System.IO.StreamWriter($pipe, [System.Text.Encoding]::UTF8)
+$writer.AutoFlush = $true
+
+# Background task to read from pipe and write to stdout
+$pipeReaderJob = [System.Threading.Tasks.Task]::Run([Action]{
+    try {
+        while (-not $reader.EndOfStream) {
+            $line = $reader.ReadLine()
+            if ($line -ne $null) {
+                [Console]::Out.WriteLine($line)
+            }
+        }
+    } catch {}
+})
+
+# Read from stdin and forward to pipe
+try {
+    while ($true) {
+        $stdinLine = [Console]::In.ReadLine()
+        if ($stdinLine -eq $null) { break }
+        $writer.WriteLine($stdinLine)
+    }
+} finally {
+    $pipe.Close()
+}
+"#;
+        let _ = fs::write(bridge_ps1, script_content);
+    }
+
     dir
 }
 
