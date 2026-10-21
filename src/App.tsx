@@ -65,7 +65,7 @@ interface SkillHierarchyItem {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('settings');
   const [wsDetailTab, setWsDetailTab] = useState<'overview' | 'skills' | 'readiness'>('overview');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
@@ -92,8 +92,14 @@ export default function App() {
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
       // Validasi SHA-256 Hash Resmi (Aman & Terisolasi)
-      // Hash untuk Organization Key RSUD dr. H. Jusuf SK: 8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905
-      if (hashHex === '8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905') {
+      // Mendukung Organization Key RSUD dr. H. Jusuf SK:
+      // 1. "SIRS-JSK-AI-AGENTS-2026" (SHA-256: 7f3b5dc985220c81dbbeae664db87e74880bb6b7e5e347ba504d603e8ff6026a)
+      // 2. Hash legacy: 8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905
+      const isOfficialKey = 
+        hashHex === '8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905' ||
+        hashHex === '7f3b5dc985220c81dbbeae664db87e74880bb6b7e5e347ba504d603e8ff6026a';
+
+      if (isOfficialKey) {
         let fetchedBotToken = config.telegram_target?.bot_token || '';
         let fetchedChatId = '-5594254057';
 
@@ -2466,13 +2472,13 @@ export default function App() {
 
           <nav className="space-y-1.5">
             <button 
-              onClick={() => setActiveTab('dashboard')}
-              title={isSidebarCollapsed ? "Dashboard" : undefined}
+              onClick={() => setActiveTab('settings')}
+              title={isSidebarCollapsed ? "Profile & Gateway Hub" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Server className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Dashboard</span>}
+              <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Profile & Gateway Hub</span>}
             </button>
             <button 
               onClick={() => setActiveTab('workspaces')}
@@ -2481,7 +2487,7 @@ export default function App() {
                 activeTab === 'workspaces' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <FolderKanban className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Workspaces</span>}
+              <FolderKanban className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Workspaces & Skills</span>}
             </button>
             <button 
               onClick={() => setActiveTab('mcp_hub')}
@@ -2493,6 +2499,15 @@ export default function App() {
               <Layers className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>MCP Servers Hub</span>}
             </button>
             <button 
+              onClick={() => setActiveTab('dashboard')}
+              title={isSidebarCollapsed ? "System Dashboard" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <Server className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>System Dashboard</span>}
+            </button>
+            <button 
               onClick={() => setActiveTab('logs')}
               title={isSidebarCollapsed ? "Evolution Logs" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
@@ -2500,15 +2515,6 @@ export default function App() {
               }`}
             >
               <Terminal className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Evolution Logs</span>}
-            </button>
-            <button 
-              onClick={() => setActiveTab('settings')}
-              title={isSidebarCollapsed ? "Settings & Repos" : undefined}
-              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-              }`}
-            >
-              <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Settings & Repos</span>}
             </button>
           </nav>
         </div>
@@ -2563,20 +2569,20 @@ export default function App() {
             <h2 className={`text-xl font-bold tracking-tight capitalize ${
               effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
             }`}>
-              {activeTab === 'dashboard' && 'System Status & Overview'}
+              {activeTab === 'settings' && 'Profile & Gateway Hub (Primary Configuration)'}
               {activeTab === 'workspaces' && 'Workspaces & Skills Manager'}
               {activeTab === 'mcp_hub' && 'MCP Servers Hub & Infrastructure'}
+              {activeTab === 'dashboard' && 'System Status & Overview'}
               {activeTab === 'logs' && 'Continuous Evolution Live Logs'}
               {activeTab === 'releases' && 'Version Logs & Official Changelog'}
-              {activeTab === 'settings' && 'Gateway & Git Repository Configuration'}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for Developer Workspace.'}
-              {activeTab === 'workspaces' && 'Kelola folder koding terisolasi, kontrak AGENTS.md, dan katalog hirarki SOP/Skills.'}
+              {activeTab === 'settings' && 'Profil utama aplikasi & pusat koneksi server Hermes Evaluator, Mnemosyne Shared Memory, dan One-Key Provisioning.'}
+              {activeTab === 'workspaces' && 'Katalog rules, specialists, dan skills modular via NTFS Junction.'}
               {activeTab === 'mcp_hub' && 'Akses seluruh tools MCP tanpa konfigurasi terpisah.'}
-              {activeTab === 'logs' && 'Telemetri evaluasi real-time antara IDE watcher dan server evaluator.'}
-              {activeTab === 'releases' && 'Catatan resmi pembaruan fitur, perbaikan bug, dan riwayat installer rilis Hermes Hub Gateway.'}
-              {activeTab === 'settings' && 'Pengaturan koneksi repositori skills Git (GitLab/GitHub) dan endpoint server terpusat.'}
+              {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for Developer Workspace.'}
+              {activeTab === 'logs' && 'Real-time telemetry stream between IDE Watcher & Evaluator Server.'}
+              {activeTab === 'releases' && 'Riwayat evolusi arsitektur dan dokumentasi fitur rilis resmi.'}
             </p>
           </div>
 
