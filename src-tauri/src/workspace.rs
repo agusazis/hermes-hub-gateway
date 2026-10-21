@@ -335,11 +335,18 @@ Upon starting a new chat session:
     );
     fs::write(memory_dir.join("anchors.json"), anchors_json).map_err(|e| e.to_string())?;
 
-    // 5. mcp_config.json (Unified Hermes Hub Gateway MCP via SSE)
+    // 5. mcp_config.json (Project-level MCP configuration)
     let mcp_config_json = r##"{
   "mcpServers": {
     "hermes-hub-gateway": {
-      "url": "http://127.0.0.1:9126/sse"
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\user\\.hermes-hub\\scripts\\pipe-bridge.ps1"
+      ]
     }
   }
 }
