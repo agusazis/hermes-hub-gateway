@@ -81,8 +81,9 @@ pub async fn start_watcher_loop(app: AppHandle) {
                         let len = metadata.len();
                         let last_len = file_offsets.get(&path).copied().unwrap_or(0);
 
-                        if len > last_len && last_len > 0 {
-                            // File bertambah panjang, baca transkrip baru
+                        // Tangani file baru atau file yang bertambah panjang
+                        if len > last_len && (last_len > 0 || len > 500) {
+                            // File bertambah panjang atau file baru dengan konten > 500 byte, baca transkrip
                             if let Ok(content) = fs::read_to_string(&path) {
                                 if content.contains("_DO_NOT_CAPTURE_BLOCK") {
                                     file_offsets.insert(path.clone(), len);
