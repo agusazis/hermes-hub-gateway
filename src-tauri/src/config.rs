@@ -46,7 +46,7 @@ pub struct GlobalConfig {
 impl Default for GlobalConfig {
     fn default() -> Self {
         GlobalConfig {
-            active_profile: "default".to_string(),
+            active_profile: "".to_string(),
             default_hermes_evaluator_url: "".to_string(),
             default_mnemosyne_url: "".to_string(),
             active_workspace_id: "".to_string(),
