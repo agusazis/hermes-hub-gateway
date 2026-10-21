@@ -33,6 +33,24 @@ pub async fn start_watcher_loop(app: AppHandle) {
 
     let mut file_offsets: HashMap<PathBuf, u64> = HashMap::new();
 
+    // Baseline Initialization: Catat ukuran awal semua file yang sudah ada agar tidak memicu re-evaluasi riwayat lama saat HHG baru dibuka
+    if brain_dir.exists() {
+        if let Ok(entries) = fs::read_dir(&brain_dir) {
+            for entry in entries.flatten() {
+                let conv_dir = entry.path();
+                if conv_dir.is_dir() {
+                    let jsonl_path = conv_dir.join(".system_generated").join("logs").join("transcript.jsonl");
+                    let target_file = if jsonl_path.exists() { jsonl_path } else { conv_dir };
+                    if target_file.is_file() {
+                        if let Ok(m) = fs::metadata(&target_file) {
+                            file_offsets.insert(target_file, m.len());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     loop {
         tokio::time::sleep(Duration::from_millis(2500)).await;
 
@@ -81,8 +99,8 @@ pub async fn start_watcher_loop(app: AppHandle) {
                         let len = metadata.len();
                         let last_len = file_offsets.get(&path).copied().unwrap_or(0);
 
-                        // Tangani file baru atau file yang bertambah panjang
-                        if len > last_len && (last_len > 0 || len > 500) {
+                        // Hanya evaluasi jika file bertambah panjang dari offset terakhir yang tercatat
+                        if len > last_len && last_len > 0 {
                             // File bertambah panjang atau file baru dengan konten > 500 byte, baca transkrip
                             if let Ok(content) = fs::read_to_string(&path) {
                                 if content.contains("_DO_NOT_CAPTURE_BLOCK") {
