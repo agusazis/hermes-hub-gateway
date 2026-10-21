@@ -55,40 +55,53 @@ pub async fn start_watcher_loop(app: AppHandle) {
 
         if let Ok(entries) = fs::read_dir(&brain_dir) {
             for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("json") {
-                    let metadata = match fs::metadata(&path) {
-                        Ok(m) => m,
-                        Err(_) => continue,
+                let conv_dir = entry.path();
+                if conv_dir.is_dir() {
+                    // Antigravity IDE menyimpan transkrip di: <uuid>/.system_generated/logs/transcript.jsonl
+                    let jsonl_path = conv_dir.join(".system_generated").join("logs").join("transcript.jsonl");
+                    let path = if jsonl_path.exists() {
+                        jsonl_path
+                    } else {
+                        conv_dir.clone()
                     };
-                    let len = metadata.len();
-                    let last_len = file_offsets.get(&path).copied().unwrap_or(0);
 
-                    if len > last_len && last_len > 0 {
-                        // File bertambah panjang, baca transkrip baru
-                        if let Ok(content) = fs::read_to_string(&path) {
-                            if content.contains("_DO_NOT_CAPTURE_BLOCK") {
-                                file_offsets.insert(path.clone(), len);
-                                continue;
-                            }
+                    if path.is_file() {
+                        let is_target = match path.extension().and_then(|s| s.to_str()) {
+                            Some("jsonl") | Some("json") => true,
+                            _ => false,
+                        };
+                        if !is_target {
+                            continue;
+                        }
 
-                            let tail_window = if content.len() > 12000 {
-                                &content[content.len() - 12000..]
-                            } else {
-                                &content[..]
-                            };
+                        let metadata = match fs::metadata(&path) {
+                            Ok(m) => m,
+                            Err(_) => continue,
+                        };
+                        let len = metadata.len();
+                        let last_len = file_offsets.get(&path).copied().unwrap_or(0);
 
-                            let conv_id = path
-                                .file_stem()
-                                .and_then(|s| s.to_str())
-                                .unwrap_or("unknown")
-                                .to_string();
+                        if len > last_len && last_len > 0 {
+                            // File bertambah panjang, baca transkrip baru
+                            if let Ok(content) = fs::read_to_string(&path) {
+                                if content.contains("_DO_NOT_CAPTURE_BLOCK") {
+                                    file_offsets.insert(path.clone(), len);
+                                    continue;
+                                }
 
-                            let _ = app.emit("watcher-event", serde_json::json!({
-                                "status": "evaluating",
-                                "conversation_id": conv_id,
-                                "file": path.to_string_lossy()
-                            }));
+                                let tail_window = if content.len() > 12000 {
+                                    &content[content.len() - 12000..]
+                                } else {
+                                    &content[..]
+                                };
+
+                                let conv_id = entry.file_name().to_string_lossy().to_string();
+
+                                let _ = app.emit("watcher-event", serde_json::json!({
+                                    "status": "evaluating",
+                                    "conversation_id": conv_id,
+                                    "file": path.to_string_lossy()
+                                }));
 
                             // Kirimkan ke Hermes Evaluator
                             let payload = ReviewRequestPayload {
@@ -132,7 +145,6 @@ pub async fn start_watcher_loop(app: AppHandle) {
                             }
                         }
                     }
-
                     file_offsets.insert(path, len);
                 }
             }
