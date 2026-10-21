@@ -311,7 +311,47 @@ export default function App() {
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [wsSearchQuery, setWsSearchQuery] = useState<string>('');
   const [testingMcpIndex, setTestingMcpIndex] = useState<number | null>(null);
-  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>({});
+  const DEFAULT_MCP_CATALOG: Record<string, { name: string; desc: string; enabled: boolean }[]> = {
+    'database-simrs-readonly': [
+      { name: 'execute_sql', desc: 'Menjalankan query SQL SELECT read-only pada database SIMRS', enabled: true },
+      { name: 'get_table_schema', desc: 'Melihat definisi kolom, tipe data, dan index tabel SIMRS', enabled: true },
+      { name: 'list_tables', desc: 'Mendapatkan daftar seluruh tabel pada schema database SIMRS', enabled: true },
+      { name: 'explain_query', desc: 'Menganalisis execution plan query MySQL/MariaDB', enabled: true },
+      { name: 'get_slow_query_summary', desc: 'Melihat ringkasan metrics performa query lambat', enabled: true },
+    ],
+    'grafana-observability': [
+      { name: 'query_loki_logs', desc: 'Menarik log stream dari Loki (Nginx, Apache, MySQL slow log)', enabled: true },
+      { name: 'query_prometheus', desc: 'Eksekusi query PromQL untuk metrik CPU, RAM, IOPS, dan latency', enabled: true },
+      { name: 'search_dashboards', desc: 'Mencari dashboard monitoring production di Grafana', enabled: true },
+      { name: 'get_alert_group', desc: 'Melihat daftar alert operasional SIMRS yang sedang firing', enabled: true },
+    ],
+    'gitlab': [
+      { name: 'list_issues', desc: 'Melihat daftar tiket issue pada GitLab repository', enabled: true },
+      { name: 'get_issue', desc: 'Membaca detail deskripsi dan riwayat diskusi tiket issue', enabled: true },
+      { name: 'create_issue', desc: 'Membuka tiket issue baru untuk bug atau request fitur', enabled: true },
+      { name: 'create_branch', desc: 'Membuat feature branch baru untuk task koding', enabled: true },
+      { name: 'create_pull_request', desc: 'Membuka Merge Request setelah perubahan kode selesai', enabled: true },
+      { name: 'list_commits', desc: 'Melihat riwayat commit pada branch aktif', enabled: true },
+    ],
+    'gitlabSimpel': [
+      { name: 'list_commits', desc: 'Melihat riwayat commit upstream Kemenkes git.simpel.web.id', enabled: true },
+      { name: 'get_file_contents', desc: 'Membaca kode acuan master dari repository upstream', enabled: true },
+      { name: 'list_branches', desc: 'Melihat daftar branch versi resmi Kemenkes', enabled: true },
+    ],
+    'mnemosyne': [
+      { name: 'mnemosyne_recall', desc: 'Pencarian semantik memori dan riwayat arsitektur', enabled: true },
+      { name: 'mnemosyne_remember', desc: 'Menyimpan fakta penting dan preferensi koding baru', enabled: true },
+      { name: 'mnemosyne_recall_canonical', desc: 'Mengambil checkpoint status turn 1 secara deterministik', enabled: true },
+      { name: 'mnemosyne_remember_canonical', desc: 'Memperbarui canonical slot checkpoint status koding', enabled: true },
+      { name: 'mnemosyne_triple_query', desc: 'Query relasi fakta terstruktur pada knowledge graph', enabled: true },
+    ],
+    'synology-nas': [
+      { name: 'synology_list_shares', desc: 'Melihat daftar shared folder backup pada NAS RSUD', enabled: true },
+      { name: 'synology_search_files', desc: 'Mencari berkas backup database dump atau installer', enabled: true },
+    ]
+  };
+
+  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>(DEFAULT_MCP_CATALOG);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [testingMcpName, setTestingMcpName] = useState<string | null>(null);
 
@@ -4059,7 +4099,7 @@ export default function App() {
                       <div className="flex-1 max-h-[340px] overflow-y-auto space-y-2 pr-1">
                         {tools.length === 0 ? (
                           <div className="p-8 text-center text-xs text-slate-500 font-mono">
-                            Belum ada tools calling yang terdaftar untuk server ini. Klik tombol "Test Connection" untuk melakukan discovery.
+                            Server terhubung. Klik tombol "Test Connection" untuk discovery tools realtime dari runtime proses.
                           </div>
                         ) : (
                           tools.map((tool, tIdx) => (
