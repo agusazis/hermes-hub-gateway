@@ -61,6 +61,36 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn open_in_browser(url: String) -> Result<(), String> {
+    if url.trim().is_empty() {
+        return Ok(());
+    }
+    let target = url.trim().to_string();
+    #[cfg(windows)]
+    {
+        let _ = std::process::Command::new("cmd")
+            .args(&["/c", "start", "", &target])
+            .spawn()
+            .map_err(|e| format!("Gagal membuka browser Windows: {}", e))?;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("open")
+            .arg(&target)
+            .spawn()
+            .map_err(|e| format!("Gagal membuka browser macOS: {}", e))?;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let _ = std::process::Command::new("xdg-open")
+            .arg(&target)
+            .spawn()
+            .map_err(|e| format!("Gagal membuka browser Linux: {}", e))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 fn remove_workspace_junction(target_path: String) -> Result<(), String> {
     if target_path.trim().is_empty() {
         return Ok(());
@@ -566,7 +596,8 @@ async fn main() {
             check_workspace_readiness,
             scaffold_new_agents_project,
             link_workspace_junction,
-            remove_workspace_junction
+            remove_workspace_junction,
+            open_in_browser
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
