@@ -1665,11 +1665,12 @@ export default function App() {
         setConfig(updated);
         await invoke("save_system_config", { cfg: updated });
 
-        // Update declarative AGENTS.md in target directory
+        // Pasang ulang NTFS Junction jika path target atau git berubah saat edit
         try {
-          await invoke("create_workspace_declarative", {
-            name: newWsName,
-            targetPath: newWsPath
+          const agentsSource = wsToEdit.internal_skills_path || `C:\\Users\\Default\\.hermes-hub\\workspaces\\${wsToEdit.id}\\skills`;
+          await invoke('link_workspace_junction', {
+            projectPath: newWsPath,
+            agentsSourcePath: agentsSource
           });
         } catch (_) {}
 
@@ -1999,7 +2000,7 @@ export default function App() {
 
   const handleTestGitConnection = async () => {
     if (!newWsGitToken) {
-      setGitTestResult({ success: false, message: 'Harap masukkan Personal Access Token (PAT) terlebih dahulu.' });
+      setGitTestResult({ success: false, message: 'Harap masukkan Project / Personal Access Token terlebih dahulu.' });
       return;
     }
 
@@ -2949,11 +2950,11 @@ export default function App() {
                     </div>
 
                     <div className="col-span-5 space-y-1">
-                      <label className="text-[11px] text-slate-400">Personal Access Token (PAT)</label>
+                      <label className="text-[11px] text-slate-400">Git Access Token (Project Token / PAT)</label>
                       <div className="flex items-center gap-2">
                         <input 
                           type="password" 
-                          placeholder="Masukkan PAT akun Git Anda..."
+                          placeholder="Project Access Token atau PAT..."
                           value={newWsGitToken}
                           onChange={(e) => setNewWsGitToken(e.target.value)}
                           className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
@@ -3227,7 +3228,7 @@ export default function App() {
                     <CheckCircle className="w-4 h-4 text-white" />
                     <span>
                       {editingWorkspaceIndex !== null 
-                        ? "Simpan Perubahan Workspace" 
+                        ? "Simpan & Pasang Ulang Junction (.agents)" 
                         : "Pasang Junction (.agents) & Hubungkan Workspace"}
                     </span>
                   </button>
