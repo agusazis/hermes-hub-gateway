@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::fs;
 use std::process::Command;
 use serde::{Deserialize, Serialize};
@@ -179,7 +179,7 @@ pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Res
     fs::create_dir_all(&tools_dir).map_err(|e| e.to_string())?;
 
     // 1. AGENTS.md (Soul & Directives)
-    let agents_md = format!(r#"# {name} AI Agent Soul & Core Directives
+    let agents_md = format!(r##"# {name} AI Agent Soul & Core Directives
 
 You are the senior AI developer for {name}.
 Be direct: match the length of your reply to the weight of the ask — a one-line question gets a one-line answer, and finished work gets a short 3-part report: What changed, What's verified, and What's left.
@@ -205,11 +205,11 @@ Upon starting a new chat session:
 # Non-Negotiable Constraints
 1. Zero Hallucinated Schema: Never guess database column names or APIs. Mandatory physical inspection.
 2. Zero Credential Leaks: Do not store credentials in memory systems or code commits.
-"#, name = project_name);
+"##, name = project_name);
     fs::write(dest_dir.join("AGENTS.md"), agents_md).map_err(|e| e.to_string())?;
 
     // 2. USER.md (Template)
-    let user_md = r#"# Developer Identity & Output Preferences
+    let user_md = r##"# Developer Identity & Output Preferences
 
 - **Name**: [Nama Pengembang]
 - **Role**: Fullstack Developer
@@ -218,11 +218,11 @@ Upon starting a new chat session:
   - Direct & concise (tanpa filler kata manis).
   - Tulis unit-test sebelum menyimpulkan kode selesai.
   - Setiap perubahan schema wajib menyertakan DDL audit.
-"#;
+"##;
     fs::write(dest_dir.join("USER.md"), user_md).map_err(|e| e.to_string())?;
 
     // 3. memory/ENVIRONMENT.md
-    let env_md = r#"# Authoritative Environment & Infrastructure Boundaries
+    let env_md = r##"# Authoritative Environment & Infrastructure Boundaries
 
 ## Servers & Networks
 - **Development Server**: `http://127.0.0.1:8000`
@@ -233,21 +233,20 @@ Upon starting a new chat session:
 ## Operational Constraints
 - Dilarang menjalankan query `DROP TABLE` tanpa konfirmasi eksplisit.
 - Seluruh endpoint API internal terlindung di jaringan intranet.
-"#;
+"##;
     fs::write(memory_dir.join("ENVIRONMENT.md"), env_md).map_err(|e| e.to_string())?;
 
     // 4. memory/anchors.json
-    let anchors_json = r#"{
-  "project_name": "#PROJECT#",
-  "gitlab_project_id": null,
-  "created_at": "2026-10-20"
-}"#.replace("#PROJECT#", project_name);
+    let anchors_json = format!(
+        "{{\n  \"project_name\": \"{}\",\n  \"gitlab_project_id\": null,\n  \"created_at\": \"2026-10-20\"\n}}",
+        project_name
+    );
     fs::write(memory_dir.join("anchors.json"), anchors_json).map_err(|e| e.to_string())?;
 
     // 5. Sample skill
     let sample_skill_dir = skills_dir.join("sample-clean-code");
     fs::create_dir_all(&sample_skill_dir).map_err(|e| e.to_string())?;
-    let sample_skill = r#"---
+    let sample_skill = r##"---
 name: sample-clean-code
 description: Panduan penulisan clean code dan arsitektur modular.
 ---
@@ -257,7 +256,7 @@ description: Panduan penulisan clean code dan arsitektur modular.
 1. Gunakan nama variabel dan fungsi yang mencerminkan intent bisnis.
 2. Hindari fungsi yang melebihi 50 baris kode (Separation of Concerns).
 3. Selalu tangani exception secara terisolasi tanpa membiarkan crash fatal.
-"#;
+"##;
     fs::write(sample_skill_dir.join("SKILL.md"), sample_skill).map_err(|e| e.to_string())?;
 
     Ok(())
