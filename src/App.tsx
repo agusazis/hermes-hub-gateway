@@ -1878,46 +1878,6 @@ export default function App() {
 
       created.git_target = gitTarget;
 
-      // OTOMASI CRITICAL: Kloning / sinkronisasi rules Git langsung saat pembuatan workspace
-      if (created.git_target && created.git_target.repo_url) {
-        try {
-          setSyncMessage("Mengunduh aturan & skills dari remote repository...");
-          await invoke('trigger_manual_sync');
-        } catch (syncErr) {
-          console.warn("Sinkronisasi otomatis saat create workspace:", syncErr);
-        }
-      }
-
-      // Handle Mode B (Create New Project Scaffolding)
-      if (wsWizardMode === 'create') {
-        try {
-          await invoke('scaffold_new_agents_project', {
-            destPath: created.internal_skills_path,
-            projectName: newWsName
-          });
-        } catch (scaffoldErr) {
-          console.error("Gagal scaffolding project baru:", scaffoldErr);
-        }
-      }
-
-      // Pastikan NTFS Junction terpasang ke project tujuan
-      try {
-        await invoke('link_workspace_junction', {
-          projectPath: newWsPath,
-          agentsSourcePath: created.internal_skills_path
-        });
-      } catch (linkErr) {
-        console.error("Gagal link junction:", linkErr);
-      }
-
-      // Audit readiness
-      try {
-        const report: any = await invoke('check_workspace_readiness', { projectPath: newWsPath });
-        if (report) {
-          setWorkspaceReadiness(prev => ({ ...prev, [created.id]: report }));
-        }
-      } catch (_) {}
-
       const existingIndex = config.workspaces.findIndex(w => w.id === created.id);
       let updatedWsList = [...config.workspaces];
       if (existingIndex >= 0) {
@@ -1935,13 +1895,50 @@ export default function App() {
       setConfig(updated);
       await invoke("save_system_config", { cfg: updated });
 
+      // OTOMASI CRITICAL: Kloning / sinkronisasi rules Git langsung saat pembuatan workspace
+      // WAJIB dijalankan SETELAH save_system_config agar backend Rust mengenali active_workspace_id yang baru!
+      if (created.git_target && created.git_target.repo_url) {
+        try {
+          setSyncMessage("Mengunduh aturan & skills dari remote repository...");
+          await invoke('trigger_manual_sync');
+          
+          // Langsung refresh hirarki skill nyata ke UI
+          try {
+            const dynamicSkills: any = await invoke('get_skills_hierarchy', { workspaceId: created.id });
+            if (dynamicSkills && dynamicSkills.length > 0) {
+              setSkillsHierarchy(dynamicSkills);
+            }
+          } catch (_) {}
+        } catch (syncErr) {
+          console.warn("Sinkronisasi otomatis saat create workspace:", syncErr);
+        }
+      }
+
+      // Pastikan NTFS Junction terpasang ke project tujuan
+      try {
+        await invoke('link_workspace_junction', {
+          projectPath: newWsPath,
+          agentsSourcePath: created.internal_skills_path
+        });
+      } catch (linkErr) {
+        console.error("Gagal link junction:", linkErr);
+      }
+
+      // Audit readiness setelah sync dan junction terpasang
+      try {
+        const report: any = await invoke('check_workspace_readiness', { projectPath: newWsPath });
+        if (report) {
+          setWorkspaceReadiness(prev => ({ ...prev, [created.id]: report }));
+        }
+      } catch (_) {}
+
       setShowAddWsModal(false);
       setNewWsName("");
       setNewWsPath("");
       setNewWsGitRepoUrl("");
       setNewWsGitProjectId("");
       setNewWsGitToken("");
-      showToast('success', 'Workspace Berhasil Dihubungkan', `Workspace "${created.name}" aktif! NTFS Junction .agents berhasil dipasang.`);
+      showToast('success', 'Workspace Berhasil Dihubungkan', `Workspace "${created.name}" aktif! NTFS Junction .agents dan SOP/Skills otomatis terpasang.`);
     } catch (err) {
       showToast('error', 'Gagal Membuat Workspace', String(err));
     } finally {
@@ -2590,6 +2587,15 @@ export default function App() {
               <Server className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>System Dashboard</span>}
             </button>
             <button 
+              onClick={() => setActiveTab('settings')}
+              title={isSidebarCollapsed ? "Profile & Gateway Hub" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Profile & Gateway Hub</span>}
+            </button>
+            <button 
               onClick={() => setActiveTab('workspaces')}
               title={isSidebarCollapsed ? "Workspaces & Skills" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
@@ -2615,15 +2621,6 @@ export default function App() {
               }`}
             >
               <Terminal className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Evolution Logs</span>}
-            </button>
-            <button 
-              onClick={() => setActiveTab('settings')}
-              title={isSidebarCollapsed ? "Profile & Gateway Hub" : undefined}
-              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-              }`}
-            >
-              <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Profile & Gateway Hub</span>}
             </button>
           </nav>
         </div>
@@ -5096,13 +5093,6 @@ export default function App() {
                   <span className="font-semibold">{provisionStatus.message}</span>
                 </div>
               )}
-            </div>
-            {/* Notice Info: Git is strictly per-workspace */}
-            <div className={`p-4 rounded-2xl flex items-center justify-between text-xs border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/60 border-slate-800 text-slate-400" : "bg-white border-slate-200 text-slate-600 shadow-sm"}`}>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                <span>Koneksi Repositori Git Skills kini <b>terkunci dan diisolasi mandiri per-workspace</b> di menu Workspaces.</span>
-              </div>
             </div>
 
             {/* Global Central Telegram Notification Config */}
