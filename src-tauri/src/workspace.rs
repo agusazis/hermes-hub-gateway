@@ -286,7 +286,12 @@ Inspect `.agents/skills/<name>/SKILL.md` ONLY when the active task matches the s
 # Session Initiation & Handover Bootstrap (Turn 1 Protocol)
 Upon starting a new chat session:
 1. Targeted Memory Check: Query the latest handover checkpoint directly via Mnemosyne MCP or local memory.
-2. Ground Truth Verification: Verify environment constraints before writing code.
+2. Pre-Flight Gateway & MCP Bridge Check:
+   - Verifikasi apakah service Hermes Hub Gateway (HHG) dan named pipe `\\.\pipe\hhg-bridge` aktif di background.
+   - JIKA HHG BELUM AKTIF: Berikan peringatan singkat 1 baris di awal:
+     `⚠️ Peringatan: Hermes Hub Gateway (HHG) belum aktif di background. Buka aplikasi HHG di Windows agar sinkronisasi Evaluator Hermes dan MCP Bridge berfungsi.`
+     Lalu lanjutkan tugas lokal seperti biasa tanpa memblokir alur user.
+3. Ground Truth Verification: Verify environment constraints before writing code.
 
 # Non-Negotiable Constraints
 1. Zero Hallucinated Schema: Never guess database column names or APIs. Mandatory physical inspection.
