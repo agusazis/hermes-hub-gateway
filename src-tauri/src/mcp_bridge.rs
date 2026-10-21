@@ -223,15 +223,15 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
             JsonRpcResponse {
                 jsonrpc: "2.0".to_string(),
                 id: request.id,
-                result: Some(serde_json::json!({\
-                    "protocolVersion": "2024-11-05",\
-                    "capabilities": {\
-                        "tools": {}\
-                    },\
-                    "serverInfo": {\
-                        "name": "hermes-hub-gateway",\
-                        "version": "0.8.0"\
-                    }\
+                result: Some(serde_json::json!({
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "hermes-hub-gateway",
+                        "version": "0.8.0"
+                    }
                 })),
                 error: None,
             }
@@ -245,43 +245,43 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
             }
         }
         "tools/list" => {
-            let tools = serde_json::json!([\
-                {\
-                    "name": "hermes_get_skill",\
-                    "description": "Ambil isi aturan koding / SOP spesifik (SKILL.md) dari Hermes Hub Gateway secara on-demand.",\
-                    "inputSchema": {\
-                        "type": "object",\
-                        "properties": {\
-                            "name": {\
-                                "type": "string",\
-                                "description": "Nama skill (contoh: 'core-blueprint', 'git-workflow')"\
-                            }\
-                        },\
-                        "required": ["name"]\
-                    }\
-                },\
-                {\
-                    "name": "hermes_list_skills",\
-                    "description": "Daftar seluruh skill dan referensi SOP yang tersedia di workspace aktif.",\
-                    "inputSchema": {\
-                        "type": "object",\
-                        "properties": {}\
-                    }\
-                },\
-                {\
-                    "name": "execute_sql_simrs",\
-                    "description": "Eksekusi query SQL read-only ke Database SIMRS RSUD dr. H. Jusuf SK melalui Hermes Gateway.",\
-                    "inputSchema": {\
-                        "type": "object",\
-                        "properties": {\
-                            "sql": {\
-                                "type": "string",\
-                                "description": "SQL query SELECT/SHOW/DESCRIBE"\
-                            }\
-                        },\
-                        "required": ["sql"]\
-                    }\
-                }\
+            let tools = serde_json::json!([
+                {
+                    "name": "hermes_get_skill",
+                    "description": "Ambil isi aturan koding / SOP spesifik (SKILL.md) dari Hermes Hub Gateway secara on-demand.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Nama skill (contoh: 'core-blueprint', 'git-workflow')"
+                            }
+                        },
+                        "required": ["name"]
+                    }
+                },
+                {
+                    "name": "hermes_list_skills",
+                    "description": "Daftar seluruh skill dan referensi SOP yang tersedia di workspace aktif.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "execute_sql_simrs",
+                    "description": "Eksekusi query SQL read-only ke Database SIMRS RSUD dr. H. Jusuf SK melalui Hermes Gateway.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "sql": {
+                                "type": "string",
+                                "description": "SQL query SELECT/SHOW/DESCRIBE"
+                            }
+                        },
+                        "required": ["sql"]
+                    }
+                }
             ]);
 
             JsonRpcResponse {
@@ -306,11 +306,11 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                             return JsonRpcResponse {
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id,
-                                result: Some(serde_json::json!({\
-                                    "content": [{\
-                                        "type": "text",\
-                                        "text": content\
-                                    }]\
+                                result: Some(serde_json::json!({
+                                    "content": [{
+                                        "type": "text",
+                                        "text": content
+                                    }]
                                 })),
                                 error: None,
                             };
@@ -320,12 +320,12 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                     JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id: request.id,
-                        result: Some(serde_json::json!({\
-                            "content": [{\
-                                "type": "text",\
-                                "text": format!("Skill '{}' tidak ditemukan di direktori internal HHG: {:?}", skill_name, skills_dir)\
-                            }],\
-                            "isError": true\
+                        result: Some(serde_json::json!({
+                            "content": [{
+                                "type": "text",
+                                "text": format!("Skill '{}' tidak ditemukan di direktori internal HHG: {:?}", skill_name, skills_dir)
+                            }],
+                            "isError": true
                         })),
                         error: None,
                     }
@@ -345,11 +345,11 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                     JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id: request.id,
-                        result: Some(serde_json::json!({\
-                            "content": [{\
-                                "type": "text",\
-                                "text": serde_json::to_string_pretty(&list).unwrap_or_default()\
-                            }]\
+                        result: Some(serde_json::json!({
+                            "content": [{
+                                "type": "text",
+                                "text": serde_json::to_string_pretty(&list).unwrap_or_default()
+                            }]
                         })),
                         error: None,
                     }
@@ -370,11 +370,11 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                     JsonRpcResponse {
                         jsonrpc: "2.0".to_string(),
                         id: request.id,
-                        result: Some(serde_json::json!({\
-                            "content": [{\
-                                "type": "text",\
-                                "text": text_result\
-                            }]\
+                        result: Some(serde_json::json!({
+                            "content": [{
+                                "type": "text",
+                                "text": text_result
+                            }]
                         })),
                         error: None,
                     }
@@ -383,9 +383,9 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                     jsonrpc: "2.0".to_string(),
                     id: request.id,
                     result: None,
-                    error: Some(serde_json::json!({\
-                        "code": -32601,\
-                        "message": format!("Tool '{}' tidak dikenali di Hermes Hub Gateway", name)\
+                    error: Some(serde_json::json!({
+                        "code": -32601,
+                        "message": format!("Tool '{}' tidak dikenali di Hermes Hub Gateway", name)
                     })),
                 },
             }
@@ -394,9 +394,9 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
             jsonrpc: "2.0".to_string(),
             id: request.id,
             result: None,
-            error: Some(serde_json::json!({\
-                "code": -32601,\
-                "message": format!("Method '{}' tidak didukung", method)\
+            error: Some(serde_json::json!({
+                "code": -32601,
+                "message": format!("Method '{}' tidak didukung", method)
             })),
         },
     }
