@@ -1694,7 +1694,17 @@ export default function App() {
 
   const handleDeleteWorkspace = async (index: number) => {
     const ws = config.workspaces[index];
-    if (!confirm(`Hapus workspace "${ws.name}"? File project lokal Anda tidak akan dihapus.`)) return;
+    if (!confirm(`Hapus workspace "${ws.name}"? Tautan junction (.agents) di project lokal akan diputus dengan aman.`)) return;
+    
+    // Putuskan junction .agents di project lokal
+    if (ws.target_path) {
+      try {
+        await invoke('remove_workspace_junction', { targetPath: ws.target_path });
+      } catch (err) {
+        console.warn('Gagal memutus junction via backend:', err);
+      }
+    }
+
     const remaining = config.workspaces.filter((_, i) => i !== index);
     const updated = {
       ...config,
@@ -1703,7 +1713,7 @@ export default function App() {
     };
     setConfig(updated);
     await invoke('save_system_config', { cfg: updated });
-    setSyncMessage(`Workspace "${ws.name}" berhasil dihapus.`);
+    setSyncMessage(`Workspace "${ws.name}" berhasil dihapus dan tautan .agents telah diputus.`);
     setTimeout(() => setSyncMessage(''), 3000);
   };
 
