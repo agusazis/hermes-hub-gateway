@@ -66,45 +66,177 @@ pub fn get_app_data_dir() -> PathBuf {
     let _ = fs::create_dir_all(&scripts_dir);
     let bridge_ps1 = scripts_dir.join("pipe-bridge.ps1");
     if !bridge_ps1.exists() {
-        let script_content = r#"# Hermes Hub Gateway - Named Pipe stdio Bridge for IDE MCP
-[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+        let script_content = r#"# Direct Stdio MCP Server for Hermes Hub Gateway
+# Runs as an MCP server responding to IDE stdin/stdout
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
-$pipeName = "hhg-bridge"
-$pipe = New-Object System.IO.Pipes.NamedPipeClientStream(".", $pipeName, [System.IO.Pipes.PipeDirection]::InOut)
-
-try {
-    $pipe.Connect(5000)
-} catch {
-    [Console]::Error.WriteLine("[HHG-Bridge] Gagal terhubung ke \\.\pipe\hhg-bridge. Pastikan aplikasi Hermes Hub Gateway sudah berjalan.")
-    exit 1
+$skillsDir = "D:\7. Project\ai-agents\skills"
+if (-not (Test-Path $skillsDir)) {
+    $skillsDir = "D:\7. Project\SIMGOSv2\New - php82\simgos2\.agents\skills"
 }
 
-$reader = New-Object System.IO.StreamReader($pipe, [System.Text.Encoding]::UTF8)
-$writer = New-Object System.IO.StreamWriter($pipe, [System.Text.Encoding]::UTF8)
-$writer.AutoFlush = $true
+function Send-McpResponse($respObj) {
+    $json = $respObj | ConvertTo-Json -Compress -Depth 10
+    [Console]::WriteLine($json)
+}
 
-# Background task to read from pipe and write to stdout
-$pipeReaderJob = [System.Threading.Tasks.Task]::Run([Action]{
+while ($true) {
+    $line = [Console]::ReadLine()
+    if ($null -eq $line) { break }
+    $trimmed = $line.Trim()
+    if ($trimmed.Length -eq 0) { continue }
+
     try {
-        while (-not $reader.EndOfStream) {
-            $line = $reader.ReadLine()
-            if ($line -ne $null) {
-                [Console]::Out.WriteLine($line)
+        $req = $trimmed | ConvertFrom-Json
+        $id = $req.id
+        $method = $req.method
+
+        switch ($method) {
+            "initialize" {
+                Send-McpResponse @{
+                    jsonrpc = "2.0"
+                    id = $id
+                    result = @{
+                        protocolVersion = "2024-11-05"
+                        capabilities = @{ tools = @{} }
+                        serverInfo = @{
+                            name = "hermes-hub-gateway"
+                            version = "0.8.0"
+                        }
+                    }
+                }
+            }
+            "notifications/initialized" {
+                # Notification, no response required
+            }
+            "tools/list" {
+                Send-McpResponse @{
+                    jsonrpc = "2.0"
+                    id = $id
+                    result = @{
+                        tools = @(
+                            @{
+                                name = "hermes_list_skills"
+                                description = "Melihat daftar seluruh SOP, aturan arsitektur koding, dan pedoman kerja (Skills) yang tersedia di Hermes Hub Gateway untuk workspace aktif."
+                                inputSchema = @{
+                                    type = "object"
+                                    properties = @{}
+                                }
+                            },
+                            @{
+                                name = "hermes_get_skill"
+                                description = "Membaca isi lengkap aturan SOP, checklist, dan panduan koding dari skill tertentu secara on-demand."
+                                inputSchema = @{
+                                    type = "object"
+                                    properties = @{
+                                        name = @{
+                                            type = "string"
+                                            description = "Nama skill atau SOP (contoh: simgos2-simrs, devops, database-best-practices)"
+                                        }
+                                    }
+                                    required = @("name")
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+            "tools/call" {
+                $toolName = $req.params.name
+                $toolArgs = $req.params.arguments
+
+                if ($toolName -eq "hermes_list_skills") {
+                    $skills = @()
+                    if (Test-Path $skillsDir) {
+                        Get-ChildItem $skillsDir -Directory | ForEach-Object {
+                            $skillFile = Join-Path $_.FullName "SKILL.md"
+                            $desc = "Skill module: " + $_.Name
+                            if (Test-Path $skillFile) {
+                                $firstLines = Get-Content $skillFile -TotalCount 5
+                                $desc = ($firstLines -join " ").Trim()
+                                if ($desc.Length -gt 120) { $desc = $desc.Substring(0, 117) + "..." }
+                            }
+                            $skills += "- **$($_.Name)**: $desc"
+                        }
+                    }
+                    $contentStr = if ($skills.Count -gt 0) {
+                        "### Katalog SOP & Aturan Koding Aktif (Hermes Hub Gateway):`n`n" + ($skills -join "`n")
+                    } else {
+                        "Belum ada skill yang tersinkronisasi di direktori skills."
+                    }
+
+                    Send-McpResponse @{
+                        jsonrpc = "2.0"
+                        id = $id
+                        result = @{
+                            content = @(
+                                @{
+                                    type = "text"
+                                    text = $contentStr
+                                }
+                            )
+                        }
+                    }
+                }
+                elseif ($toolName -eq "hermes_get_skill") {
+                    $targetSkill = $toolArgs.name
+                    $skillMd = Join-Path $skillsDir "$targetSkill\SKILL.md"
+                    if (Test-Path $skillMd) {
+                        $skillBody = Get-Content $skillMd -Raw
+                        Send-McpResponse @{
+                            jsonrpc = "2.0"
+                            id = $id
+                            result = @{
+                                content = @(
+                                    @{
+                                        type = "text"
+                                        text = $skillBody
+                                    }
+                                )
+                            }
+                        }
+                    } else {
+                        Send-McpResponse @{
+                            jsonrpc = "2.0"
+                            id = $id
+                            result = @{
+                                content = @(
+                                    @{
+                                        type = "text"
+                                        text = "Error: Skill '$targetSkill' tidak ditemukan di direktori $skillsDir"
+                                    }
+                                )
+                                isError = $true
+                            }
+                        }
+                    }
+                }
+                else {
+                    Send-McpResponse @{
+                        jsonrpc = "2.0"
+                        id = $id
+                        error = @{
+                            code = -32601
+                            message = "Method or tool not found"
+                        }
+                    }
+                }
+            }
+            default {
+                Send-McpResponse @{
+                    jsonrpc = "2.0"
+                    id = $id
+                    error = @{
+                        code = -32601
+                        message = "Method not supported"
+                    }
+                }
             }
         }
-    } catch {}
-})
-
-# Read from stdin and forward to pipe
-try {
-    while ($true) {
-        $stdinLine = [Console]::In.ReadLine()
-        if ($stdinLine -eq $null) { break }
-        $writer.WriteLine($stdinLine)
+    } catch {
+        # Silent ignore parse error
     }
-} finally {
-    $pipe.Close()
 }
 "#;
         let _ = fs::write(bridge_ps1, script_content);
