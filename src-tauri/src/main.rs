@@ -61,6 +61,16 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn remove_workspace_junction(target_path: String) -> Result<(), String> {
+    if target_path.trim().is_empty() {
+        return Ok(());
+    }
+    let p = PathBuf::from(target_path.trim());
+    let junc = p.join(".agents");
+    workspace::remove_ntfs_junction(&junc)
+}
+
+#[tauri::command]
 fn reset_system_config() -> Result<config::GlobalConfig, String> {
     let clean_cfg = config::GlobalConfig::default();
     config::save_config(&clean_cfg);
@@ -555,7 +565,8 @@ async fn main() {
             list_git_projects,
             check_workspace_readiness,
             scaffold_new_agents_project,
-            link_workspace_junction
+            link_workspace_junction,
+            remove_workspace_junction
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
