@@ -113,39 +113,40 @@ pub async fn start_watcher_loop(app: AppHandle) {
                                 git_target: active_ws.git_target.clone(),
                             };
 
-                            let evaluator_url = format!("{}/review", active_ws.hermes_evaluator_url.trim_end_matches('/'));
-                            let client = reqwest::Client::builder()
-                                .timeout(Duration::from_secs(45))
-                                .build()
-                                .unwrap_or_default();
+                                let evaluator_url = format!("{}/review", active_ws.hermes_evaluator_url.trim_end_matches('/'));
+                                let client = reqwest::Client::builder()
+                                    .timeout(Duration::from_secs(45))
+                                    .build()
+                                    .unwrap_or_default();
 
-                            let res = client.post(&evaluator_url).json(&payload).send().await;
+                                let res = client.post(&evaluator_url).json(&payload).send().await;
 
-                            match res {
-                                Ok(response) => {
-                                    if let Ok(review_res) = response.json::<ReviewResponsePayload>().await {
-                                        if review_res.has_lesson {
-                                            let skill = review_res.skill_name.unwrap_or_else(|| "new-rule".to_string());
-                                            println!("[Watcher] Lesson learned detected: {}", skill);
+                                match res {
+                                    Ok(response) => {
+                                        if let Ok(review_res) = response.json::<ReviewResponsePayload>().await {
+                                            if review_res.has_lesson {
+                                                let skill = review_res.skill_name.unwrap_or_else(|| "new-rule".to_string());
+                                                println!("[Watcher] Lesson learned detected: {}", skill);
 
-                                            let _ = app.emit("lesson-learned", serde_json::json!({
-                                                "skill_name": skill,
-                                                "commit": review_res.commit_message,
-                                                "time": Utc::now().to_rfc3339()
-                                            }));
+                                                let _ = app.emit("lesson-learned", serde_json::json!({
+                                                    "skill_name": skill,
+                                                    "commit": review_res.commit_message,
+                                                    "time": Utc::now().to_rfc3339()
+                                                }));
 
-                                            // Auto-pull rules ke internal storage HHG
-                                            sync_rules_from_git(&active_ws).await;
+                                                // Auto-pull rules ke internal storage HHG
+                                                sync_rules_from_git(&active_ws).await;
+                                            }
                                         }
                                     }
-                                }
-                                Err(e) => {
-                                    eprintln!("[Watcher] Failed to send review payload: {}", e);
+                                    Err(e) => {
+                                        eprintln!("[Watcher] Failed to send review payload: {}", e);
+                                    }
                                 }
                             }
                         }
+                        file_offsets.insert(path, len);
                     }
-                    file_offsets.insert(path, len);
                 }
             }
         }
