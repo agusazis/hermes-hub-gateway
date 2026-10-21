@@ -280,11 +280,13 @@ export default function App() {
 
   const [newWsName, setNewWsName] = useState('');
   const [newWsPath, setNewWsPath] = useState('');
+  const [newWsGitBaseUrl, setNewWsGitBaseUrl] = useState('http://172.168.1.33');
   const [newWsGitProvider, setNewWsGitProvider] = useState('gitlab');
   const [newWsGitRepoUrl, setNewWsGitRepoUrl] = useState('');
   const [newWsGitProjectId, setNewWsGitProjectId] = useState('');
   const [newWsGitBranch, setNewWsGitBranch] = useState('main');
   const [newWsGitToken, setNewWsGitToken] = useState('');
+  const [newRepoName, setNewRepoName] = useState('');
   // State Wizard Add Workspace & Readiness Gatekeeper
   const [wsWizardMode, setWsWizardMode] = useState<'exist' | 'create'>('exist');
   const [remoteProjectsList, setRemoteProjectsList] = useState<{ id: string; name: string; path_with_namespace: string; default_branch: string; http_url_to_repo: string; description?: string }[]>([]);
@@ -1690,7 +1692,7 @@ export default function App() {
       const id = newWsName.toLowerCase().replace(/\s+/g, "-");
       const gitTarget: GitTarget | undefined = newWsGitRepoUrl ? {
         provider: newWsGitProvider,
-        base_url: newWsGitRepoUrl.includes("github.com") ? "https://github.com" : "http://172.168.1.33",
+        base_url: newWsGitBaseUrl.trim() || (newWsGitRepoUrl.includes("github.com") ? "https://github.com" : "http://172.168.1.33"),
         project_id: newWsGitProjectId || "0",
         repo_url: newWsGitRepoUrl,
         target_branch: newWsGitBranch || "main",
@@ -1995,59 +1997,53 @@ export default function App() {
   };
 
   const handleTestGitConnection = async () => {
-    if (!newWsGitRepoUrl && !newWsGitToken) {
-      setGitTestResult({ success: false, message: 'Harap masukkan Base URL Git dan Personal Access Token (PAT).' });
+    if (!newWsGitToken) {
+      setGitTestResult({ success: false, message: 'Harap masukkan Personal Access Token (PAT) terlebih dahulu.' });
       return;
     }
 
     setTestingGit(true);
     setGitTestResult(null);
 
-    try {
-      const baseUrl = newWsGitRepoUrl.includes("github.com") 
-        ? "https://api.github.com" 
-        : (newWsGitRepoUrl.startsWith("http") ? newWsGitRepoUrl.replace(/\/[\w-]+\/[\w-]+\.git$/, '') : "http://172.168.1.33");
+    const baseUrl = newWsGitBaseUrl.trim() || (newWsGitProvider === 'github' ? 'https://api.github.com' : 'http://172.168.1.33');
 
+    try {
       setLoadingProjects(true);
       // Fetch available remote projects via PAT
       const projects: any = await invoke('list_git_projects', {
         provider: newWsGitProvider,
         baseUrl: baseUrl,
-        token: newWsGitToken
+        token: newWsGitToken.trim()
       });
-      setRemoteProjectsList(projects || []);
+      
+      const list = projects || [];
+      setRemoteProjectsList(list);
       setLoadingProjects(false);
-
       setTestingGit(false);
-      setGitTestResult({
-        success: true,
-        message: `✓ Terhubung! Berhasil memuat ${projects?.length || 0} repositori yang dapat diakses dengan PAT ini.`
-      });
-    } catch (err: any) {
-      setLoadingProjects(false);
-      // Fallback ke test_git_remote jika URL repo langsung diisi
-      try {
-        const res: any = await invoke('test_git_remote', {
-          repoUrl: newWsGitRepoUrl,
-          authToken: newWsGitToken || null
-        });
-        setTestingGit(false);
+
+      if (list.length > 0) {
         setGitTestResult({
           success: true,
-          message: res.message || '✓ Berhasil terhubung ke Remote Git Repository!'
+          message: `✓ Koneksi Sukses! Berhasil memuat ${list.length} project repository yang dapat Anda akses.`
         });
-      } catch (fallbackErr: any) {
-        setTestingGit(false);
+      } else {
         setGitTestResult({
-          success: false,
-          message: `Koneksi Git Remote Gagal: ${err?.toString() || fallbackErr?.toString()}`
+          success: true,
+          message: `✓ Terhubung ke Git server, namun belum ada repositori pada akun PAT ini.`
         });
       }
+    } catch (err: any) {
+      setLoadingProjects(false);
+      setTestingGit(false);
+      setGitTestResult({
+        success: false,
+        message: `Koneksi Git Gagal: ${err?.toString() || 'Pastikan Base URL dan PAT benar.'}`
+      });
     }
 
     setTimeout(() => {
       setGitTestResult(null);
-    }, 6000);
+    }, 8000);
   };
 
   const handleTestMcp = async (mcp: McpServerEntry, idx: number) => {
@@ -2881,12 +2877,12 @@ export default function App() {
               </button>
             </div>
 
-            {/* Modal Tambah Workspace Baru */}
+            {/* Modal Tambah Workspace Baru (Urutan: 1. PAT & Cek Koneksi -> 2. Pilih Project Exist / Buat Baru -> 3. Pilih Folder Project Lokal) */}
             {showAddWsModal && (
               <form onSubmit={handleCreateWorkspace} className="p-5 bg-slate-900 border border-cyan-500/30 rounded-2xl space-y-4 shadow-xl">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
-                    {editingWorkspaceIndex !== null ? "Edit Konfigurasi Workspace & Git Remote" : "Pendaftaran Workspace Baru (Zero-Pollution & Isolated Git Repo)"}
+                    {editingWorkspaceIndex !== null ? "Edit Konfigurasi Workspace & Git Remote" : "Pendaftaran Workspace Baru (Hubungkan .agents ke Project Lokal)"}
                   </h4>
                   <button 
                     type="button" 
@@ -2898,199 +2894,158 @@ export default function App() {
                       setNewWsGitRepoUrl('');
                       setNewWsGitProjectId('');
                       setNewWsGitToken('');
+                      setNewRepoName('');
                       setGitTestResult(null);
+                      setRemoteProjectsList([]);
                     }}
                     className="text-slate-400 hover:text-white"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 font-medium">Nama Workspace / Project</label>
-                    <input 
-                      type="text" 
-                      placeholder="Contoh: SIMRS Billing"
-                      value={newWsName}
-                      onChange={(e) => setNewWsName(e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs"}`}
-                      required
-                    />
+
+                {/* LANGKAH 1: KONEKSI GIT & PERSONAL ACCESS TOKEN (PAT) */}
+                <div className={`p-4 rounded-xl space-y-3 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-950/70 border-cyan-500/30" : "bg-slate-50 border-cyan-500/40 shadow-xs"}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Key className="w-4 h-4 text-cyan-400" /> LANGKAH 1: Masukkan PAT & Cek Koneksi Git
+                    </span>
+                    <span className="text-[10px] text-cyan-400 font-mono bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-700/50">OTENTIKASI</span>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 font-medium">Direktori Project Target di Laptop</label>
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="Contoh: D:\7. Project\Billing"
-                        value={newWsPath}
-                        onChange={(e) => setNewWsPath(e.target.value)}
-                        className={`flex-1 px-3 py-2 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs"}`}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            const selected = await invoke<string | null>("select_project_folder");
-                            if (selected) {
-                              setNewWsPath(selected);
-                            }
-                          } catch (err) {
-                            console.error("Gagal membuka folder picker:", err);
+
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-3 space-y-1">
+                      <label className="text-[11px] text-slate-400">Provider Git</label>
+                      <select 
+                        value={newWsGitProvider}
+                        onChange={(e) => {
+                          const p = e.target.value;
+                          setNewWsGitProvider(p);
+                          if (p === 'github') {
+                            setNewWsGitBaseUrl('https://api.github.com');
+                          } else {
+                            setNewWsGitBaseUrl('http://172.168.1.33');
                           }
                         }}
-                        className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border shadow-xs ${effectiveTheme === "dark" ? "bg-slate-800 hover:bg-slate-700 text-cyan-300 border-slate-700" : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"}`}
-                        title="Buka Windows Explorer untuk memilih folder target"
+                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
                       >
-                        <Folder className="w-4 h-4 text-cyan-500" />
-                        <span>Pilih Folder</span>
-                      </button>
+                        <option value="gitlab">GitLab (Self-Hosted)</option>
+                        <option value="github">GitHub</option>
+                      </select>
+                    </div>
+
+                    <div className="col-span-4 space-y-1">
+                      <label className="text-[11px] text-slate-400">Git Base Server URL</label>
+                      <input 
+                        type="text" 
+                        placeholder={newWsGitProvider === 'gitlab' ? "http://172.168.1.33" : "https://api.github.com"}
+                        value={newWsGitBaseUrl}
+                        onChange={(e) => setNewWsGitBaseUrl(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-span-5 space-y-1">
+                      <label className="text-[11px] text-slate-400">Personal Access Token (PAT)</label>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="password" 
+                          placeholder="Masukkan PAT akun Git Anda..."
+                          value={newWsGitToken}
+                          onChange={(e) => setNewWsGitToken(e.target.value)}
+                          className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={handleTestGitConnection}
+                          disabled={testingGit || loadingProjects}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
+                        >
+                          {testingGit || loadingProjects ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>Cek...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3.5 h-3.5 fill-current" />
+                              <span>Cek Koneksi</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Feedback Notifikasi Status Koneksi Git */}
+                  {gitTestResult && (
+                    <div className={`p-2.5 rounded-lg text-xs font-mono border shadow-md animate-in fade-in flex items-center gap-2.5 ${
+                      gitTestResult.success
+                        ? "bg-emerald-950/80 border-emerald-500 text-emerald-200"
+                        : "bg-rose-950/80 border-rose-500 text-rose-200"
+                    }`}>
+                      {gitTestResult.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                      )}
+                      <span>{gitTestResult.message}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Wizard Mode Selector: Select Existing Project vs Create New Project */}
-                <div className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-xl space-y-2">
-                  <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Metode Pengikatan Repositori Aturan:</span>
-                  <div className="grid grid-cols-2 gap-2">
+                {/* LANGKAH 2: PILIH METODE REPO (PROJECT EXIST vs CREATE NEW REPO) */}
+                <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-xl space-y-3">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <FolderTree className="w-4 h-4 text-cyan-400" /> LANGKAH 2: Pilih Sumber Arsitektur (.agents)
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setWsWizardMode('exist')}
-                      className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                      className={`p-3 rounded-xl border text-left transition-all ${
                         wsWizardMode === 'exist'
-                          ? 'bg-cyan-900/40 border-cyan-400 text-cyan-200 shadow-sm'
+                          ? 'bg-cyan-950/60 border-cyan-400 text-cyan-200 shadow-md ring-1 ring-cyan-500'
                           : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
                       }`}
                     >
-                      <div className="font-bold flex items-center gap-1.5">
-                        <Folder className="w-3.5 h-3.5 text-cyan-400" /> Mode A: Select Existing Project
+                      <div className="font-bold text-xs flex items-center gap-2">
+                        <Folder className="w-4 h-4 text-cyan-400" /> OPSI A: Pilih Project Exist (Rekomendasi)
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-1">
-                        Klon repo yang sudah ada (misal: ai-agents) dan hubungkan via NTFS Junction.
+                      <div className="text-[11px] text-slate-400 mt-1">
+                        Pilih repositori master yang sudah ada di Git (seperti <b>ai-agents</b>).
                       </div>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setWsWizardMode('create')}
-                      className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                      className={`p-3 rounded-xl border text-left transition-all ${
                         wsWizardMode === 'create'
-                          ? 'bg-emerald-900/40 border-emerald-400 text-emerald-200 shadow-sm'
+                          ? 'bg-emerald-950/60 border-emerald-400 text-emerald-200 shadow-md ring-1 ring-emerald-500'
                           : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
                       }`}
                     >
-                      <div className="font-bold flex items-center gap-1.5">
-                        <Plus className="w-3.5 h-3.5 text-emerald-400" /> Mode B: Create New Project
+                      <div className="font-bold text-xs flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-emerald-400" /> OPSI B: Create Project Baru
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-1">
+                      <div className="text-[11px] text-slate-400 mt-1">
                         Build struktur standar baru Antigravity + Hermes (USER.md, ENVIRONMENT, dll.).
                       </div>
                     </button>
                   </div>
-                </div>
 
-                {/* Git Repository Binding for this Workspace */}
-                <div className="p-4 bg-slate-950/60 border border-slate-800/80 rounded-xl space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-                      <GitBranch className="w-3.5 h-3.5 text-cyan-400" /> Koneksi Repositori Git Skills (Per-Workspace)
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-mono">ISOLATED REPO BINDING</span>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400">Provider Git</label>
-                      <select 
-                        value={newWsGitProvider}
-                        onChange={(e) => setNewWsGitProvider(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
-                      >
-                        <option value="gitlab">GitLab (Self-Hosted / Enterprise)</option>
-                        <option value="github">GitHub</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1 col-span-2">
-                      <label className="text-[11px] text-slate-400">URL Remote Git Repository</label>
-                      <input 
-                        type="text" 
-                        placeholder="https://github.com/your-org/ai-skills.git"
-                        value={newWsGitRepoUrl}
-                        onChange={(e) => setNewWsGitRepoUrl(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400">Project ID / Identifier</label>
-                      <input 
-                        type="text" 
-                        placeholder="Contoh: 84"
-                        value={newWsGitProjectId}
-                        onChange={(e) => setNewWsGitProjectId(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400">Target Branch</label>
-                      <input 
-                        type="text" 
-                        placeholder="main"
-                        value={newWsGitBranch}
-                        onChange={(e) => setNewWsGitBranch(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400">Access Token (PAT)</label>
-                      <input 
-                        type="password" 
-                        placeholder="glpat-••••••••••••"
-                        value={newWsGitToken}
-                        onChange={(e) => setNewWsGitToken(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tombol Test Koneksi Git & Hasil Notasi Hijau Kontras */}
-                  <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400">
-                        {wsWizardMode === 'exist' 
-                          ? 'Validasi PAT untuk menarik daftar project repository yang dapat Anda akses.'
-                          : 'Validasi kredensial PAT untuk membuat dan push repository baru ke remote.'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleTestGitConnection}
-                        disabled={testingGit || loadingProjects}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 rounded-lg text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
-                      >
-                        {testingGit || loadingProjects ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
-                            <span>Validasi & Muat Projects...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-3.5 h-3.5 text-cyan-400 fill-current" />
-                            <span>{wsWizardMode === 'exist' ? 'Validasi & Load Projects' : 'Cek Akses PAT Git'}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Dropdown Select Existing Remote Project jika berhasil ditarik */}
-                    {wsWizardMode === 'exist' && remoteProjectsList.length > 0 && (
-                      <div className="p-3 bg-cyan-950/30 border border-cyan-500/40 rounded-lg space-y-1.5 animate-fadeIn">
-                        <label className="text-[11px] text-cyan-300 font-semibold flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Pilih Project Repository yang Ditemukan ({remoteProjectsList.length}):
-                        </label>
+                  {/* Konten Opsi A: Dropdown Project yang ditemukan dari PAT */}
+                  {wsWizardMode === 'exist' && (
+                    <div className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-lg space-y-1.5 animate-fadeIn">
+                      <label className="text-[11px] text-cyan-300 font-semibold flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 
+                        Pilih Project Repository yang Anda Akses:
+                      </label>
+                      {remoteProjectsList.length > 0 ? (
                         <select
                           value={selectedProjectId}
                           onChange={(e) => {
@@ -3104,49 +3059,117 @@ export default function App() {
                               if (!newWsName) setNewWsName(found.name);
                             }
                           }}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-cyan-500/50 rounded-lg text-xs font-mono text-cyan-200 focus:outline-none"
+                          className="w-full px-3 py-2 bg-slate-900 border border-cyan-500/50 rounded-lg text-xs font-mono text-cyan-200 focus:outline-none"
                         >
-                          <option value="">-- Pilih Project dari Daftar Akses PAT --</option>
+                          <option value="">-- Klik untuk Memilih Repositori (misal: simrs/ai-agents) --</option>
                           {remoteProjectsList.map(proj => (
                             <option key={proj.id} value={proj.id}>
-                              {proj.path_with_namespace} ({proj.default_branch}) {proj.description ? `- ${proj.description.substring(0, 40)}` : ''}
+                              📁 {proj.path_with_namespace} (Branch: {proj.default_branch || 'main'}) - ID: {proj.id}
                             </option>
                           ))}
                         </select>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="text-xs text-amber-300/90 font-mono py-1 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-amber-400" />
+                          <span>Klik tombol <b>"Cek Koneksi"</b> di Langkah 1 untuk memuat otomatis daftar project dari PAT Anda.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {gitTestResult && (
-                      <div className={`p-3 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-center gap-3 ${
-                        gitTestResult.success
-                          ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
-                          : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
-                      }`}>
-                        <div className={`p-1.5 rounded-lg border flex-shrink-0 ${
-                          gitTestResult.success
-                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                            : "bg-rose-500/20 text-rose-400 border-rose-500/40"
-                        }`}>
-                          {gitTestResult.success ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 text-rose-400" />
-                          )}
-                        </div>
-                        <div className="space-y-0.5">
-                          <div className={`text-[10px] font-bold uppercase tracking-wider ${
-                            gitTestResult.success ? "text-emerald-400" : "text-rose-400"
-                          }`}>
-                            {gitTestResult.success ? "Hasil Uji Koneksi Git (Sukses Terhubung)" : "Hasil Uji Koneksi Git (Gagal)"}
-                          </div>
-                          <span className="font-semibold">{gitTestResult.message}</span>
-                        </div>
+                  {/* Konten Opsi B: Input Nama Repo Baru untuk di-scaffold */}
+                  {wsWizardMode === 'create' && (
+                    <div className="p-3 bg-emerald-950/20 border border-emerald-500/30 rounded-lg space-y-2 animate-fadeIn">
+                      <label className="text-[11px] text-emerald-300 font-semibold">Nama Repositori Baru yang Akan Dibuat:</label>
+                      <input 
+                        type="text" 
+                        placeholder="Contoh: my-project-agents"
+                        value={newRepoName}
+                        onChange={(e) => {
+                          setNewRepoName(e.target.value);
+                          if (!newWsName) setNewWsName(e.target.value);
+                        }}
+                        className="w-full px-3 py-2 bg-slate-900 border border-emerald-500/40 rounded-lg text-xs font-mono text-emerald-200 focus:outline-none"
+                      />
+                      <p className="text-[10px] text-slate-400">
+                        HHG akan membuat struktur standar: <code>USER.md</code>, <code>memory/ENVIRONMENT.md</code>, <code>skills/</code>, <code>rules/</code>, dan <code>specialists/</code>.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* LANGKAH 3: PILIH TUJUAN PROJECT LOCAL DI LAPTOP */}
+                <div className={`p-4 rounded-xl space-y-3 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-950/70 border-amber-500/30" : "bg-slate-50 border-amber-500/40 shadow-xs"}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <FolderKanban className="w-4 h-4 text-amber-400" /> LANGKAH 3: Pilih Tujuan Project Local di Laptop
+                    </span>
+                    <span className="text-[10px] text-amber-400 font-mono bg-amber-950/50 px-2 py-0.5 rounded border border-amber-700/50">TARGET IDE</span>
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-5 space-y-1">
+                      <label className="text-[11px] text-slate-400">Nama Workspace / Label</label>
+                      <input 
+                        type="text" 
+                        placeholder="Contoh: SIMGOS2 SIMRS"
+                        value={newWsName}
+                        onChange={(e) => setNewWsName(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-amber-200 focus:outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-span-7 space-y-1">
+                      <label className="text-[11px] text-slate-400">Path Folder Project Lokal (Tempat Buka IDE)</label>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="Contoh: D:\7. Project\SIMGOSv2\New - php82\simgos2"
+                          value={newWsPath}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setNewWsPath(val);
+                            const folderName = val.split(/[\\/]/).filter(Boolean).pop();
+                            if (folderName && !newWsName) {
+                              setNewWsName(folderName);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-amber-200 focus:outline-none"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const selected = await invoke<string | null>("select_project_folder");
+                              if (selected) {
+                                setNewWsPath(selected);
+                                const folderName = selected.split(/[\\/]/).filter(Boolean).pop();
+                                if (folderName && !newWsName) {
+                                  setNewWsName(folderName);
+                                }
+                              }
+                            } catch (err) {
+                              console.error("Gagal membuka folder picker:", err);
+                            }
+                          }}
+                          className="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors whitespace-nowrap"
+                        >
+                          <Folder className="w-4 h-4 text-amber-400" />
+                          <span>Pilih Folder</span>
+                        </button>
                       </div>
-                    )}
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>HHG akan membuat junction <code>.agents/</code> di dalam folder project ini tanpa mengubah commit Git project Anda.</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-1">
+                {/* Footer Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-2">
                   <button 
                     type="button" 
                     onClick={() => {
@@ -3157,17 +3180,24 @@ export default function App() {
                       setNewWsGitRepoUrl('');
                       setNewWsGitProjectId('');
                       setNewWsGitToken('');
+                      setNewRepoName('');
                       setGitTestResult(null);
+                      setRemoteProjectsList([]);
                     }}
-                    className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                    className="px-3.5 py-2 text-xs text-slate-400 hover:text-white"
                   >
                     Batal
                   </button>
                   <button 
                     type="submit"
-                    className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm"
+                    className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold shadow-md flex items-center gap-2"
                   >
-                    {editingWorkspaceIndex !== null ? "Simpan Perubahan Workspace" : "Generate AGENTS.md & Simpan Workspace"}
+                    <CheckCircle className="w-4 h-4 text-white" />
+                    <span>
+                      {editingWorkspaceIndex !== null 
+                        ? "Simpan Perubahan Workspace" 
+                        : "Pasang Junction (.agents) & Hubungkan Workspace"}
+                    </span>
                   </button>
                 </div>
               </form>
