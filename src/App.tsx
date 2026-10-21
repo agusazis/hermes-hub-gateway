@@ -2588,7 +2588,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.1</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.2</span>
                 </div>
               )}
             </div>
@@ -2681,7 +2681,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveTab('releases')}
-              title={isSidebarCollapsed ? "Changelogs (v0.8.1)" : undefined}
+              title={isSidebarCollapsed ? "Changelogs (v0.8.2)" : undefined}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
                 activeTab === 'releases'
                   ? 'text-cyan-400 font-bold'
@@ -2692,7 +2692,7 @@ export default function App() {
               {!isSidebarCollapsed && <span>Changelogs</span>}
             </button>
             {!isSidebarCollapsed && (
-              <span className="text-[10px] font-mono text-slate-400">v0.8.1</span>
+              <span className="text-[10px] font-mono text-slate-400">v0.8.2</span>
             )}
           </div>
         </div>
