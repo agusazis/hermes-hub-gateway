@@ -96,100 +96,24 @@ export default function App() {
       if (hashHex === '8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905') {
         const provisionedConfig: GlobalConfig = {
           ...config,
-          active_profile: 'agus',
           default_hermes_evaluator_url: 'http://172.168.1.202:9125',
           default_mnemosyne_url: 'http://172.168.1.202:8080',
-          active_workspace_id: 'simgos2',
-          workspaces: [
-            {
-              id: 'simgos2',
-              name: 'SIMGOSv2 Workspace',
-              target_path: 'D:\\7. Project\\SIMGOSv2\\New - php82\\simgos2',
-              internal_skills_path: 'C:\\Users\\user\\.hermes-hub\\workspaces\\simgos2\\skills',
-              hermes_evaluator_url: 'http://172.168.1.202:9125',
-              mnemosyne_url: 'http://172.168.1.202:8080',
-              git_target: {
-                provider: 'gitlab',
-                base_url: 'http://172.168.1.33',
-                project_id: '84',
-                repo_url: 'http://172.168.1.33/simrs/ai-agents.git',
-                target_branch: 'main',
-                auth_token: ''
-              }
-            }
-          ],
-          mcp_servers: [
-            {
-              name: 'database-simrs-readonly',
-              command: 'python',
-              args: ['mysql_mcp_readonly.py'],
-              env: { DB_HOST: '172.168.1.4', DB_PORT: '3306', DB_NAME: 'db_rs' },
-              enabled: true,
-              description: 'Proxy SQL Query Aman (Read-Only) ke Database SIMGOS'
-            },
-            {
-              name: 'synology-nas-storage',
-              command: 'npx',
-              args: ['-y', 'mcp-server-synology'],
-              env: { SYNOLOGY_HOST: '172.168.1.27' },
-              enabled: true,
-              description: 'Manajemen Storage & Audit Retensi GFS Backup di NAS Synology'
-            },
-            {
-              name: 'mikrotik-router',
-              command: 'python',
-              args: ['mikrotik_mcp.py'],
-              env: { ROUTER_IP: '172.168.1.1' },
-              enabled: true,
-              description: 'Pemantauan Traffic WAN & Router Jaringan'
-            },
-            {
-              name: 'grafana-observability',
-              command: 'npx',
-              args: ['-y', '@dockndevai/mcp-grafana'],
-              env: { GRAFANA_URL: 'http://172.168.1.8:3000' },
-              enabled: true,
-              description: 'Monitoring Metrik Server & Alerting Developer Workspace'
-            }
-          ],
           telegram_target: {
-            bot_token: '',
-            chat_id: '-1002348910234',
-            topic_id: '8',
+            bot_token: config.telegram_target?.bot_token || '',
+            chat_id: '-5594254057', // SIRS JSK - AI Agents Activity
+            topic_id: config.telegram_target?.topic_id || '',
             enabled: true
           }
         };
 
         setConfig(provisionedConfig);
-        setMcpToolsDiscovery({
-          "database-simrs-readonly": [
-            { name: "read_query", desc: "Menjalankan SELECT SQL query aman dengan timeout 5 detik", enabled: true },
-            { name: "list_tables", desc: "Mendapatkan daftar tabel database SIMRS", enabled: true },
-            { name: "describe_table", desc: "Mendapatkan skema kolom tabel", enabled: true }
-          ],
-          "synology-nas-storage": [
-            { name: "get_storage_status", desc: "Cek utilisasi storage pool dan volume NAS Synology", enabled: true },
-            { name: "list_gfs_snapshots", desc: "Daftar snapshot retensi harian/mingguan/bulanan", enabled: true },
-            { name: "check_nas_health", desc: "Cek SMART disk dan suhu storage", enabled: true }
-          ],
-          "mikrotik-router": [
-            { name: "get_interface_traffic", desc: "Traffic real-time ether WAN & bridge LAN", enabled: true },
-            { name: "get_queue_simple", desc: "Daftar pembagian bandwidth per poli/unit RSUD", enabled: true },
-            { name: "router_ping", desc: "Uji latensi jaringan dari router ke host", enabled: true }
-          ],
-          "grafana-observability": [
-            { name: "query_prometheus", desc: "Evaluasi ekspresi PromQL metrik server", enabled: true },
-            { name: "query_loki_logs", desc: "Pencarian log error sistem Simgos2 via LogQL", enabled: true },
-            { name: "list_active_alerts", desc: "Daftar alert Prometheus/Grafana yang sedang firing", enabled: true }
-          ]
-        });
         try {
           await invoke('save_system_config', { cfg: provisionedConfig });
         } catch (_) {}
 
         setProvisionStatus({
           success: true,
-          message: '✓ Otentikasi Organisasi Terverifikasi! Parameter Server Evaluator, Mnemosyne, MCP, dan Workspace berhasil dimuat.'
+          message: '✓ Pengaturan Organisasi Aktif! Target grup "SIRS JSK - AI Agents Activity" (-5594254057), Hermes Server, dan Mnemosyne berhasil disetel. (Workspace Git & Server MCP tetap aman diisi manual).'
         });
       } else {
         setProvisionStatus({
