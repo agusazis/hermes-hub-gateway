@@ -309,6 +309,7 @@ export default function App() {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [workspaceReadiness, setWorkspaceReadiness] = useState<Record<string, { score_percent: number; is_ready: boolean; checks: { key: string; label: string; status: boolean; message: string }[] }>>({});
+  const [isRecheckingAudit, setIsRecheckingAudit] = useState<boolean>(false);
   const [testingGit, setTestingGit] = useState(false);
   const [gitTestResult, setGitTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [testingTelegram, setTestingTelegram] = useState(false);
@@ -1756,7 +1757,10 @@ export default function App() {
         }
       } catch (_) {}
 
+      showToast('success', 'Sinkronisasi Rules Selesai', res.message || 'Aturan & SOP berhasil diperbarui dari GitLab.');
       setTimeout(() => setSyncMessage(''), 4000);
+    } catch (err: any) {
+      showToast('error', 'Gagal Sinkronisasi Rules', err?.toString() || 'Koneksi ke repositori Git terputus');
     } finally {
       setSyncing(false);
     }
@@ -3665,15 +3669,27 @@ export default function App() {
                                     </p>
                                   </div>
                                   <button
+                                    disabled={isRecheckingAudit}
                                     onClick={async () => {
+                                      setIsRecheckingAudit(true);
                                       try {
                                         const r: any = await invoke('check_workspace_readiness', { projectPath: currentWs.target_path });
-                                        if (r) setWorkspaceReadiness(prev => ({ ...prev, [currentWs.id]: r }));
-                                      } catch (_) {}
+                                        if (r) {
+                                          setWorkspaceReadiness(prev => ({ ...prev, [currentWs.id]: r }));
+                                          showToast('success', 'Audit Kesiapan Selesai', `Skor Kesiapan Workspace: ${r.score_percent}% (${r.is_ready ? '100% SIAP' : 'Perlu Tindakan'})`);
+                                        }
+                                      } catch (err: any) {
+                                        showToast('error', 'Gagal Audit Kesiapan', err?.toString() || 'Terjadi kesalahan saat memeriksa direktori project');
+                                      } finally {
+                                        setTimeout(() => setIsRecheckingAudit(false), 500);
+                                      }
                                     }}
-                                    className="px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700/50 text-cyan-300 rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                                    className={`px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700/50 text-cyan-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                                      isRecheckingAudit ? 'opacity-60 cursor-not-allowed' : 'active:scale-95'
+                                    }`}
                                   >
-                                    <RefreshCw className="w-3.5 h-3.5" /> Re-check Audit
+                                    <RefreshCw className={`w-3.5 h-3.5 ${isRecheckingAudit ? 'animate-spin' : ''}`} /> 
+                                    <span>{isRecheckingAudit ? 'Memeriksa...' : 'Re-check Audit'}</span>
                                   </button>
                                 </div>
 
