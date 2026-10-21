@@ -41,24 +41,35 @@ pub async fn list_remote_projects(
         .map_err(|e| e.to_string())?;
 
     if provider.to_lowercase() == "gitlab" {
-        let endpoint = format!("{}/api/v4/projects?membership=true&per_page=100&simple=true", base_url.trim_end_matches('/'));
-        let res = client
-            .get(&endpoint)
-            .header("PRIVATE-TOKEN", token)
-            .send()
-            .await
-            .map_err(|e| format!("Koneksi GitLab gagal: {}", e))?;
-
-        if !res.status().is_success() {
-            let status = res.status();
-            let err_text = res.text().await.unwrap_or_default();
-            return Err(format!("GitLab API Error ({}): {}", status, err_text));
-        }
-
-        let json_data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+        // GitLab API: pagination loop up to 500 projects with membership or accessible
         let mut list = Vec::new();
-        if let Some(arr) = json_data.as_array() {
-            for item in arr {
+        let mut page = 1;
+        loop {
+            let endpoint = format!(
+                "{}/api/v4/projects?membership=true&per_page=100&page={}&simple=true&order_by=name&sort=asc",
+                base_url.trim_end_matches('/'),
+                page
+            );
+            let res = client
+                .get(&endpoint)
+                .header("PRIVATE-TOKEN", token)
+                .send()
+                .await
+                .map_err(|e| format!("Koneksi GitLab gagal: {}", e))?;
+
+            if !res.status().is_success() {
+                let status = res.status();
+                let err_text = res.text().await.unwrap_or_default();
+                return Err(format!("GitLab API Error ({}): {}", status, err_text));
+            }
+
+            let json_data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+            let arr = match json_data.as_array() {
+                Some(a) if !a.is_empty() => a.clone(),
+                _ => break,
+            };
+
+            for item in &arr {
                 let id = item["id"].to_string();
                 let name = item["name"].as_str().unwrap_or("").to_string();
                 let path_ns = item["path_with_namespace"].as_str().unwrap_or(&name).to_string();
@@ -77,7 +88,53 @@ pub async fn list_remote_projects(
                     description: desc,
                 });
             }
+
+            if arr.len() < 100 || page >= 5 {
+                break;
+            }
+            page += 1;
         }
+
+        // Jika repo spesifik 'ai-agents' belum ada di membership list, coba fetch langsung via endpoint search
+        let has_ai_agents = list.iter().any(|p| p.path_with_namespace.to_lowercase().contains("ai-agents"));
+        if !has_ai_agents {
+            let search_endpoint = format!(
+                "{}/api/v4/projects?search=ai-agents&per_page=10",
+                base_url.trim_end_matches('/')
+            );
+            if let Ok(search_res) = client.get(&search_endpoint).header("PRIVATE-TOKEN", token).send().await {
+                if search_res.status().is_success() {
+                    if let Ok(search_json) = search_res.json::<serde_json::Value>().await {
+                        if let Some(search_arr) = search_json.as_array() {
+                            for item in search_arr {
+                                let id = item["id"].to_string();
+                                if !list.iter().any(|p| p.id == id) {
+                                    let name = item["name"].as_str().unwrap_or("").to_string();
+                                    let path_ns = item["path_with_namespace"].as_str().unwrap_or(&name).to_string();
+                                    let branch = item["default_branch"].as_str().unwrap_or("main").to_string();
+                                    let http_url = item["http_url_to_repo"].as_str().unwrap_or("").to_string();
+                                    let ssh_url = item["ssh_url_to_repo"].as_str().unwrap_or("").to_string();
+                                    let desc = item["description"].as_str().map(|s| s.to_string());
+
+                                    list.push(GitProjectItem {
+                                        id,
+                                        name,
+                                        path_with_namespace: path_ns,
+                                        default_branch: branch,
+                                        http_url_to_repo: http_url,
+                                        ssh_url_to_repo: ssh_url,
+                                        description: desc,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Urutkan alfabetis
+        list.sort_by(|a, b| a.path_with_namespace.to_lowercase().cmp(&b.path_with_namespace.to_lowercase()));
         Ok(list)
     } else {
         // GitHub API
