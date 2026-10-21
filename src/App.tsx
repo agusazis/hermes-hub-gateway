@@ -3034,7 +3034,12 @@ export default function App() {
                     handleCopySnippet(JSON.stringify({
                       mcpServers: {
                         "hermes-hub-gateway": {
-                          url: "http://127.0.0.1:9126/sse"
+                          command: "powershell",
+                          args: [
+                            "-NoProfile",
+                            "-ExecutionPolicy", "Bypass",
+                            "-File", "C:\\\\Users\\\\user\\\\.hermes-hub\\\\scripts\\\\pipe-bridge.ps1"
+                          ]
                         }
                       }
                     }, null, 2), "ide_json");
