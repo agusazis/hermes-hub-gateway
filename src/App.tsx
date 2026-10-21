@@ -243,35 +243,82 @@ export default function App() {
       { name: 'explain_query', desc: 'Menganalisis execution plan query MySQL/MariaDB', enabled: true },
       { name: 'get_slow_query_summary', desc: 'Melihat ringkasan metrics performa query lambat', enabled: true },
     ],
+    'tabularis': [
+      { name: 'run_query', desc: 'Eksekusi query SELECT langsung ke MariaDB/MySQL SIMRS', enabled: true },
+      { name: 'describe_table', desc: 'Melihat struktur field, tipe data, dan index tabel', enabled: true },
+      { name: 'list_tables', desc: 'Menampilkan seluruh daftar tabel aktif pada schema', enabled: true },
+      { name: 'list_databases', desc: 'Daftar database pada host database SIMRS', enabled: true },
+      { name: 'list_connections', desc: 'Status koneksi aktif dan pool worker database', enabled: true },
+    ],
     'grafana-observability': [
       { name: 'query_loki_logs', desc: 'Menarik log stream dari Loki (Nginx, Apache, MySQL slow log)', enabled: true },
       { name: 'query_prometheus', desc: 'Eksekusi query PromQL untuk metrik CPU, RAM, IOPS, dan latency', enabled: true },
       { name: 'search_dashboards', desc: 'Mencari dashboard monitoring production di Grafana', enabled: true },
       { name: 'get_alert_group', desc: 'Melihat daftar alert operasional SIMRS yang sedang firing', enabled: true },
+      { name: 'diff_tempo_traces', desc: 'Analisis jejak tracing latency mikroservis dan query APM', enabled: true },
+      { name: 'query_pyroscope', desc: 'Profil CPU dan memory profiling runtime sistem', enabled: true },
+    ],
+    'grafana': [
+      { name: 'query_loki_logs', desc: 'Menarik log stream dari Loki (Nginx, Apache, MySQL slow log)', enabled: true },
+      { name: 'query_prometheus', desc: 'Eksekusi query PromQL untuk metrik CPU, RAM, IOPS, dan latency', enabled: true },
+      { name: 'search_dashboards', desc: 'Mencari dashboard monitoring production di Grafana', enabled: true },
+      { name: 'get_alert_group', desc: 'Melihat daftar alert operasional SIMRS yang sedang firing', enabled: true },
+      { name: 'diff_tempo_traces', desc: 'Analisis jejak tracing latency mikroservis dan query APM', enabled: true },
+      { name: 'query_pyroscope', desc: 'Profil CPU dan memory profiling runtime sistem', enabled: true },
     ],
     'gitlab': [
       { name: 'list_issues', desc: 'Melihat daftar tiket issue pada GitLab repository', enabled: true },
       { name: 'get_issue', desc: 'Membaca detail deskripsi dan riwayat diskusi tiket issue', enabled: true },
       { name: 'create_issue', desc: 'Membuka tiket issue baru untuk bug atau request fitur', enabled: true },
+      { name: 'update_issue', desc: 'Memperbarui status, milestone, atau label tiket issue', enabled: true },
+      { name: 'list_merge_requests', desc: 'Melihat daftar Merge Request aktif di repositori', enabled: true },
+      { name: 'create_merge_request', desc: 'Membuka Merge Request setelah perubahan kode selesai', enabled: true },
       { name: 'create_branch', desc: 'Membuat feature branch baru untuk task koding', enabled: true },
-      { name: 'create_pull_request', desc: 'Membuka Merge Request setelah perubahan kode selesai', enabled: true },
       { name: 'list_commits', desc: 'Melihat riwayat commit pada branch aktif', enabled: true },
+      { name: 'get_commit', desc: 'Inspeksi detail perubahan dan author pada commit tertentu', enabled: true },
+      { name: 'get_file_contents', desc: 'Membaca isi file spesifik pada branch GitLab', enabled: true },
+      { name: 'list_branches', desc: 'Melihat daftar branch yang tersedia di repositori', enabled: true },
+      { name: 'create_or_update_file', desc: 'Commit file baru atau patch langsung via GitLab API', enabled: true },
+      { name: 'search_code', desc: 'Pencarian kode global di seluruh repository project', enabled: true },
+      { name: 'list_pipelines', desc: 'Melihat status eksekusi CI/CD pipeline GitLab', enabled: true },
+      { name: 'get_pipeline_job_logs', desc: 'Membaca log build dan error failure pada runner CI', enabled: true },
     ],
     'gitlabSimpel': [
       { name: 'list_commits', desc: 'Melihat riwayat commit upstream Kemenkes git.simpel.web.id', enabled: true },
       { name: 'get_file_contents', desc: 'Membaca kode acuan master dari repository upstream', enabled: true },
       { name: 'list_branches', desc: 'Melihat daftar branch versi resmi Kemenkes', enabled: true },
+      { name: 'list_issues', desc: 'Melihat daftar issue dan bug tracking upstream SIMPEL', enabled: true },
+      { name: 'list_merge_requests', desc: 'Inspeksi MR dan kontribusi upstream Kemenkes', enabled: true },
+      { name: 'get_commit', desc: 'Detail diff patch resmi dari rilis upstream', enabled: true },
     ],
     'mnemosyne': [
-      { name: 'mnemosyne_recall', desc: 'Pencarian semantik memori dan riwayat arsitektur', enabled: true },
-      { name: 'mnemosyne_remember', desc: 'Menyimpan fakta penting dan preferensi koding baru', enabled: true },
+      { name: 'mnemosyne_recall', desc: 'Pencarian semantik memori, insight, dan riwayat arsitektur', enabled: true },
+      { name: 'mnemosyne_remember', desc: 'Menyimpan fakta penting, lesson learned, dan preferensi koding baru', enabled: true },
       { name: 'mnemosyne_recall_canonical', desc: 'Mengambil checkpoint status turn 1 secara deterministik', enabled: true },
       { name: 'mnemosyne_remember_canonical', desc: 'Memperbarui canonical slot checkpoint status koding', enabled: true },
+      { name: 'mnemosyne_forget_canonical', desc: 'Mengakhiri atau menghapus canonical slot yang sudah usang', enabled: true },
       { name: 'mnemosyne_triple_query', desc: 'Query relasi fakta terstruktur pada knowledge graph', enabled: true },
+      { name: 'mnemosyne_triple_add', desc: 'Menambahkan relasi subjek-predikat-objek ke knowledge graph', enabled: true },
+      { name: 'mnemosyne_graph_query', desc: 'Traverse multi-hop keterkaitan entitas arsitektur memori', enabled: true },
+      { name: 'mnemosyne_task_progress', desc: 'Melacak status progresi tugas lintas sesi secara presisi', enabled: true },
+      { name: 'mnemosyne_scratchpad_read', desc: 'Membaca catatan sementara pada scratchpad memori', enabled: true },
+      { name: 'mnemosyne_scratchpad_write', desc: 'Menuliskan catatan kerja sementara antar agen', enabled: true },
+      { name: 'mnemosyne_diagnose', desc: 'Diagnostik integritas database dan vektor embedding memori', enabled: true },
     ],
     'synology-nas': [
       { name: 'synology_list_shares', desc: 'Melihat daftar shared folder backup pada NAS RSUD', enabled: true },
       { name: 'synology_search_files', desc: 'Mencari berkas backup database dump atau installer', enabled: true },
+      { name: 'synology_disk_health', desc: 'Memeriksa status kesehatan SMART drive NAS', enabled: true },
+    ],
+    'synology-nas-storage': [
+      { name: 'synology_list_shares', desc: 'Melihat daftar shared folder backup pada NAS RSUD', enabled: true },
+      { name: 'synology_search_files', desc: 'Mencari berkas backup database dump atau installer', enabled: true },
+      { name: 'synology_disk_health', desc: 'Memeriksa status kesehatan SMART drive NAS', enabled: true },
+    ],
+    'mikrotik-router': [
+      { name: 'get_interface_traffic', desc: 'Traffic real-time ether WAN & bridge LAN RSUD', enabled: true },
+      { name: 'router_ping', desc: 'Uji latensi jaringan dari router ke gateway/server', enabled: true },
+      { name: 'list_ip_addresses', desc: 'Melihat alokasi subnet IP pada router Mikrotik', enabled: true },
     ]
   };
 
@@ -2018,33 +2065,7 @@ export default function App() {
     setTestResult(null);
 
     setTimeout(() => {
-      const defaultCatalog: Record<string, { name: string; desc: string; enabled: boolean }[]> = {
-        'database-simrs-readonly': [
-          { name: 'execute_sql', desc: 'Menjalankan query SQL SELECT read-only pada database SIMRS', enabled: true },
-          { name: 'get_table_schema', desc: 'Melihat definisi kolom, tipe data, dan index tabel SIMRS', enabled: true },
-          { name: 'list_tables', desc: 'Mendapatkan daftar seluruh tabel pada schema database SIMRS', enabled: true },
-          { name: 'explain_query', desc: 'Menganalisis execution plan query MySQL/MariaDB', enabled: true },
-          { name: 'get_slow_query_summary', desc: 'Melihat ringkasan metrics performa query lambat', enabled: true },
-        ],
-        'grafana-observability': [
-          { name: 'query_loki_logs', desc: 'Menarik log stream dari Loki (Nginx, Apache, MySQL slow log)', enabled: true },
-          { name: 'query_prometheus', desc: 'Eksekusi query PromQL untuk metrik CPU, RAM, IOPS, dan latency', enabled: true },
-          { name: 'search_dashboards', desc: 'Mencari dashboard monitoring production di Grafana', enabled: true },
-          { name: 'get_alert_group', desc: 'Melihat daftar alert operasional SIMRS yang sedang firing', enabled: true },
-        ],
-        'gitlab': [
-          { name: 'list_issues', desc: 'Melihat daftar tiket issue pada GitLab repository', enabled: true },
-          { name: 'create_branch', desc: 'Membuat feature branch baru untuk task koding', enabled: true },
-          { name: 'create_pull_request', desc: 'Membuka Merge Request setelah perubahan kode selesai', enabled: true },
-        ],
-        'mnemosyne': [
-          { name: 'mnemosyne_recall', desc: 'Pencarian semantik memori dan riwayat arsitektur', enabled: true },
-          { name: 'mnemosyne_remember', desc: 'Menyimpan fakta penting dan preferensi koding baru', enabled: true },
-          { name: 'mnemosyne_recall_canonical', desc: 'Mengambil checkpoint status turn 1 secara deterministik', enabled: true },
-        ]
-      };
-
-      const discovered = defaultCatalog[mcp.name] || [
+      const discovered = DEFAULT_MCP_CATALOG[mcp.name] || [
         { name: `${mcp.name}_invoke`, desc: `Tool operasi utama untuk server ${mcp.name}`, enabled: true },
         { name: `${mcp.name}_status`, desc: `Health-check dan status koneksi runtime ${mcp.name}`, enabled: true },
       ];
