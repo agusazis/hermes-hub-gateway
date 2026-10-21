@@ -482,7 +482,7 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.0');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.1');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   interface ReleaseLog {
@@ -500,11 +500,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.1',
+      name: 'Hermes Hub Gateway v0.8.1 (Unified MCP Aggregator & Database Multiplexer)',
+      date: '22 Oktober 2026',
+      type: 'MAJOR',
+      status: 'LATEST',
+      highlights: 'Implementasi Arsitektur Satu Pintu (OmniRoute style): HHG bertindak sebagai Single MCP Multiplexer yang mengagregasikan seluruh SOP/Skills dan live sub-server MCP (termasuk Tabularis MariaDB SIMRS) tanpa konfigurasi ganda di IDE.',
+      features: [
+        'Single-Door MCP Multiplexing: IDE Antigravity cukup mendaftarkan hermes-hub-gateway untuk mengakses skills sekaligus tools database.',
+        'Tabularis Bridge Live: Mendukung tools list_connections, list_databases, list_tables, describe_table, dan run_query.',
+        'Auto-Fallback Connection: Pemanggilan run_query dari AI IDE otomatis mengarah ke koneksi Vagrant SIMRS (192.168.137.10) jika connection_id tidak dispesifikasikan.',
+        'Zero Script Maintenance: Jembatan bridge runtime otomatis ter-generate dan sinkron dengan konfigurasi aktif HHG.'
+      ],
+      fixes: [
+        'Memperbaiki method not found saat agen IDE memanggil run_query database.',
+        'Mengatasi masalah timeout proses pipe stdio bridge pada Windows.'
+      ],
+      architecture: [
+        'Dynamic multiplexing dispatcher layer di .hermes-hub/scripts/',
+        'Subprocess RPC tunneling ke Tabularis MCP engine'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.1/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.1/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.0',
       name: 'Hermes Hub Gateway v0.8.0 (Full ai-agents Adoption & Readiness Gatekeeper)',
       date: '20 Oktober 2026',
-      type: 'MAJOR',
-      status: 'LATEST',
+      type: 'FEATURE',
+      status: 'STABLE',
       highlights: 'Transformasi fundamental HHG: Mengadopsi penuh arsitektur master ai-agents via NTFS Junction otomatis, menghadirkan Wizard Workspace Dual-Mode (Select Existing Repo via PAT vs Create New Project Scaffolding), serta Workspace Readiness Gatekeeper 0-100% untuk mengunci kualitas baseline.',
       features: [
         'Full ai-agents Adoption: Mengembalikan kontrol kognitif utuh ke master ai-agents via NTFS Junction (.agents/) tanpa mereduksi format dokumen master.',
@@ -2562,7 +2588,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.0</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.1</span>
                 </div>
               )}
             </div>
@@ -2655,7 +2681,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveTab('releases')}
-              title={isSidebarCollapsed ? "Changelogs (v0.8.0)" : undefined}
+              title={isSidebarCollapsed ? "Changelogs (v0.8.1)" : undefined}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
                 activeTab === 'releases'
                   ? 'text-cyan-400 font-bold'
@@ -2666,7 +2692,7 @@ export default function App() {
               {!isSidebarCollapsed && <span>Changelogs</span>}
             </button>
             {!isSidebarCollapsed && (
-              <span className="text-[10px] font-mono text-slate-400">v0.8.0</span>
+              <span className="text-[10px] font-mono text-slate-400">v0.8.1</span>
             )}
           </div>
         </div>
