@@ -1792,6 +1792,16 @@ export default function App() {
 
       created.git_target = gitTarget;
 
+      // OTOMASI CRITICAL: Kloning / sinkronisasi rules Git langsung saat pembuatan workspace
+      if (created.git_target && created.git_target.repo_url) {
+        try {
+          setSyncMessage("Mengunduh aturan & skills dari remote repository...");
+          await invoke('trigger_manual_sync');
+        } catch (syncErr) {
+          console.warn("Sinkronisasi otomatis saat create workspace:", syncErr);
+        }
+      }
+
       // Handle Mode B (Create New Project Scaffolding)
       if (wsWizardMode === 'create') {
         try {
@@ -3154,23 +3164,7 @@ export default function App() {
                             />
                           </div>
 
-                          <select
-                            value={selectedProjectId}
-                            onChange={(e) => {
-                              const pid = e.target.value;
-                              setSelectedProjectId(pid);
-                              const found = remoteProjectsList.find(p => p.id === pid);
-                              if (found) {
-                                setNewWsGitRepoUrl(found.http_url_to_repo);
-                                setNewWsGitProjectId(found.id);
-                                setNewWsGitBranch(found.default_branch || 'main');
-                                if (!newWsName) setNewWsName(found.name);
-                              }
-                            }}
-                            className="w-full px-3 py-2 bg-slate-900 border border-cyan-500/50 rounded-lg text-xs font-mono text-cyan-200 focus:outline-none max-h-48"
-                            size={remoteProjectsList.filter(p => !projectSearchQuery || p.path_with_namespace.toLowerCase().includes(projectSearchQuery.toLowerCase()) || p.name.toLowerCase().includes(projectSearchQuery.toLowerCase())).length > 4 ? 5 : undefined}
-                          >
-                            <option value="">-- Klik untuk Memilih Repositori --</option>
+                          <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                             {remoteProjectsList
                               .filter(proj => {
                                 if (!projectSearchQuery.trim()) return true;
@@ -3179,12 +3173,49 @@ export default function App() {
                                        proj.name.toLowerCase().includes(q) ||
                                        proj.id.includes(q);
                               })
-                              .map(proj => (
-                                <option key={proj.id} value={proj.id} className="py-1">
-                                  📁 {proj.path_with_namespace} (Branch: {proj.default_branch || 'main'}) - ID: {proj.id}
-                                </option>
-                              ))}
-                          </select>
+                              .map(proj => {
+                                const isSelected = selectedProjectId === proj.id;
+                                return (
+                                  <div
+                                    key={proj.id}
+                                    onClick={() => {
+                                      setSelectedProjectId(proj.id);
+                                      setNewWsGitRepoUrl(proj.http_url_to_repo);
+                                      setNewWsGitProjectId(proj.id);
+                                      setNewWsGitBranch(proj.default_branch || 'main');
+                                      if (!newWsName) setNewWsName(proj.name);
+                                    }}
+                                    className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                                      isSelected
+                                        ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-sm ring-1 ring-cyan-500/40'
+                                        : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-850 hover:border-slate-700'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2.5 overflow-hidden">
+                                      <div className={`p-1.5 rounded-lg border shrink-0 ${isSelected ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                                        <Folder className="w-3.5 h-3.5" />
+                                      </div>
+                                      <div className="truncate">
+                                        <div className="text-xs font-semibold truncate flex items-center gap-2">
+                                          <span>{proj.path_with_namespace}</span>
+                                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-slate-400">
+                                            {proj.default_branch || 'main'}
+                                          </span>
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 font-mono">Project ID: #{proj.id}</div>
+                                      </div>
+                                    </div>
+                                    <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded shrink-0 uppercase transition-colors ${
+                                      isSelected
+                                        ? 'bg-cyan-400 text-slate-950 shadow-xs'
+                                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                    }`}>
+                                      {isSelected ? '✓ Terpilih' : 'Pilih'}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                          </div>
                         </div>
                       ) : (
                         <div className="text-xs text-amber-300/90 font-mono py-1 flex items-center gap-2">
