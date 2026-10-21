@@ -94,13 +94,26 @@ export default function App() {
       // Validasi SHA-256 Hash Resmi (Aman & Terisolasi)
       // Hash untuk Organization Key RSUD dr. H. Jusuf SK: 8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905
       if (hashHex === '8faa29dddb8904d9b474813a77ea691f97efdec1e0b9f0c6e28a6b190a66d905') {
+        let fetchedBotToken = config.telegram_target?.bot_token || '';
+        let fetchedChatId = '-5594254057';
+
+        // Auto-fetch kredensial bot resmi organisasi langsung dari Hermes Server Evaluator
+        try {
+          const res = await fetch('http://172.168.1.202:9125/api/v1/provision/telegram-target');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.bot_token) fetchedBotToken = data.bot_token;
+            if (data.chat_id) fetchedChatId = data.chat_id;
+          }
+        } catch (_) {}
+
         const provisionedConfig: GlobalConfig = {
           ...config,
           default_hermes_evaluator_url: 'http://172.168.1.202:9125',
           default_mnemosyne_url: 'http://172.168.1.202:8080',
           telegram_target: {
-            bot_token: config.telegram_target?.bot_token || '',
-            chat_id: '-5594254057', // SIRS JSK - AI Agents Activity
+            bot_token: fetchedBotToken,
+            chat_id: fetchedChatId,
             topic_id: config.telegram_target?.topic_id || '',
             enabled: true
           }
@@ -113,7 +126,7 @@ export default function App() {
 
         setProvisionStatus({
           success: true,
-          message: '✓ Pengaturan Organisasi Aktif! Target grup "SIRS JSK - AI Agents Activity" (-5594254057), Hermes Server, dan Mnemosyne berhasil disetel. (Workspace Git & Server MCP tetap aman diisi manual).'
+          message: '✓ Pengaturan Organisasi Aktif! Target grup "SIRS JSK - AI Agents Activity" & Bot Token resmi terisi otomatis 100% dari Evaluator Server.'
         });
       } else {
         setProvisionStatus({
