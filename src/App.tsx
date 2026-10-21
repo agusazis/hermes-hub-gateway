@@ -65,8 +65,8 @@ interface SkillHierarchyItem {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('settings');
-  const [wsDetailTab, setWsDetailTab] = useState<'overview' | 'skills' | 'readiness'>('overview');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
+  const [wsDetailTab, setWsDetailTab] = useState<'readiness' | 'skills'>('readiness');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
   // Provisioning Token / Organization Setup Key State
@@ -113,10 +113,72 @@ export default function App() {
           }
         } catch (_) {}
 
+        // Daftar MCP Server Resmi Organisasi (diaktifkan otomatis via One-Key)
+        const officialMcpServers: McpServerEntry[] = [
+          {
+            name: 'database-simrs-readonly',
+            command: 'python',
+            args: ['mysql_mcp_readonly.py'],
+            env: { DB_HOST: '172.168.1.202', DB_PORT: '3306', DB_USER: 'simrs_read', DB_NAME: 'simrs' },
+            enabled: true,
+            description: 'Akses Read-Only Terisolasi ke Database SIMRS dr. H. Jusuf SK'
+          },
+          {
+            name: 'tabularis',
+            command: 'tabularis',
+            args: ['--readonly', '--host', '172.168.1.202'],
+            env: {},
+            enabled: true,
+            description: 'Tabularis High-Performance SQL Engine (MariaDB SIMRS)'
+          },
+          {
+            name: 'grafana-observability',
+            command: 'node',
+            args: ['grafana_mcp.js'],
+            env: { GRAFANA_URL: 'http://172.168.1.202:3000' },
+            enabled: true,
+            description: 'Grafana Observability, Prometheus Metrics & Loki Log Streams'
+          },
+          {
+            name: 'gitlab',
+            command: 'npx',
+            args: ['-y', '@modelcontextprotocol/server-gitlab'],
+            env: { GITLAB_API_URL: 'http://172.168.1.33/api/v4' },
+            enabled: true,
+            description: 'GitLab Internal SIRS RSUD dr. H. Jusuf SK (Issues, MRs, Commits)'
+          },
+          {
+            name: 'mnemosyne',
+            command: 'curl',
+            args: ['-s', 'http://172.168.1.202:8080/mcp'],
+            env: { MNEMOSYNE_URL: 'http://172.168.1.202:8080' },
+            enabled: true,
+            description: 'Mnemosyne Knowledge Graph & Cross-Agent Shared Memory'
+          },
+          {
+            name: 'synology-nas-storage',
+            command: 'python',
+            args: ['synology_mcp.py'],
+            env: { NAS_HOST: '172.168.1.200' },
+            enabled: true,
+            description: 'Synology NAS Storage & GFS Backup Verification'
+          },
+          {
+            name: 'mikrotik-router',
+            command: 'python',
+            args: ['mikrotik_mcp.py'],
+            env: { ROUTER_HOST: '172.168.1.1' },
+            enabled: true,
+            description: 'MikroTik RouterOS Network Diagnostics & Traffic Monitor'
+          }
+        ];
+
         const provisionedConfig: GlobalConfig = {
           ...config,
+          active_profile: config.active_profile || 'agus',
           default_hermes_evaluator_url: 'http://172.168.1.202:9125',
           default_mnemosyne_url: 'http://172.168.1.202:8080',
+          mcp_servers: config.mcp_servers && config.mcp_servers.length > 0 ? config.mcp_servers : officialMcpServers,
           telegram_target: {
             bot_token: fetchedBotToken,
             chat_id: fetchedChatId,
@@ -126,13 +188,14 @@ export default function App() {
         };
 
         setConfig(provisionedConfig);
+        setMcpToolsDiscovery(DEFAULT_MCP_CATALOG);
         try {
           await invoke('save_system_config', { cfg: provisionedConfig });
         } catch (_) {}
 
         setProvisionStatus({
           success: true,
-          message: '✓ Pengaturan Organisasi Aktif! Target grup "SIRS JSK - AI Agents Activity" & Bot Token resmi terisi otomatis 100% dari Evaluator Server.'
+          message: '✓ Pengaturan Organisasi Aktif! Evaluator, Mnemosyne, Profil, dan 7 Server MCP Resmi terisi otomatis.'
         });
       } else {
         setProvisionStatus({
@@ -193,7 +256,7 @@ export default function App() {
   }, [themeMode]);
   
   const [config, setConfig] = useState<GlobalConfig>({
-    active_profile: 'default',
+    active_profile: '',
     default_hermes_evaluator_url: '',
     default_mnemosyne_url: '',
     active_workspace_id: '',
@@ -215,6 +278,15 @@ export default function App() {
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [isSubmittingWorkspace, setIsSubmittingWorkspace] = useState(false);
+  const [toastNotification, setToastNotification] = useState<{ type: 'success' | 'error' | 'info'; title: string; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error' | 'info', title: string, message: string) => {
+    setToastNotification({ type, title, message });
+    setTimeout(() => {
+      setToastNotification((curr) => (curr?.message === message ? null : curr));
+    }, 4500);
+  };
   const [errorMessage, setErrorMessage] = useState('');
   const [showAddWsModal, setShowAddWsModal] = useState(false);
   const [showAddMcpModal, setShowAddMcpModal] = useState(false);
@@ -249,7 +321,7 @@ export default function App() {
   const [backupNotice, setBackupNotice] = useState<{ success: boolean; message: string } | null>(null);
   
   // MCP Testing & Tool Calling Discovery state
-  const [selectedMcpName, setSelectedMcpName] = useState<string>('database-simrs-readonly');
+  const [selectedMcpName, setSelectedMcpName] = useState<string>('');
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [wsSearchQuery, setWsSearchQuery] = useState<string>('');
@@ -385,7 +457,7 @@ export default function App() {
     ]
   };
 
-  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>(DEFAULT_MCP_CATALOG);
+  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>({});
   const [testResult, setTestResult] = useState<string | null>(null);
   const [testingMcpName, setTestingMcpName] = useState<string | null>(null);
 
@@ -1732,6 +1804,9 @@ export default function App() {
     e.preventDefault();
     if (!newWsName || !newWsPath) return;
 
+    setIsSubmittingWorkspace(true);
+    setSyncMessage("Sedang memproses workspace & memasang NTFS junction...");
+
     if (editingWorkspaceIndex !== null) {
       try {
         const wsToEdit = config.workspaces[editingWorkspaceIndex];
@@ -1866,10 +1941,11 @@ export default function App() {
       setNewWsGitRepoUrl("");
       setNewWsGitProjectId("");
       setNewWsGitToken("");
-      setSyncMessage(`Workspace "${created.name}" aktif dengan koneksi Git Repositori! AGENTS.md deklaratif otomatis dibuat.`);
-      setTimeout(() => setSyncMessage(""), 5000);
+      showToast('success', 'Workspace Berhasil Dihubungkan', `Workspace "${created.name}" aktif! NTFS Junction .agents berhasil dipasang.`);
     } catch (err) {
-      alert(`Gagal membuat workspace: ${err}`);
+      showToast('error', 'Gagal Membuat Workspace', String(err));
+    } finally {
+      setIsSubmittingWorkspace(false);
     }
   };
 
@@ -2198,7 +2274,9 @@ export default function App() {
     setTimeout(() => {
       setMcpToolsDiscovery(updatedCatalog);
       setTestingAllMcp(false);
-      setTestResult(`✓ Handshake Massal Sukses! Berhasil menguji ${successCount}/${config.mcp_servers.length} MCP servers via bridge. Total ${totalTools} tools calling aktif.`);
+      const resMsg = `✓ Handshake Massal Sukses! Berhasil menguji ${successCount}/${config.mcp_servers.length} MCP servers via bridge. Total ${totalTools} tools calling aktif.`;
+      setTestResult(resMsg);
+      showToast('success', 'Uji Coba Server MCP Selesai', resMsg);
       setTimeout(() => {
         setTestResult(null);
       }, 6000);
@@ -2503,13 +2581,13 @@ export default function App() {
 
           <nav className="space-y-1.5">
             <button 
-              onClick={() => setActiveTab('settings')}
-              title={isSidebarCollapsed ? "Profile & Gateway Hub" : undefined}
+              onClick={() => setActiveTab('dashboard')}
+              title={isSidebarCollapsed ? "System Dashboard" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                activeTab === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Profile & Gateway Hub</span>}
+              <Server className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>System Dashboard</span>}
             </button>
             <button 
               onClick={() => setActiveTab('workspaces')}
@@ -2530,15 +2608,6 @@ export default function App() {
               <Layers className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>MCP Servers Hub</span>}
             </button>
             <button 
-              onClick={() => setActiveTab('dashboard')}
-              title={isSidebarCollapsed ? "System Dashboard" : undefined}
-              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-              }`}
-            >
-              <Server className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>System Dashboard</span>}
-            </button>
-            <button 
               onClick={() => setActiveTab('logs')}
               title={isSidebarCollapsed ? "Evolution Logs" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
@@ -2546,6 +2615,15 @@ export default function App() {
               }`}
             >
               <Terminal className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Evolution Logs</span>}
+            </button>
+            <button 
+              onClick={() => setActiveTab('settings')}
+              title={isSidebarCollapsed ? "Profile & Gateway Hub" : undefined}
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+              }`}
+            >
+              <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Profile & Gateway Hub</span>}
             </button>
           </nav>
         </div>
@@ -2668,6 +2746,35 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {/* Global Floating Toast Notification */}
+        {toastNotification && (
+          <div className={`fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-xl border shadow-2xl flex items-start gap-3 animate-in slide-in-from-bottom-4 duration-300 ${
+            toastNotification.type === 'success'
+              ? 'bg-slate-900 border-emerald-500/60 text-emerald-300 shadow-emerald-950/40'
+              : toastNotification.type === 'error'
+                ? 'bg-slate-900 border-rose-500/60 text-rose-300 shadow-rose-950/40'
+                : 'bg-slate-900 border-cyan-500/60 text-cyan-300 shadow-cyan-950/40'
+          }`}>
+            {toastNotification.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />}
+            {toastNotification.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />}
+            {toastNotification.type === 'info' && <RefreshCw className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />}
+            <div className="flex-1">
+              <div className="text-xs font-bold font-mono uppercase tracking-wider text-white">
+                {toastNotification.title}
+              </div>
+              <div className="text-xs text-slate-300 mt-0.5 leading-snug">
+                {toastNotification.message}
+              </div>
+            </div>
+            <button
+              onClick={() => setToastNotification(null)}
+              className="text-slate-400 hover:text-white text-xs font-mono p-1"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {syncMessage && (
           <div className="flex items-center gap-2.5 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 animate-in fade-in">
@@ -3351,13 +3458,24 @@ export default function App() {
                   </button>
                   <button 
                     type="submit"
-                    className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold shadow-md flex items-center gap-2"
+                    disabled={isSubmittingWorkspace}
+                    className={`px-5 py-2 rounded-lg text-xs font-bold shadow-md flex items-center gap-2 transition-all ${
+                      isSubmittingWorkspace 
+                        ? 'bg-cyan-800 text-cyan-200 cursor-not-allowed' 
+                        : 'bg-cyan-600 hover:bg-cyan-500 text-white cursor-pointer'
+                    }`}
                   >
-                    <CheckCircle className="w-4 h-4 text-white" />
+                    {isSubmittingWorkspace ? (
+                      <RefreshCw className="w-4 h-4 text-cyan-300 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4 text-white" />
+                    )}
                     <span>
-                      {editingWorkspaceIndex !== null 
-                        ? "Simpan & Pasang Ulang Junction (.agents)" 
-                        : "Pasang Junction (.agents) & Hubungkan Workspace"}
+                      {isSubmittingWorkspace 
+                        ? "Memproses & Memasang Junction..."
+                        : editingWorkspaceIndex !== null 
+                          ? "Simpan & Pasang Ulang Junction (.agents)" 
+                          : "Pasang Junction (.agents) & Hubungkan Workspace"}
                     </span>
                   </button>
                 </div>
@@ -3480,16 +3598,6 @@ export default function App() {
 
                         <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800">
                           <button
-                            onClick={() => setWsDetailTab('overview')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                              wsDetailTab === 'overview'
-                                ? 'bg-cyan-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <FileText className="w-3.5 h-3.5" /> AGENTS.md & Git
-                          </button>
-                          <button
                             onClick={async () => {
                               setWsDetailTab('readiness');
                               try {
@@ -3519,72 +3627,6 @@ export default function App() {
                           </button>
                         </div>
                       </div>
-
-                      {/* Konten Tab: OVERVIEW (AGENTS.md & Git Remote) */}
-                      {wsDetailTab === 'overview' && (
-                        <div className="space-y-4 flex-1 flex flex-col">
-                          {/* Repositori Git Binding Card */}
-                          <div className={`p-4 rounded-xl space-y-2 border transition-colors ${
-                            effectiveTheme === 'dark' 
-                              ? 'bg-slate-950/70 border-slate-800' 
-                              : 'bg-slate-50 border-slate-200/80 shadow-xs'
-                          }`}>
-                            <div className="flex items-center justify-between text-xs">
-                              <span className={`font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-                                effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'
-                              }`}>
-                                <GitBranch className="w-3.5 h-3.5" /> Koneksi Git Terisolasi
-                              </span>
-                              <span className={`font-mono text-[11px] ${
-                                effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-                              }`}>
-                                Branch: <b className={effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{currentWs.git_target?.target_branch || "main"}</b>
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-                              <div className="space-y-0.5">
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Remote Repo:</span>
-                                <div className={`font-mono truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
-                                  {currentWs.git_target?.repo_url || "Belum dikonfigurasi"}
-                                </div>
-                              </div>
-                              <div className="space-y-0.5">
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Provider & Project ID:</span>
-                                <div className={`font-mono ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800 font-medium'}`}>
-                                  {currentWs.git_target?.provider || "gitlab"} (ID: {currentWs.git_target?.project_id || "-"})
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Kontrak Deklaratif AGENTS.md */}
-                          <div className="space-y-1.5 flex-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                                <FileText className="w-3.5 h-3.5 text-cyan-400" /> Kontrak Deklaratif AGENTS.md (Root Project)
-                              </span>
-                              <span className="text-[10px] text-slate-500 font-mono">D:\...\AGENTS.md</span>
-                            </div>
-                            <pre className={`p-4 rounded-xl font-mono text-[11px] whitespace-pre-wrap max-h-[190px] overflow-y-auto leading-relaxed border transition-colors ${
-                              effectiveTheme === 'dark'
-                                ? 'bg-slate-950 border-slate-800 text-slate-300'
-                                : 'bg-slate-50 border-slate-200 text-slate-800 shadow-inner'
-                            }`}>
-{`# Autonomous AI Developer Instructions - Developer Workspace
-> [!IMPORTANT]
-> Zero-Pollution Architecture Enforcement:
-> Proyek ini dikelola secara terpusat oleh Hermes Hub Gateway (HHG).
-> DILARANG membuat folder .agents/, folder skills/, atau skrip watcher di dalam project ini.
-
-## 1. Unified MCP Hub
-- Seluruh kemampuan tools koding diakses via Named Pipe: \\\\.\\pipe\\hhg-bridge
-
-## 2. Dynamic Skill Retrieval
-- Panggil hermes_get_skill(name: "...") untuk memuat SOP workspace ${currentWs.name}.`}
-                            </pre>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Konten Tab: READINESS AUDIT */}
                       {wsDetailTab === 'readiness' && (
@@ -4874,14 +4916,18 @@ export default function App() {
                           </div>
                         </div>
 
-                        <a 
-                          href={`https://github.com/agusazis/hermes-hub-gateway/releases/tag/${currentRel.version}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition-all"
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const url = `https://github.com/agusazis/hermes-hub-gateway/releases/tag/${currentRel.version}`;
+                            invoke('open_in_browser', { url }).catch(() => {
+                              window.open(url, '_blank');
+                            });
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold border border-slate-700 transition-all cursor-pointer"
                         >
                           <ExternalLink className="w-3.5 h-3.5 text-cyan-400" /> GitHub Tag
-                        </a>
+                        </button>
                       </div>
 
                       {/* Highlights Card */}
