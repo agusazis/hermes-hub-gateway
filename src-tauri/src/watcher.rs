@@ -182,6 +182,15 @@ pub async fn sync_rules_from_git(ws: &crate::config::Workspace) {
             }
         }
 
+        // OTOMASI LOCAL DEVELOPER PROFILE:
+        // Jika USER.md belum ada tapi USER.md.example ada di repository, salin menjadi USER.md
+        let user_md = internal_path.join("USER.md");
+        let user_md_example = internal_path.join("USER.md.example");
+        if !user_md.exists() && user_md_example.exists() {
+            let _ = fs::copy(&user_md_example, &user_md);
+            println!("[Git Sync] Automatically instantiated USER.md from USER.md.example");
+        }
+
         // STANDAR STRUKTUR HERMES EVALUATOR:
         // Seluruh skill harus berada di subfolder `skills/<skill_name>/SKILL.md`
         let skills_root = internal_path.join("skills");
