@@ -290,6 +290,7 @@ export default function App() {
   // State Wizard Add Workspace & Readiness Gatekeeper
   const [wsWizardMode, setWsWizardMode] = useState<'exist' | 'create'>('exist');
   const [remoteProjectsList, setRemoteProjectsList] = useState<{ id: string; name: string; path_with_namespace: string; default_branch: string; http_url_to_repo: string; description?: string }[]>([]);
+  const [projectSearchQuery, setProjectSearchQuery] = useState('');
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [workspaceReadiness, setWorkspaceReadiness] = useState<Record<string, { score_percent: number; is_ready: boolean; checks: { key: string; label: string; status: boolean; message: string }[] }>>({});
@@ -2897,6 +2898,7 @@ export default function App() {
                       setNewRepoName('');
                       setGitTestResult(null);
                       setRemoteProjectsList([]);
+                      setProjectSearchQuery('');
                     }}
                     className="text-slate-400 hover:text-white"
                   >
@@ -3038,36 +3040,65 @@ export default function App() {
                     </button>
                   </div>
 
-                  {/* Konten Opsi A: Dropdown Project yang ditemukan dari PAT */}
+                  {/* Konten Opsi A: Pencarian & Dropdown Project yang ditemukan dari PAT */}
                   {wsWizardMode === 'exist' && (
-                    <div className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-lg space-y-1.5 animate-fadeIn">
-                      <label className="text-[11px] text-cyan-300 font-semibold flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 
-                        Pilih Project Repository yang Anda Akses:
-                      </label>
+                    <div className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-lg space-y-2 animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] text-cyan-300 font-semibold flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 
+                          Pilih Project Repository yang Anda Akses ({remoteProjectsList.length}):
+                        </label>
+                        {remoteProjectsList.length > 5 && (
+                          <span className="text-[10px] text-slate-400">Gunakan filter pencarian di bawah</span>
+                        )}
+                      </div>
+
                       {remoteProjectsList.length > 0 ? (
-                        <select
-                          value={selectedProjectId}
-                          onChange={(e) => {
-                            const pid = e.target.value;
-                            setSelectedProjectId(pid);
-                            const found = remoteProjectsList.find(p => p.id === pid);
-                            if (found) {
-                              setNewWsGitRepoUrl(found.http_url_to_repo);
-                              setNewWsGitProjectId(found.id);
-                              setNewWsGitBranch(found.default_branch || 'main');
-                              if (!newWsName) setNewWsName(found.name);
-                            }
-                          }}
-                          className="w-full px-3 py-2 bg-slate-900 border border-cyan-500/50 rounded-lg text-xs font-mono text-cyan-200 focus:outline-none"
-                        >
-                          <option value="">-- Klik untuk Memilih Repositori (misal: simrs/ai-agents) --</option>
-                          {remoteProjectsList.map(proj => (
-                            <option key={proj.id} value={proj.id}>
-                              📁 {proj.path_with_namespace} (Branch: {proj.default_branch || 'main'}) - ID: {proj.id}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-2">
+                          {/* Search Input Filter Real-Time */}
+                          <div className="relative">
+                            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                            <input 
+                              type="text" 
+                              placeholder="Ketik untuk mencari (misal: ai-agents, simgos, billing)..." 
+                              value={projectSearchQuery}
+                              onChange={(e) => setProjectSearchQuery(e.target.value)}
+                              className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-cyan-200 focus:outline-none focus:border-cyan-400"
+                            />
+                          </div>
+
+                          <select
+                            value={selectedProjectId}
+                            onChange={(e) => {
+                              const pid = e.target.value;
+                              setSelectedProjectId(pid);
+                              const found = remoteProjectsList.find(p => p.id === pid);
+                              if (found) {
+                                setNewWsGitRepoUrl(found.http_url_to_repo);
+                                setNewWsGitProjectId(found.id);
+                                setNewWsGitBranch(found.default_branch || 'main');
+                                if (!newWsName) setNewWsName(found.name);
+                              }
+                            }}
+                            className="w-full px-3 py-2 bg-slate-900 border border-cyan-500/50 rounded-lg text-xs font-mono text-cyan-200 focus:outline-none max-h-48"
+                            size={remoteProjectsList.filter(p => !projectSearchQuery || p.path_with_namespace.toLowerCase().includes(projectSearchQuery.toLowerCase()) || p.name.toLowerCase().includes(projectSearchQuery.toLowerCase())).length > 4 ? 5 : undefined}
+                          >
+                            <option value="">-- Klik untuk Memilih Repositori --</option>
+                            {remoteProjectsList
+                              .filter(proj => {
+                                if (!projectSearchQuery.trim()) return true;
+                                const q = projectSearchQuery.toLowerCase();
+                                return proj.path_with_namespace.toLowerCase().includes(q) ||
+                                       proj.name.toLowerCase().includes(q) ||
+                                       proj.id.includes(q);
+                              })
+                              .map(proj => (
+                                <option key={proj.id} value={proj.id} className="py-1">
+                                  📁 {proj.path_with_namespace} (Branch: {proj.default_branch || 'main'}) - ID: {proj.id}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
                       ) : (
                         <div className="text-xs text-amber-300/90 font-mono py-1 flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-amber-400" />
@@ -3183,6 +3214,7 @@ export default function App() {
                       setNewRepoName('');
                       setGitTestResult(null);
                       setRemoteProjectsList([]);
+                      setProjectSearchQuery('');
                     }}
                     className="px-3.5 py-2 text-xs text-slate-400 hover:text-white"
                   >
