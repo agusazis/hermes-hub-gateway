@@ -3,13 +3,6 @@ name: Build Hermes Hub Gateway (Windows)
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'docs/**'
-      - '*.md'
-      - '.gitignore'
-      - 'LICENSE'
   workflow_dispatch:
 
 concurrency:
@@ -56,6 +49,6 @@ jobs:
         with:
           tagName: v0.8.0
           releaseName: "Hermes Hub Gateway v0.8.0"
-          releaseBody: "Release v0.8.0: Full ai-agents Adoption & Readiness Gatekeeper. Adopsi penuh arsitektur master ai-agents via otomatisasi NTFS Junction (.agents/), Wizard Workspace Dual-Mode (Select Existing Repo via PAT vs Create New Scaffolding), dan Workspace Readiness Gatekeeper 0-100%."
+          releaseBody: "Release v0.8.0: Clean-Slate Fresh Install, NSIS Pre-Uninstall Data Purge Hook, Dynamic SOP auto-sync, Top Dashboard Navigation, and Native Browser Execution."
           releaseDraft: false
           prerelease: false
