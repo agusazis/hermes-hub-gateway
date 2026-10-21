@@ -3031,18 +3031,10 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    const homePath = typeof window !== 'undefined' && (window as any).__TAURI__ 
-                      ? "C:\\\\Users\\\\user" 
-                      : "%USERPROFILE%";
                     handleCopySnippet(JSON.stringify({
                       mcpServers: {
                         "hermes-hub-gateway": {
-                          command: "powershell",
-                          args: [
-                            "-NoProfile",
-                            "-ExecutionPolicy", "Bypass",
-                            "-File", "C:\\\\Users\\\\user\\\\.hermes-hub\\\\scripts\\\\pipe-bridge.ps1"
-                          ]
+                          url: "http://127.0.0.1:9126/sse"
                         }
                       }
                     }, null, 2), "ide_json");
