@@ -376,7 +376,9 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
     let user_md = agents_dir.join("USER.md");
     let user_configured = if user_md.exists() {
         if let Ok(content) = fs::read_to_string(&user_md) {
-            !content.contains("[Nama Pengembang]") && content.trim().len() > 50
+            !content.contains("[Nama Pengembang]") && 
+            !content.contains("[Unit Kerja]") && 
+            content.trim().len() > 30
         } else {
             false
         }
