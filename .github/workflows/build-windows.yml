@@ -47,8 +47,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.7.9
-          releaseName: "Hermes Hub Gateway v0.7.9"
-          releaseBody: "Release v0.7.9: Collapsible Navigation Sidebar & Space Optimization. Introduces interactive collapsible sidebar (toggle between full w-64 and icon-only w-18 modes), smart tooltips, and compact Evaluator LIVE indicators for increased workspace viewing area."
+          tagName: v0.8.0
+          releaseName: "Hermes Hub Gateway v0.8.0"
+          releaseBody: "Release v0.8.0: Full ai-agents Adoption & Readiness Gatekeeper. Adopsi penuh arsitektur master ai-agents via otomatisasi NTFS Junction (.agents/), Wizard Workspace Dual-Mode (Select Existing Repo via PAT vs Create New Scaffolding), dan Workspace Readiness Gatekeeper 0-100%."
           releaseDraft: false
           prerelease: false
