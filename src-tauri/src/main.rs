@@ -409,8 +409,14 @@ async fn test_gateway_connection(evaluator_url: String, mnemosyne_url: String) -
         .map_err(|e| e.to_string())?;
 
     // Check Evaluator API
-    let eval_res = client.get(&evaluator_url).send().await;
+    let eval_url = if evaluator_url.ends_with('/') {
+        format!("{}health", evaluator_url)
+    } else {
+        format!("{}/health", evaluator_url)
+    };
+    let eval_res = client.get(&eval_url).send().await;
     let eval_status = match eval_res {
+        Ok(r) if r.status().is_success() => "ONLINE (HTTP 200)".to_string(),
         Ok(r) => format!("HTTP {}", r.status().as_u16()),
         Err(e) => format!("Gagal: {}", e)
     };
@@ -418,6 +424,8 @@ async fn test_gateway_connection(evaluator_url: String, mnemosyne_url: String) -
     // Check Mnemosyne Shared Memory Server
     let mnemo_res = client.get(&mnemosyne_url).send().await;
     let mnemo_status = match mnemo_res {
+        Ok(r) if r.status().is_success() => "ONLINE (HTTP 200)".to_string(),
+        Ok(r) if r.status().as_u16() == 404 => "ONLINE (Service Reachable)".to_string(),
         Ok(r) => format!("HTTP {}", r.status().as_u16()),
         Err(e) => format!("Gagal: {}", e)
     };
