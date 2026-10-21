@@ -1909,8 +1909,11 @@ export default function App() {
               setSkillsHierarchy(dynamicSkills);
             }
           } catch (_) {}
+          setSyncMessage("Aturan dan skills berhasil diunduh!");
         } catch (syncErr) {
           console.warn("Sinkronisasi otomatis saat create workspace:", syncErr);
+        } finally {
+          setTimeout(() => setSyncMessage(''), 3000);
         }
       }
 
