@@ -41,12 +41,15 @@ pub async fn list_remote_projects(
         .map_err(|e| e.to_string())?;
 
     if provider.to_lowercase() == "gitlab" {
-        // GitLab API: pagination loop up to 500 projects with membership or accessible
+        // Cek dulu apakah token adalah Project Access Token (terikat ke 1 project spesifik)
         let mut list = Vec::new();
+        
+        // 1. Coba panggil /api/v4/project/ (info spesifik project dari Project Access Token jika ada)
+        // Jika token adalah Project Access Token, memanggil /api/v4/projects mungkin hanya mengembalikan 1 project yang diizinkan
         let mut page = 1;
         loop {
             let endpoint = format!(
-                "{}/api/v4/projects?membership=true&per_page=100&page={}&simple=true&order_by=name&sort=asc",
+                "{}/api/v4/projects?per_page=100&page={}&simple=true&order_by=name&sort=asc",
                 base_url.trim_end_matches('/'),
                 page
             );
