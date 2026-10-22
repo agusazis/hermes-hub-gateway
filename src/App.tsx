@@ -513,8 +513,8 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
-      version: 'v0.8.3',
-      name: 'Hermes Hub Gateway v0.8.3 (Dual-Brain Watcher & Realtime Evolution Feed)',
+      version: 'v0.8.4',
+      name: 'Hermes Hub Gateway v0.8.4 (Dual-Brain Watcher & Realtime Evolution Feed)',
       date: '22 Oktober 2026',
       type: 'PATCH',
       status: 'LATEST',
@@ -533,8 +533,8 @@ export default function App() {
         'Direct HTTP event bridge ke Hermes Review Receiver (Port 9125)'
       ],
       downloads: [
-        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.3/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
-        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.3/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.4/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.4/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
       ]
     },
     {
