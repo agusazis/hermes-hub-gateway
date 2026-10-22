@@ -5543,29 +5543,32 @@ export default function App() {
                 </div>
 
                 {gatewayTestResult && (
-                  <div className={`p-3 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-center gap-3 ${
+                  <div className={`p-3 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-start gap-3 ${
                     gatewayTestResult.success
                       ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
                       : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
                   }`}>
-                    <div className={`p-1.5 rounded-lg border flex-shrink-0 ${
-                      gatewayTestResult.success
-                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                        : "bg-rose-500/20 text-rose-400 border-rose-500/40"
-                    }`}>
-                      {gatewayTestResult.success ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-rose-400" />
-                      )}
-                    </div>
-                    <div className="space-y-0.5">
-                      <div className={`text-[10px] font-bold uppercase tracking-wider ${
+                    {gatewayTestResult.success ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
                         gatewayTestResult.success ? "text-emerald-400" : "text-rose-400"
                       }`}>
                         {gatewayTestResult.success ? "Hasil Uji Gateway Server (Online)" : "Hasil Uji Gateway Server (Gagal)"}
                       </div>
-                      <span className="font-semibold">{gatewayTestResult.message}</span>
+                      <div className="font-semibold">{gatewayTestResult.message}</div>
+                      {!gatewayTestResult.success && (
+                        <div className="mt-2.5 p-2 bg-slate-900/90 rounded border border-rose-800/60 text-[11px] text-slate-300">
+                          <p className="font-semibold text-rose-300 mb-1">Panduan Server Fresh Install:</p>
+                          <p className="mb-1 text-slate-400">Pastikan Hermes Hub Companion Daemon terpasang di host server dengan menjalankan perintah berikut:</p>
+                          <code className="text-cyan-300 block bg-black/60 p-1.5 rounded select-all font-mono">
+                            curl -fsSL https://raw.githubusercontent.com/agusazis/hermes-hub-gateway/main/server/install.sh | bash
+                          </code>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
