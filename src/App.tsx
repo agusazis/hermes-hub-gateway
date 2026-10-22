@@ -602,11 +602,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.15',
+      name: 'Hermes Hub Gateway v0.8.15 (Multiplatform-Ready Dynamic Context Engine)',
+      date: '22 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Multiplatform & Zero-Footprint Context Engine: Implementasi backend Rust mcp_bridge untuk hermes_get_rule, hermes_list_rules, dan hermes_consult_specialist dengan path resolusi dinamis cross-platform.',
+      features: [
+        'Multiplatform Dynamic Pathing: Menghilangkan seluruh hardcoded Windows path (C:\\Users\\...) menjadi path dinamis berbasis home_dir OS.',
+        'High-Compliance AGENTS.md Template: Format aturan 100% English-first, zero-emoji, RFC 2119 imperatives untuk memaksimalkan kepatuhan model frontier.',
+        'Native Context Handler: Backend Tauri Rust kini menangani request rule dan specialist consultation langsung di memori.',
+        'Zero-Footprint Ready: Project lokal bersih tanpa folder fisik skills/rules atau resiko symlink leak.'
+      ],
+      fixes: [
+        'Memperbaiki template injeksi mcp_config.json agar otomatis menyesuaikan path binary node di Windows vs Unix.'
+      ],
+      architecture: [
+        'Cross-Platform Context-as-a-Service',
+        'Dynamic OS Directory Resolution (dirs crate)'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.15/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.15/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.14',
       name: 'Hermes Hub Gateway v0.8.14 (Zero-Footprint Cross-Platform Context Architecture)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Zero-Footprint Cross-Platform MCP: Eliminasi ketergantungan symlink (mklink) di project. Konversi arsitektur .agents menjadi dynamic context-as-a-service (rules, skills, specialists) via MCP terpusat.',
       features: [
         'Zero-Footprint Architecture: Project lokal murni hanya membutuhkan 1 file AGENTS.md (The Soul) dan koneksi MCP HHG, tanpa folder fisik skills/rules/specialists.',
@@ -2973,7 +2998,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.14</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.15</span>
                 </div>
               )}
             </div>
