@@ -251,19 +251,12 @@ pub fn remove_ntfs_junction(link_path: &Path) -> Result<(), String> {
     }
 }
 
-/// Scaffold a brand new .agents architecture following Antigravity + Hermes conventions
+// src-tauri/src/workspace.rs: Zero-Footprint Project Scaffold
 pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Result<(), String> {
-    let memory_dir = dest_dir.join("memory");
-    let rules_dir = dest_dir.join("rules");
-    let specialists_dir = dest_dir.join("specialists");
-    let skills_dir = dest_dir.join("skills");
-    let tools_dir = dest_dir.join("tools");
-
-    fs::create_dir_all(&memory_dir).map_err(|e| e.to_string())?;
-    fs::create_dir_all(&rules_dir).map_err(|e| e.to_string())?;
-    fs::create_dir_all(&specialists_dir).map_err(|e| e.to_string())?;
-    fs::create_dir_all(&skills_dir).map_err(|e| e.to_string())?;
-    fs::create_dir_all(&tools_dir).map_err(|e| e.to_string())?;
+    // Zero-Footprint: Cukup buat file AGENTS.md (Soul) dan mcp_config.json di root project
+    // TIDAK LAGI membuat subfolder memory/, rules/, specialists/, skills/
+    let tools_dir = dest_dir.join(".agents").join("tools");
+    let _ = fs::create_dir_all(&tools_dir);
 
     // 1. AGENTS.md (Soul & Directives)
     let agents_md = format!(r##"# {name} AI Agent Core Directives
@@ -356,7 +349,7 @@ Evaluate tools dynamically based on their live `description` in your active tool
     #[cfg(not(windows))]
     let node_cmd = PathBuf::from("node");
 
-    let run_mcp_script = home.join(".hermes-hub").join("scripts").join("run_mcp.js");
+    let run_mcp_script = home.join(".hermes-hub").join("scripts").join("mcp_server.js");
 
     let mcp_config_json = serde_json::json!({
         "mcpServers": {
