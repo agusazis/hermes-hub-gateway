@@ -515,27 +515,27 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
-      version: 'v0.8.6',
-      name: 'Hermes Hub Gateway v0.8.6 (Tray Managed State & Clean Audit Trail)',
+      version: 'v0.8.7',
+      name: 'Hermes Hub Gateway v0.8.7 (Clean Audit Trail & Local Time Integration)',
       date: '22 Oktober 2026',
       type: 'PATCH',
       status: 'LATEST',
-      highlights: 'Penghapusan tombol Bersihkan Log untuk menjaga integritas jejak audit, serta perbaikan arsitektur state TrayIcon di Rust agar dynamic tooltip tampil konsisten di Windows.',
+      highlights: 'Penghapusan tombol Bersihkan Log untuk menjaga integritas jejak audit, penyelarasan format waktu dengan konfigurasi lokal perangkat Windows, dan pembersihan tray build pipeline.',
       features: [
-        'Immutable Audit Trail: Menghilangkan tombol Bersihkan Log agar riwayat pembelajaran tidak hilang secara tidak sengaja.',
-        'Rust TrayIcon State Management: TrayIcon didaftarkan ke app.manage() sehingga set_tooltip dapat dipanggil secara aman dari frontend.',
-        'Evolution Logs +N Badge: Badge jumlah log baru yang belum dibaca langsung terlihat di sidebar.'
+        'Immutable Audit Trail: Tombol Bersihkan Log dihapus permanen agar log historis tidak hilang sengaja maupun tidak sengaja.',
+        'Windows Locale Time Alignment: Format timestamp log dan status sinkronisasi secara presisi mengikuti jam sistem operasi Windows pengguna.',
+        'Evolution Logs Unread Badge: Tampilan visual badge +N pada menu sidebar logs.'
       ],
       fixes: [
-        'Memperbaiki kegagalan kompilasi Tauri v2 terkait pemanggilan tray_by_id.'
+        'Memperbaiki Rust Tray build agar stabil tanpa error tipe di Tauri v2.'
       ],
       architecture: [
-        'app.manage(tray_instance) di main.rs',
-        'State injection pada command update_tray_status'
+        'Intl.DateTimeFormat browser/OS locale detection',
+        'Stable Tauri 2.0 TrayIcon initialization'
       ],
       downloads: [
-        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.6/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
-        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.6/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.7/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.7/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
       ]
     },
     {
