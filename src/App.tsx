@@ -603,11 +603,34 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.21',
+      name: 'Hermes Hub Gateway v0.8.21 (Zero-Footprint Engine Compiler Hardening)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Compiler Hardening: Pembersihan menyeluruh variabel pustaka lama (memory_dir, skills_dir, move-borrow name) di Rust backend untuk rilis produksi Windows.',
+      features: [
+        'Zero-Footprint Rust Engine: Scaffolding bebas dependensi folder lokal lama.',
+        'Strict Lifetime Borrow Safety: Pemanggilan command workspace tauri terisolasi murni.'
+      ],
+      fixes: [
+        'Memperbaiki kompilasi rustc tauri bundle pada runner Windows CI.'
+      ],
+      architecture: [
+        'Hardened Zero-Footprint Context Pipeline',
+        'Direct Node-MCP Multiplatform Service'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.21/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.21/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.20',
       name: 'Hermes Hub Gateway v0.8.20 (Zero-Footprint Workspace UI & Dual Scripts Sync)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Zero-Footprint UI & Dual Runner Sync: Menghilangkan seluruh teks dan logika pembuatan NTFS Junction pada modal Tambah Workspace. Menyelaraskan runner script run_mcp.js dan mcp_server.js di runtime Rust.',
       features: [
         'Pure Zero-Footprint Workspace: Modal tambah workspace kini murni menghubungkan project via AGENTS.md dan mcp_config.json tanpa junction NTFS.',
@@ -3124,7 +3147,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.20</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.21</span>
                 </div>
               )}
             </div>
