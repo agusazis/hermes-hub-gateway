@@ -603,11 +603,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.23',
+      name: 'Hermes Hub Gateway v0.8.23 (Zero-Footprint Readiness Audit & Clean Workspace)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Zero-Footprint Readiness Audit: Menyelaraskan seluruh logika evaluasi kesiapan workspace (Readiness Audit) ke era MCP tanpa menuntut folder .agents fisik di project.',
+      features: [
+        'Pure Zero-Footprint Scaffold: Menghapus total pembuatan folder .agents/tools di project koding.',
+        'Modern MCP Readiness Audit: Evaluasi berbasis AGENTS.md, mcp_config.json, run_mcp.js, dan Mnemosyne conduit.',
+        '100% Ready Detection: Workspace dengan arsitektur MCP modern langsung terverifikasi hijau sempurna.'
+      ],
+      fixes: [
+        'Memperbaiki skor audit 20% yang salah menilai ketiadaan folder fisik .agents.',
+        'Menghapus instruksi halusinasi lama terkait USER.md dan ENVIRONMENT.md lokal.'
+      ],
+      architecture: [
+        'Pure Zero-Footprint Verification Pipeline',
+        'Direct MCP Context Diagnostics'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.23/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.23/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.22',
       name: 'Hermes Hub Gateway v0.8.22 (Permanent Single-Script MCP Architecture)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Single-Script MCP Architecture: Menghapus total ambiguitas script MCP. Menyeragamkan seluruh konfigurasi, scaffolding, dan clipboard IDE murni menggunakan run_mcp.js dengan perlindungan atomic safe-write di Rust.',
       features: [
         'Deterministic Stdio MCP: Seluruh template dan dashboard 100% menggunakan run_mcp.js yang mandiri dan tahan file lock.',
@@ -3172,7 +3197,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.22</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.23</span>
                 </div>
               )}
             </div>
@@ -4233,8 +4258,8 @@ export default function App() {
                                     </div>
                                     <p className="text-xs text-slate-400">
                                       {report.is_ready 
-                                        ? 'Workspace ini memenuhi seluruh standar kognitif Antigravity + Hermes. Bebas digunakan untuk prompt koding.'
-                                        : 'Lengkapi berkas wajib di direktori .agents agar AI Agent tidak berhalusinasi saat eksekusi prompt.'}
+                                        ? 'Workspace ini memenuhi seluruh standar kognitif Antigravity + Hermes via Zero-Footprint Context & MCP. Bebas digunakan untuk prompt koding.'
+                                        : 'Lengkapi konfigurasi AGENTS.md atau mcp_config.json agar AI Agent terhubung sempurna ke gateway.'}
                                     </p>
                                   </div>
                                   <button
