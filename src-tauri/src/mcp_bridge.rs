@@ -291,6 +291,28 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                     }
                 },
                 {
+                    "name": "hermes_save_rule",
+                    "description": "Simpan atau perbarui aturan arsitektur / pola koding (rule/pattern) baru ke dalam repository HHG langsung dari IDE.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "category": {
+                                "type": "string",
+                                "description": "Kategori aturan/slug (contoh: 'crud-pattern', 'extjs-styling', 'php82-types')"
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Judul deskriptif aturan koding"
+                            },
+                            "content": {
+                                "type": "string",
+                                "description": "Isi lengkap aturan koding, pola standar, dan instruksi imperatif dalam format Markdown"
+                            }
+                        },
+                        "required": ["category", "content"]
+                    }
+                },
+                {
                     "name": "hermes_consult_specialist",
                     "description": "Konsultasi dengan persona spesialis virtual (DBA, Frontend Lead, Security Architect) untuk review teknis.",
                     "inputSchema": {
@@ -442,6 +464,57 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                             }]
                         })),
                         error: None,
+                    }
+                }
+                "hermes_save_rule" => {
+                    let category = arguments.get("category").and_then(|s| s.as_str()).unwrap_or("");
+                    let title = arguments.get("title").and_then(|s| s.as_str()).unwrap_or("");
+                    let content = arguments.get("content").and_then(|s| s.as_str()).unwrap_or("");
+
+                    if category.is_empty() || content.is_empty() {
+                        JsonRpcResponse {
+                            jsonrpc: "2.0".to_string(),
+                            id: request.id,
+                            result: None,
+                            error: Some(JsonRpcError {
+                                code: -32602,
+                                message: "Parameter 'category' dan 'content' wajib diisi.".to_string(),
+                            }),
+                        }
+                    } else {
+                        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+                        let rules_dir = home.join(".hermes-hub").join("rules");
+                        let _ = fs::create_dir_all(&rules_dir);
+                        let rule_file = rules_dir.join(format!("{}.md", category));
+
+                        let file_content = if !title.is_empty() {
+                            format!("# {}\n\n{}\n", title, content)
+                        } else {
+                            format!("{}\n", content)
+                        };
+
+                        match fs::write(&rule_file, file_content) {
+                            Ok(_) => JsonRpcResponse {
+                                jsonrpc: "2.0".to_string(),
+                                id: request.id,
+                                result: Some(serde_json::json!({
+                                    "content": [{
+                                        "type": "text",
+                                        "text": format!("✓ Berhasil menyimpan aturan koding '{}' ke repository HHG.", category)
+                                    }]
+                                })),
+                                error: None,
+                            },
+                            Err(e) => JsonRpcResponse {
+                                jsonrpc: "2.0".to_string(),
+                                id: request.id,
+                                result: None,
+                                error: Some(JsonRpcError {
+                                    code: -32603,
+                                    message: format!("Gagal menulis file aturan: {}", e),
+                                }),
+                            },
+                        }
                     }
                 }
                 "hermes_consult_specialist" => {
