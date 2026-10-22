@@ -436,6 +436,7 @@ export default function App() {
       { name: 'get_skill', desc: 'Mengambil isi lengkap file panduan/SOP teknis (SKILL.md) secara on-demand', enabled: true },
       { name: 'list_rules', desc: 'Melihat daftar aturan koding arsitektural (ExtJS, PHP 8.2, Security, Query)', enabled: true },
       { name: 'get_rule', desc: 'Mengambil isi aturan koding spesifik dari HHG tanpa perlu file lokal di project', enabled: true },
+      { name: 'save_rule', desc: 'Menyimpan atau memperbarui aturan arsitektur / pola koding baru ke repository HHG langsung dari IDE', enabled: true },
       { name: 'consult_specialist', desc: 'Konsultasi dengan persona spesialis (DBA, Frontend Lead, Security Architect) untuk review', enabled: true },
     ],
     'tabularis': [
@@ -602,11 +603,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.17',
+      name: 'Hermes Hub Gateway v0.8.17 (Bidirectional MCP Knowledge & Rule Authoring Engine)',
+      date: '22 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Bidirectional Knowledge Authoring: Menambahkan tool penulisan hermes_save_rule agar IDE dapat mencatat pola arsitektur & CRUD pattern langsung ke HHG tanpa mengotori project lokal.',
+      features: [
+        'IDE Rule Authoring (hermes_save_rule): Agent di IDE dapat menyimpan aturan koding imperatif langsung ke ~/.hermes-hub/rules/ via MCP.',
+        'Bidirectional Knowledge Loop: Evaluator menyuplai skill terkurasi, sedangkan IDE menyuplai pattern koding spesifik proyek.',
+        'Fresh Install Out-of-the-Box: Struktur direktori rules otomatis diinisialisasi oleh gateway saat pertama kali menyimpan aturan.',
+        'High-Compliance AGENTS.md Directives: Penambahan panduan penyimpanan aturan baru ke dalam tool execution matrix.'
+      ],
+      fixes: [
+        'Menyempurnakan katalog MCP discovery dengan tool hermes_save_rule.'
+      ],
+      architecture: [
+        'Bidirectional Context-as-a-Service',
+        'Zero-Footprint Persistent Rule Repository'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.17/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.17/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.16',
       name: 'Hermes Hub Gateway v0.8.16 (Continuous Self-Improvement & MCP-First Soul)',
       date: '22 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Continuous Self-Improvement & Protocol Turn-1: Integrasi kaidah self-improving memory ke dalam template AGENTS.md. Penegasan blind-spot mitigasi untuk tools lokal via bridge script, dan transformasi total dari orientasi folder ke MCP HHG.',
       features: [
         'Continuous Self-Improvement Mandate: Setiap prompt kompleks mewajibkan verifikasi memory usang dan pengecekan skill aktif terlebih dahulu.',
@@ -3023,7 +3049,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.16</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.17</span>
                 </div>
               )}
             </div>
