@@ -431,6 +431,13 @@ export default function App() {
       { name: 'explain_query', desc: 'Menganalisis execution plan query MySQL/MariaDB SIMRS', enabled: true },
       { name: 'get_slow_query_summary', desc: 'Melihat ringkasan metrics performa query lambat database SIMRS', enabled: true },
     ],
+    'hermes': [
+      { name: 'list_skills', desc: 'Melihat seluruh katalog SOP, aturan koding, dan pedoman skill arsitektur yang tersedia', enabled: true },
+      { name: 'get_skill', desc: 'Mengambil isi lengkap file panduan/SOP teknis (SKILL.md) secara on-demand', enabled: true },
+      { name: 'list_rules', desc: 'Melihat daftar aturan koding arsitektural (ExtJS, PHP 8.2, Security, Query)', enabled: true },
+      { name: 'get_rule', desc: 'Mengambil isi aturan koding spesifik dari HHG tanpa perlu file lokal di project', enabled: true },
+      { name: 'consult_specialist', desc: 'Konsultasi dengan persona spesialis (DBA, Frontend Lead, Security Architect) untuk review', enabled: true },
+    ],
     'tabularis': [
       { name: 'run_query', desc: 'Eksekusi query SQL SELECT/SHOW/DESCRIBE langsung ke Database MariaDB SIMRS / SIMGOS2 (Vagrant/Production) via Tabularis Gateway', enabled: true },
       { name: 'describe_table', desc: 'Inspeksi fisik struktur field, nama kolom asli, tipe data, dan index tabel database SIMRS SIMGOS2', enabled: true },
@@ -595,11 +602,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.14',
+      name: 'Hermes Hub Gateway v0.8.14 (Zero-Footprint Cross-Platform Context Architecture)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Zero-Footprint Cross-Platform MCP: Eliminasi ketergantungan symlink (mklink) di project. Konversi arsitektur .agents menjadi dynamic context-as-a-service (rules, skills, specialists) via MCP terpusat.',
+      features: [
+        'Zero-Footprint Architecture: Project lokal murni hanya membutuhkan 1 file AGENTS.md (The Soul) dan koneksi MCP HHG, tanpa folder fisik skills/rules/specialists.',
+        'Cross-Platform Ready: Membuka jalan portabilitas penuh ke macOS dan Linux tanpa terbentur masalah path OS atau izin symlink/junction Windows.',
+        'Semantic Context Tools: Penambahan katalog hermes_list_rules, hermes_get_rule, dan hermes_consult_specialist ke aggregator gateway.',
+        'Anti-Git Pollution: Bebas risiko symlink atau file SOP ter-stage ke git repository lokal.'
+      ],
+      fixes: [
+        'Memperbarui template injeksi AGENTS.md agar mengarahkan agent menggunakan dynamic context tools.'
+      ],
+      architecture: [
+        'Cross-Platform Context-as-a-Service via MCP',
+        'Zero Physical Symlink Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.14/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.14/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.13',
       name: 'Hermes Hub Gateway v0.8.13 (Dynamic Self-Discovery MCP & High-DPI Tray)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Self-Discovery MCP Architecture: Penegasan deskripsi semantik tools MCP dan protokol dynamic discovery di AGENTS.md, ditambah sinkronisasi tray icon High-DPI 64px.',
       features: [
         'Dynamic MCP Self-Discovery: Deskripsi tool database di HHG diperkaya dengan konteks schema MariaDB SIMRS SIMGOS2 agar agent otonom memilih tool yang tepat tanpa hardcoded rule.',
@@ -2941,7 +2973,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.13</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.14</span>
                 </div>
               )}
             </div>
