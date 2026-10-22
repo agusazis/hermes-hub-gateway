@@ -71,9 +71,8 @@ fn update_tray_status(app: tauri::AppHandle, tooltip: String, unread_count: u32,
         let _ = tray.set_tooltip(Some(display_tooltip));
 
         if let (Some(rgba), Some(w), Some(h)) = (icon_rgba, icon_width, icon_height) {
-            if let Ok(icon) = tauri::image::Image::new_owned(rgba, w, h) {
-                let _ = tray.set_icon(Some(icon));
-            }
+            let icon = tauri::image::Image::new_owned(rgba, w, h);
+            let _ = tray.set_icon(Some(icon));
         }
     }
     Ok(())
