@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.13
-          releaseName: "Hermes Hub Gateway v0.8.13"
-          releaseBody: "Release v0.8.13: Dynamic MCP Self-Discovery architecture, refined poll loop for tray icon updates, and high-DPI 64px badge typography."
+          tagName: v0.8.14
+          releaseName: "Hermes Hub Gateway v0.8.14"
+          releaseBody: "Release v0.8.14: Zero-Footprint Cross-Platform Context Architecture. Eliminating physical mklink dependencies with dynamic MCP tools (rules, skills, specialists)."
           releaseDraft: false
           prerelease: false
