@@ -84,4 +84,5 @@
 ## 4. STRICT OPERATIONAL DISCIPLINE
 1. **Never Assume — Verify Physical Files First:** Inspect actual disk contents and active process locks before making architectural or code assertions.
 2. **Never Patch Locally Without Repo Push:** Fixing files on a client laptop via ad-hoc commands without committing to the central repository is strictly prohibited. All fixes must originate from and be verified in git.
-3. **Canonical Naming Enforcement:** Do not introduce alternate filenames (`mcp_server_v2.js`, `runner_test.js`). The stdio engine runner is and will always be `run_mcp.js`.
+4. **Canonical Naming Enforcement:** Do not introduce alternate filenames (`mcp_server_v2.js`, `runner_test.js`). The stdio engine runner is and will always be `run_mcp.js`.
+5. **Telegram Notification Decoupling (Plugin Architecture):** Telegram broadcast notifications are exclusively handled by the centralized Hermes Evaluator backend service. The desktop HHG client does not act as a notification dispatcher. External developers must configure backend broadcast via `plugins/telegram-notifier/README.md`.
