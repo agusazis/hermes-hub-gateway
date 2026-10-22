@@ -27,17 +27,19 @@ pub struct ReviewResponsePayload {
 
 pub async fn start_watcher_loop(app: AppHandle) {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
-    let p1 = home.join(".gemini").join("antigravity").join("brain");
-    let p2 = home.join(".gemini").join("antigravity-ide").join("brain");
-    let brain_dir = if p1.exists() { p1 } else { p2 };
+    let mut brain_dirs = Vec::new();
+    let p_ide = home.join(".gemini").join("antigravity-ide").join("brain");
+    let p_agy = home.join(".gemini").join("antigravity").join("brain");
+    if p_ide.exists() { brain_dirs.push(p_ide); }
+    if p_agy.exists() { brain_dirs.push(p_agy); }
 
-    println!("[Watcher] Monitoring Antigravity Brain dir: {:?}", brain_dir);
+    println!("[Watcher] Monitoring Antigravity Brain dirs: {:?}", brain_dirs);
 
     let mut file_offsets: HashMap<PathBuf, u64> = HashMap::new();
 
-    // Baseline Initialization: Catat ukuran awal semua file yang sudah ada agar tidak memicu re-evaluasi riwayat lama saat HHG baru dibuka
-    if brain_dir.exists() {
-        if let Ok(entries) = fs::read_dir(&brain_dir) {
+    // Baseline Initialization: Catat ukuran awal semua file yang sudah ada
+    for b_dir in &brain_dirs {
+        if let Ok(entries) = fs::read_dir(b_dir) {
             for entry in entries.flatten() {
                 let conv_dir = entry.path();
                 if conv_dir.is_dir() {
@@ -56,7 +58,7 @@ pub async fn start_watcher_loop(app: AppHandle) {
     loop {
         tokio::time::sleep(Duration::from_millis(2500)).await;
 
-        if !brain_dir.exists() {
+        if brain_dirs.is_empty() {
             continue;
         }
 
@@ -73,100 +75,97 @@ pub async fn start_watcher_loop(app: AppHandle) {
             },
         };
 
-        if let Ok(entries) = fs::read_dir(&brain_dir) {
-            for entry in entries.flatten() {
-                let conv_dir = entry.path();
-                if conv_dir.is_dir() {
-                    // Antigravity IDE menyimpan transkrip di: <uuid>/.system_generated/logs/transcript.jsonl
-                    let jsonl_path = conv_dir.join(".system_generated").join("logs").join("transcript.jsonl");
-                    let path = if jsonl_path.exists() {
-                        jsonl_path
-                    } else {
-                        conv_dir.clone()
-                    };
-
-                    if path.is_file() {
-                        let is_target = match path.extension().and_then(|s| s.to_str()) {
-                            Some("jsonl") | Some("json") => true,
-                            _ => false,
+        for brain_dir in &brain_dirs {
+            if let Ok(entries) = fs::read_dir(brain_dir) {
+                for entry in entries.flatten() {
+                    let conv_dir = entry.path();
+                    if conv_dir.is_dir() {
+                        let jsonl_path = conv_dir.join(".system_generated").join("logs").join("transcript.jsonl");
+                        let path = if jsonl_path.exists() {
+                            jsonl_path
+                        } else {
+                            conv_dir.clone()
                         };
-                        if !is_target {
-                            continue;
-                        }
 
-                        let metadata = match fs::metadata(&path) {
-                            Ok(m) => m,
-                            Err(_) => continue,
-                        };
-                        let len = metadata.len();
-                        let last_len = file_offsets.get(&path).copied().unwrap_or(0);
-
-                        // Hanya evaluasi jika file bertambah panjang dari offset terakhir yang tercatat
-                        if len > last_len && last_len > 0 {
-                            // File bertambah panjang atau file baru dengan konten > 500 byte, baca transkrip
-                            if let Ok(content) = fs::read_to_string(&path) {
-                                if content.contains("_DO_NOT_CAPTURE_BLOCK") {
-                                    file_offsets.insert(path.clone(), len);
-                                    continue;
-                                }
-
-                                let tail_window = if content.len() > 12000 {
-                                    &content[content.len() - 12000..]
-                                } else {
-                                    &content[..]
-                                };
-
-                                let conv_id = entry.file_name().to_string_lossy().to_string();
-
-                                let _ = app.emit("watcher-event", serde_json::json!({
-                                    "status": "evaluating",
-                                    "conversation_id": conv_id,
-                                    "file": path.to_string_lossy()
-                                }));
-
-                            // Kirimkan ke Hermes Evaluator
-                            let payload = ReviewRequestPayload {
-                                client: "hermes-hub-gateway".to_string(),
-                                profile_id: cfg.active_profile.clone(),
-                                workspace_id: active_ws.id.clone(),
-                                conversation_id: conv_id.clone(),
-                                transcript_tail: tail_window.to_string(),
-                                git_target: active_ws.git_target.clone(),
+                        if path.is_file() {
+                            let is_target = match path.extension().and_then(|s| s.to_str()) {
+                                Some("jsonl") | Some("json") => true,
+                                _ => false,
                             };
+                            if !is_target {
+                                continue;
+                            }
 
-                                let evaluator_url = format!("{}/review", active_ws.hermes_evaluator_url.trim_end_matches('/'));
-                                let client = reqwest::Client::builder()
-                                    .timeout(Duration::from_secs(45))
-                                    .build()
-                                    .unwrap_or_default();
+                            let metadata = match fs::metadata(&path) {
+                                Ok(m) => m,
+                                Err(_) => continue,
+                            };
+                            let len = metadata.len();
+                            let last_len = file_offsets.get(&path).copied().unwrap_or(0);
 
-                                let res = client.post(&evaluator_url).json(&payload).send().await;
+                            if len > last_len && last_len > 0 {
+                                if let Ok(content) = fs::read_to_string(&path) {
+                                    if content.contains("_DO_NOT_CAPTURE_BLOCK") {
+                                        file_offsets.insert(path.clone(), len);
+                                        continue;
+                                    }
 
-                                match res {
-                                    Ok(response) => {
-                                        if let Ok(review_res) = response.json::<ReviewResponsePayload>().await {
-                                            if review_res.has_lesson {
-                                                let skill = review_res.skill_name.unwrap_or_else(|| "new-rule".to_string());
-                                                println!("[Watcher] Lesson learned detected: {}", skill);
+                                    let tail_window = if content.len() > 12000 {
+                                        &content[content.len() - 12000..]
+                                    } else {
+                                        &content[..]
+                                    };
 
-                                                let _ = app.emit("lesson-learned", serde_json::json!({
-                                                    "skill_name": skill,
-                                                    "commit": review_res.commit_message,
-                                                    "time": Utc::now().to_rfc3339()
-                                                }));
+                                    let conv_id = entry.file_name().to_string_lossy().to_string();
 
-                                                // Auto-pull rules ke internal storage HHG
-                                                sync_rules_from_git(&active_ws).await;
+                                    let _ = app.emit("watcher-event", serde_json::json!({
+                                        "status": "evaluating",
+                                        "conversation_id": conv_id,
+                                        "file": path.to_string_lossy()
+                                    }));
+
+                                    let payload = ReviewRequestPayload {
+                                        client: "hermes-hub-gateway".to_string(),
+                                        profile_id: cfg.active_profile.clone(),
+                                        workspace_id: active_ws.id.clone(),
+                                        conversation_id: conv_id.clone(),
+                                        transcript_tail: tail_window.to_string(),
+                                        git_target: active_ws.git_target.clone(),
+                                    };
+
+                                    let evaluator_url = format!("{}/review", active_ws.hermes_evaluator_url.trim_end_matches('/'));
+                                    let client = reqwest::Client::builder()
+                                        .timeout(Duration::from_secs(45))
+                                        .build()
+                                        .unwrap_or_default();
+
+                                    let res = client.post(&evaluator_url).json(&payload).send().await;
+
+                                    match res {
+                                        Ok(response) => {
+                                            if let Ok(review_res) = response.json::<ReviewResponsePayload>().await {
+                                                if review_res.has_lesson {
+                                                    let skill = review_res.skill_name.unwrap_or_else(|| "new-rule".to_string());
+                                                    println!("[Watcher] Lesson learned detected: {}", skill);
+
+                                                    let _ = app.emit("lesson-learned", serde_json::json!({
+                                                        "skill_name": skill,
+                                                        "commit": review_res.commit_message,
+                                                        "time": Utc::now().to_rfc3339()
+                                                    }));
+
+                                                    sync_rules_from_git(&active_ws).await;
+                                                }
                                             }
                                         }
-                                    }
-                                    Err(e) => {
-                                        eprintln!("[Watcher] Failed to send review payload: {}", e);
+                                        Err(e) => {
+                                            eprintln!("[Watcher] Failed to send review payload: {}", e);
+                                        }
                                     }
                                 }
                             }
+                            file_offsets.insert(path, len);
                         }
-                        file_offsets.insert(path, len);
                     }
                 }
             }
