@@ -585,11 +585,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.11',
+      name: 'Hermes Hub Gateway v0.8.11 (Dynamic Canvas Tray Badge Icon)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Hadirnya Dynamic Canvas Tray Badge Icon: Tray icon Windows kini menampilkan bulatan merah penanda angka unread layaknya aplikasi chat modern (seperti Telegram/WhatsApp).',
+      features: [
+        'Dynamic Tray Badge Icon: Saat ada pembaruan log koding/memori baru, icon tray di Windows otomatis digambar ulang dengan badge angka merah terang.',
+        'Zero Distraction: Programmer langsung tahu berapa event yang masuk hanya dengan melirik icon tray tanpa perlu popup yang mengganggu layar.',
+        'Auto Reset Icon: Ketika tab Evolution Logs dibuka, badge angka merah otomatis hilang dan kembali ke icon standar H.'
+      ],
+      fixes: [
+        'Memperbaiki return type Image::new_owned (mengembalikan Image langsung bukan Result).'
+      ],
+      architecture: [
+        'HTML5 Offscreen Canvas RGBA rasterizer',
+        'Tauri 2.0 tauri::image::Image::new_owned memory buffer'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.11/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.11/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.10',
       name: 'Hermes Hub Gateway v0.8.10 (Dynamic Canvas Tray Badge Icon)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Hadirnya Dynamic Canvas Tray Badge Icon: Tray icon Windows kini menampilkan bulatan merah penanda angka unread layaknya aplikasi chat modern (seperti Telegram/WhatsApp).',
       features: [
         'Dynamic Tray Badge Icon: Saat ada pembaruan log koding/memori baru, icon tray di Windows otomatis digambar ulang dengan badge angka merah terang.',
@@ -2863,7 +2887,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.10</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.11</span>
                 </div>
               )}
             </div>
