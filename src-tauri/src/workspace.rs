@@ -287,9 +287,14 @@ Inspect `.agents/skills/<name>/SKILL.md` ONLY when the active task matches the s
 # Session Initiation & Handover Bootstrap (Turn 1 Protocol)
 Upon starting a new chat session:
 1. Targeted Memory Check: Query the latest handover checkpoint directly via Mnemosyne MCP or local memory.
-2. Pre-Flight Gateway & MCP Bridge Check:
-   - Seluruh tool eksternal (Database Tabularis, GitLab, dan Grafana/Loki/Prometheus) dilayani melalui satu pintu server MCP `hermes-hub-gateway`.
-   - Tool Grafana (seperti `check_datasources_health`, `query_loki_logs`, `query_prometheus`) TIDAK berdiri sebagai server MCP 'grafana' terpisah, melainkan sudah teragregasi di dalam toolset `hermes-hub-gateway`.
+2. Unified MCP Gateway Architecture (Hermes Hub Gateway):
+   - Seluruh integrasi infrastruktur eksternal terhubung secara dinamis melalui 1 pintu server MCP `hermes-hub-gateway`.
+   - Pola pemanggilan tools menggunakan **Namespace Dinamis Server (`<server_name>__<tool_name>`)**:
+     * `tabularis__*` : Database Gateway MariaDB (SIMRS, Vagrant, Mirroring, Production).
+     * `grafana__*` : Observabilitas log Loki, metrik Prometheus, dan health data sources.
+     * `gitlab__*` : Manajemen issue, merge request, branch, dan repository tracker.
+     * `hermes__*` : On-demand loading aturan SOP dan pedoman koding spesialis.
+   - Panggil fungsionalitas secara natural sesuai namespace server tujuan.
    - JIKA HHG BELUM AKTIF: Berikan peringatan singkat 1 baris di awal:
      `⚠️ Peringatan: Hermes Hub Gateway (HHG) belum aktif di background. Buka aplikasi HHG di Windows agar sinkronisasi Evaluator Hermes dan MCP Bridge berfungsi.`
      Lalu lanjutkan tugas lokal seperti biasa tanpa memblokir alur user.
