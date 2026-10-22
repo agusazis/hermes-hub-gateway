@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent, TrayIcon};
 use tauri::{Manager, Emitter, WindowEvent};
 use std::path::PathBuf;
 
@@ -62,7 +62,7 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
 
 #[tauri::command]
 fn update_tray_status(app: tauri::AppHandle, tooltip: String, unread_count: u32) -> Result<(), String> {
-    if let Some(tray) = app.tray_by_id("main-tray") {
+    if let Some(tray) = app.try_state::<TrayIcon>() {
         let display_tooltip = if unread_count > 0 {
             format!("Hermes Hub Gateway ({} update baru)\n{}", unread_count, tooltip)
         } else {
@@ -535,7 +535,7 @@ async fn main() {
             if let Some(default_icon) = app.default_window_icon() {
                 tray_builder = tray_builder.icon(default_icon.clone());
             }
-            let _tray = tray_builder
+            let tray_instance = tray_builder
                 .show_menu_on_left_click(false)
                 .tooltip("Hermes Hub Gateway (Active Background)")
                 .on_menu_event(move |app, event| match event.id.as_ref() {
@@ -576,6 +576,7 @@ async fn main() {
                     }
                 })
                 .build(app)?;
+            app.manage(tray_instance);
 
             let handle_clone = app_handle.clone();
             tauri::async_runtime::spawn(async move {
