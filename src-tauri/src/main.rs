@@ -61,6 +61,18 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn update_tray_status(app: tauri::AppHandle, tooltip: String, unread_count: u32) -> Result<(), String> {
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        let display_tooltip = if unread_count > 0 {
+            format!("Hermes Hub Gateway ({} update baru)\n{}", unread_count, tooltip)
+        } else {
+            "Hermes Hub Gateway (Active Background)".to_string()
+        };
+        let _ = tray.set_tooltip(Some(display_tooltip));
+    }
+    Ok(())
+}
+
 fn open_in_browser(url: String) -> Result<(), String> {
     if url.trim().is_empty() {
         return Ok(());
@@ -519,7 +531,7 @@ async fn main() {
             let quit_i = MenuItem::with_id(app, "quit", "Stop & Keluar Aplikasi", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &sync_i, &quit_i])?;
 
-            let mut tray_builder = TrayIconBuilder::new().menu(&menu);
+            let mut tray_builder = TrayIconBuilder::with_id("main-tray").menu(&menu);
             if let Some(default_icon) = app.default_window_icon() {
                 tray_builder = tray_builder.icon(default_icon.clone());
             }
@@ -605,7 +617,8 @@ async fn main() {
             scaffold_new_agents_project,
             link_workspace_junction,
             remove_workspace_junction,
-            open_in_browser
+            open_in_browser,
+            update_tray_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");
