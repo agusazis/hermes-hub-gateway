@@ -245,9 +245,9 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
 
     let target_dir = PathBuf::from(&target_path);
     if target_dir.exists() {
-        // Fasilitasi NTFS junction ke internal_skills_path (.agents)
-        let agents_junction = target_dir.join(".agents");
-        let _ = workspace::create_ntfs_junction(&agents_junction, &internal_skills_path);
+        // Zero-Footprint Context: Tidak lagi membuat NTFS Junction (.agents)
+        // Hubungkan project secara non-intrusif cukup dengan AGENTS.md dan mcp_config.json
+        let _ = workspace::scaffold_new_agents_structure(&target_dir, &name);
     }
 
     // Periksa apakah workspace dengan ID ini sudah ada untuk mencegah duplikasi entri
