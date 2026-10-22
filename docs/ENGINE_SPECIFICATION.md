@@ -36,9 +36,10 @@
   - Before writing, check if the file exists and has size > 0.
   - If locked by a running IDE process, DO NOT overwrite with 0 bytes.
   - Write bytes atomically to ensure zero-byte file corruptions never occur on startup.
-* **Exposed Gateway Tools:**
-  - `hermes_list_rules`, `hermes_get_rule`, `hermes_save_rule` (Dynamic rule store).
-  - `hermes_list_skills`, `hermes_get_skill` (SOP inspection).
+* **Exposed Gateway Tools (Complete 6-Tool Suite):**
+  - `hermes_list_skills`, `hermes_get_skill` (SOP & Runbooks inspection).
+  - `hermes_list_rules`, `hermes_get_rule` (Dynamic architecture rule reader).
+  - `hermes_save_rule` (Bidirectional rule writer from IDE to gateway).
   - `hermes_consult_specialist` (Role-based operational delegation).
 
 ### C. Watcher & Git Sync Engine (`src-tauri/src/watcher.rs`)
