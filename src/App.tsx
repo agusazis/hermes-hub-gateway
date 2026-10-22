@@ -326,6 +326,71 @@ export default function App() {
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [logFilterWorkspace, setLogFilterWorkspace] = useState<string>('all');
+  // Helper membuat icon tray dengan badge angka merah dinamis (Dynamic Canvas Icon Generator)
+  const generateTrayBadgeIcon = async (count: number): Promise<{ rgba: number[]; width: number; height: number } | null> => {
+    try {
+      const size = 32;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      // Base icon: background rounded persegi biru gelap dengan huruf H putih
+      ctx.fillStyle = '#0f172a'; // slate-900
+      ctx.beginPath();
+      ctx.roundRect(0, 0, size, size, 6);
+      ctx.fill();
+
+      // Border halus cyan
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Huruf H di tengah
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 16px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('H', size / 2, size / 2);
+
+      // Jika ada unread count, gambar badge merah di pojok kanan atas
+      if (count > 0) {
+        const badgeRadius = 8;
+        const bx = size - badgeRadius;
+        const by = badgeRadius;
+
+        // Lingkaran merah
+        ctx.fillStyle = '#ef4444'; // red-500
+        ctx.beginPath();
+        ctx.arc(bx, by, badgeRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Border badge putih tipis
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Teks counter
+        ctx.fillStyle = '#ffffff';
+        const displayCount = count > 99 ? '99+' : count.toString();
+        ctx.font = 'bold 9px "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(displayCount, bx, by);
+      }
+
+      const imgData = ctx.getImageData(0, 0, size, size);
+      return {
+        rgba: Array.from(imgData.data),
+        width: size,
+        height: size,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   // Helper format jam 24 jam (HH:mm:ss)
   const formatTime24 = (dateInput?: string | number | Date) => {
     const d = dateInput ? new Date(dateInput) : new Date();
@@ -520,11 +585,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.10',
+      name: 'Hermes Hub Gateway v0.8.10 (Dynamic Canvas Tray Badge Icon)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Hadirnya Dynamic Canvas Tray Badge Icon: Tray icon Windows kini menampilkan bulatan merah penanda angka unread layaknya aplikasi chat modern (seperti Telegram/WhatsApp).',
+      features: [
+        'Dynamic Tray Badge Icon: Saat ada pembaruan log koding/memori baru, icon tray di Windows otomatis digambar ulang dengan badge angka merah terang.',
+        'Zero Distraction: Programmer langsung tahu berapa event yang masuk hanya dengan melirik icon tray tanpa perlu popup yang mengganggu layar.',
+        'Auto Reset Icon: Ketika tab Evolution Logs dibuka, badge angka merah otomatis hilang dan kembali ke icon standar H.'
+      ],
+      fixes: [
+        'Bridge RGBA raw pixel data dari HTML5 Canvas ke Tauri native TrayIcon::set_icon.'
+      ],
+      architecture: [
+        'HTML5 Offscreen Canvas RGBA rasterizer',
+        'Tauri 2.0 tauri::image::Image::new_owned memory buffer'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.10/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.10/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.9',
       name: 'Hermes Hub Gateway v0.8.9 (Tray Dynamic Tooltip & Header Sync)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Sinkronisasi update status tooltip ke Windows System Tray via tray_by_id, sinkronisasi teks header Gateway v0.8.9, dan format waktu 24 jam.',
       features: [
         'Tray Dynamic Tooltip: Menampilkan jumlah update unread dan judul evolusi terakhir saat kursor mouse di-hover di atas tray icon.',
@@ -1835,13 +1924,29 @@ export default function App() {
             if (activeTab === 'logs') {
               setLastReadFeedCount(data.length);
               setUnreadEvolutionCount(0);
-              invoke('update_tray_status', { tooltip: 'Semua log sudah dibaca', unreadCount: 0 }).catch(() => {});
+              generateTrayBadgeIcon(0).then((iconRes) => {
+                invoke('update_tray_status', {
+                  tooltip: 'Semua log sudah dibaca',
+                  unreadCount: 0,
+                  iconRgba: iconRes?.rgba,
+                  iconWidth: iconRes?.width,
+                  iconHeight: iconRes?.height,
+                }).catch(() => {});
+              });
             } else if (data.length > lastReadFeedCount) {
               const diff = data.length - lastReadFeedCount;
               setUnreadEvolutionCount(diff);
               const latest = data[0];
               const summary = latest ? `[${latest.type.toUpperCase()}] ${latest.title}` : 'Update baru masuk';
-              invoke('update_tray_status', { tooltip: summary, unreadCount: diff }).catch(() => {});
+              generateTrayBadgeIcon(diff).then((iconRes) => {
+                invoke('update_tray_status', {
+                  tooltip: summary,
+                  unreadCount: diff,
+                  iconRgba: iconRes?.rgba,
+                  iconWidth: iconRes?.width,
+                  iconHeight: iconRes?.height,
+                }).catch(() => {});
+              });
             }
           }
         })
@@ -2758,7 +2863,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.9</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.10</span>
                 </div>
               )}
             </div>
@@ -2821,7 +2926,15 @@ export default function App() {
                 setActiveTab('logs');
                 setLastReadFeedCount(evolutionFeed.length);
                 setUnreadEvolutionCount(0);
-                invoke('update_tray_status', { tooltip: 'Semua log sudah dibaca', unreadCount: 0 }).catch(() => {});
+                generateTrayBadgeIcon(0).then((iconRes) => {
+                  invoke('update_tray_status', {
+                    tooltip: 'Semua log sudah dibaca',
+                    unreadCount: 0,
+                    iconRgba: iconRes?.rgba,
+                    iconWidth: iconRes?.width,
+                    iconHeight: iconRes?.height,
+                  }).catch(() => {});
+                });
               }}
               title={isSidebarCollapsed ? "Evolution Logs" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all relative ${
