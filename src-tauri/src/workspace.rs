@@ -296,24 +296,16 @@ Evaluate tools dynamically based on their live `description` in your active tool
    - For all task handovers, environment mappings, and user preferences, write directly via `mnemosyne_remember`. Do not write markdown files to a local `memory/` folder.
 
 ## NON-NEGOTIABLE CONSTRAINTS
-1. Zero Hallucinated Schema: Never infer database columns, tables, or relationships. Mandatory physical schema inspection via Tabularis MCP prior to SQL generation.
-2. Zero Credential Leaks: NEVER persist passwords, private keys, API tokens, or root credentials into Mnemosyne memory or code commits.
-3. Dynamic Self-Discovery: Rely on live MCP tool names and descriptions presented in your active session rather than hardcoded assumptions.
+1. Zero Root Clutter & Scratchpad Discipline: STRICTLY PROHIBITED from creating temporary helper scripts, JSON-RPC payload files, scratchpads, test runners, or probe artifacts (e.g. `test_*.js`, `test_*.json`, `probe_*.py`, `temp_*`) inside the project repository root. All temporary execution files MUST be written strictly to `~/.hermes-hub/tmp/` or the operating system temp directory.
+2. Direct MCP Invocation: You possess 168+ live native MCP tools. NEVER write local JavaScript or Python scripts just to simulate or invoke an MCP tool (such as calling Loki or Tabularis via local `node script.js`). Invoke the MCP tool directly in your tool-call turn.
+3. Zero Hallucinated Schema: Never infer database columns, tables, or relationships. Mandatory physical schema inspection via Tabularis MCP prior to SQL generation.
+4. Zero Credential Leaks: NEVER persist passwords, private keys, API tokens, or root credentials into Mnemosyne memory or code commits.
+5. Dynamic Self-Discovery: Rely on live MCP tool names and descriptions presented in your active session rather than hardcoded assumptions.
 "##, name = project_name);
     fs::write(dest_dir.join("AGENTS.md"), agents_md).map_err(|e| e.to_string())?;
 
-    // 2. USER.md (Template)
-    let user_md = r##"# Developer Identity & Output Preferences
-
-- **Name**: [Nama Pengembang]
-- **Role**: Fullstack Developer
-- **Preferred Language**: Bahasa Indonesia (teknis santun)
-- **Output Preferences**:
-  - Direct & concise (tanpa filler kata manis).
-  - Tulis unit-test sebelum menyimpulkan kode selesai.
-  - Setiap perubahan schema wajib menyertakan DDL audit.
-"##;
-    fs::write(dest_dir.join("USER.md"), user_md).map_err(|e| e.to_string())?;
+    // Pure Zero-Footprint Invariant: DILARANG MEMBUAT USER.md atau file sampah lain di root project!
+    // Profil pengguna sudah disimpan di Mnemosyne memori kognitif terpusat.
 
     // 3. mcp_config.json (Cross-Platform Dynamic Path)
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
