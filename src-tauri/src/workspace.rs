@@ -288,13 +288,13 @@ Inspect `.agents/skills/<name>/SKILL.md` ONLY when the active task matches the s
 Upon starting a new chat session:
 1. Targeted Memory Check: Query the latest handover checkpoint directly via Mnemosyne MCP or local memory.
 2. Unified MCP Gateway Architecture (Hermes Hub Gateway):
-   - Seluruh integrasi infrastruktur eksternal terhubung secara dinamis melalui 1 pintu server MCP `hermes-hub-gateway`.
-   - Pola pemanggilan tools menggunakan **Namespace Dinamis Server (`<server_name>__<tool_name>`)**:
-     * `tabularis__*` : Database Gateway MariaDB (SIMRS, Vagrant, Mirroring, Production).
-     * `grafana__*` : Observabilitas log Loki, metrik Prometheus, dan health data sources.
-     * `gitlab__*` : Manajemen issue, merge request, branch, dan repository tracker.
-     * `hermes__*` : On-demand loading aturan SOP dan pedoman koding spesialis.
-   - Panggil fungsionalitas secara natural sesuai namespace server tujuan.
+   - Seluruh integrasi tools dan infrastruktur eksternal diagregasi secara dinamis melalui 1 pintu server MCP `hermes-hub-gateway`.
+   - **Self-Discovery Protocol**: Jangan menebak atau menggunakan SSH/CLI mentah jika sudah ada tool MCP yang relevan. Periksa dan pilih tools yang tersedia secara dinamis berdasarkan `description` pada katalog MCP sesi aktif Anda.
+   - Pola pemanggilan tools menggunakan **Namespace Dinamis Server (`<server_name>_<tool_name>`)**:
+     * Database & Skema: Prioritaskan tools MCP database (`tabularis_*` / `database-simrs_*`) untuk inspeksi struktur tabel, kolom, dan query data MariaDB SIMRS/SIMGOS2 daripada mencoba SSH/terminal langsung ke host database/VM.
+     * Observabilitas: Gunakan tools observabilitas (`grafana_*`) untuk log stream Loki dan metrik Prometheus.
+     * Repositori: Gunakan tools Git (`gitlab_*`) untuk tiket issue, merge request, dan review branch.
+     * SOP & Blueprint: Gunakan `hermes_*` untuk loading aturan koding spesialis secara on-demand.
    - JIKA HHG BELUM AKTIF: Berikan peringatan singkat 1 baris di awal:
      `⚠️ Peringatan: Hermes Hub Gateway (HHG) belum aktif di background. Buka aplikasi HHG di Windows agar sinkronisasi Evaluator Hermes dan MCP Bridge berfungsi.`
      Lalu lanjutkan tugas lokal seperti biasa tanpa memblokir alur user.
