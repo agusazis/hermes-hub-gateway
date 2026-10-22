@@ -515,11 +515,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.6',
+      name: 'Hermes Hub Gateway v0.8.6 (Tray Managed State & Clean Audit Trail)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penghapusan tombol Bersihkan Log untuk menjaga integritas jejak audit, serta perbaikan arsitektur state TrayIcon di Rust agar dynamic tooltip tampil konsisten di Windows.',
+      features: [
+        'Immutable Audit Trail: Menghilangkan tombol Bersihkan Log agar riwayat pembelajaran tidak hilang secara tidak sengaja.',
+        'Rust TrayIcon State Management: TrayIcon didaftarkan ke app.manage() sehingga set_tooltip dapat dipanggil secara aman dari frontend.',
+        'Evolution Logs +N Badge: Badge jumlah log baru yang belum dibaca langsung terlihat di sidebar.'
+      ],
+      fixes: [
+        'Memperbaiki kegagalan kompilasi Tauri v2 terkait pemanggilan tray_by_id.'
+      ],
+      architecture: [
+        'app.manage(tray_instance) di main.rs',
+        'State injection pada command update_tray_status'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.6/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.6/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.5',
       name: 'Hermes Hub Gateway v0.8.5 (Tray Ambient Unread Badges & Companion Daemon Pack)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Hadirnya indikator ambient di Windows System Tray: unread count badge & dynamic evolution tooltip tanpa popup yang mengganggu, paket instalasi mandiri server/install.sh untuk server Hermes fresh install.',
       features: [
         'Tray Dynamic Tooltip: Menampilkan jumlah update unread dan judul evolusi terakhir saat kursor mouse di-hover di atas tray icon.',
@@ -4832,12 +4856,6 @@ export default function App() {
                     ))}
                   </select>
                 </div>
-                <button 
-                  onClick={() => setLogs([])}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800" : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs"}`}
-                >
-                  Bersihkan Log
-                </button>
               </div>
             </div>
 
