@@ -290,6 +290,7 @@ Evaluate tools dynamically based on their live `description` in your active tool
 1. Cognitive Knowledge & Runbooks:
    - Rules & Coding Policies (ExtJS, PHP 8.2, Query Policies): Call `hermes_get_rule` / `hermes_list_rules`.
    - Procedural SOPs & Workflows: Call `hermes_get_skill` / `hermes_list_skills`.
+   - Recording New Architectural Rules / CRUD Patterns: Call `hermes_save_rule` to persist mandatory coding patterns directly into the central HHG rules repository.
    - Architecture & Specialist Review: Call `hermes_consult_specialist`.
 
 2. Database Schema & Query Operations:
