@@ -603,11 +603,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.22',
+      name: 'Hermes Hub Gateway v0.8.22 (Permanent Single-Script MCP Architecture)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Single-Script MCP Architecture: Menghapus total ambiguitas script MCP. Menyeragamkan seluruh konfigurasi, scaffolding, dan clipboard IDE murni menggunakan run_mcp.js dengan perlindungan atomic safe-write di Rust.',
+      features: [
+        'Deterministic Stdio MCP: Seluruh template dan dashboard 100% menggunakan run_mcp.js yang mandiri dan tahan file lock.',
+        'Rust Atomic Safe-Write: Backend Rust mencegah pembuatan file kosong (0-byte) jika script sedang dijalankan oleh IDE.',
+        'Zero-Intervention Fresh Install: Tidak membutuhkan intervensi manual script di laptop pada instalasi baru.'
+      ],
+      fixes: [
+        'Memperbaiki error client is closing EOF akibat pemanggilan mcp_server.js 0-byte.',
+        'Menyelaraskan tombol Copy IDE MCP Config agar selalu menyalin konfigurasi run_mcp.js yang valid.'
+      ],
+      architecture: [
+        'Deterministic Single-Runner Pipeline',
+        'Direct Zero-Footprint Context Service'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.22/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.22/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.21',
       name: 'Hermes Hub Gateway v0.8.21 (Zero-Footprint Engine Compiler Hardening)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Compiler Hardening: Pembersihan menyeluruh variabel pustaka lama (memory_dir, skills_dir, move-borrow name) di Rust backend untuk rilis produksi Windows.',
       features: [
         'Zero-Footprint Rust Engine: Scaffolding bebas dependensi folder lokal lama.',
@@ -3147,7 +3172,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.21</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.22</span>
                 </div>
               )}
             </div>
@@ -4380,7 +4405,7 @@ export default function App() {
                 <p className={`text-xs leading-snug ${
                   effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
                 }`}>
-                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan dengan namespace masing-masing server via <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>mcp_server.js</code>.
+                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan dengan namespace masing-masing server via <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>run_mcp.js</code>.
                 </p>
               </div>
 
@@ -4392,7 +4417,7 @@ export default function App() {
                         "hermes-hub-gateway": {
                           command: "C:/Users/user/AppData/Local/hermes/node/node.exe",
                           args: [
-                            "C:/Users/user/.hermes-hub/scripts/mcp_server.js"
+                            "C:/Users/user/.hermes-hub/scripts/run_mcp.js"
                           ]
                         }
                       }
