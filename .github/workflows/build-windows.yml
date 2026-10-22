@@ -56,6 +56,6 @@ jobs:
         with:
           tagName: v0.8.23
           releaseName: "Hermes Hub Gateway v0.8.23"
-          releaseBody: "Release v0.8.23: Pure Zero-Footprint Workspace Scaffold and Modern MCP Readiness Audit Engine."
+          releaseBody: "Release v0.8.23: Complete 6-Tool Hermes Bidirectional Cognitive Suite, Zero-Footprint Workspace Scaffold, and Modern MCP Readiness Audit."
           releaseDraft: false
           prerelease: false
