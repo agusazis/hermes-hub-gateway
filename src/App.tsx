@@ -513,11 +513,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.3',
+      name: 'Hermes Hub Gateway v0.8.3 (Dual-Brain Watcher & Realtime Evolution Feed)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Dukungan pemindaian konkuren untuk path brain Antigravity (.gemini/antigravity & .gemini/antigravity-ide), intersepsi langsung mutasi memori Mnemosyne ke Telegram, dan panel feed Evolution Logs per workspace.',
+      features: [
+        'Dual-Brain Real-Time Watcher: Memantau .gemini/antigravity/brain dan .gemini/antigravity-ide/brain secara bersamaan.',
+        'Instant MCP Memory Interceptor: Mutasi memori langsung via mnemosyne_* seketika dipancarkan ke Telegram dan Evolution Logs.',
+        'Workspace Filter & Author Tracking: Menu Evolution Logs menampilkan kartu replika Telegram yang terisolasi per-workspace dengan nama pembuat (Author).'
+      ],
+      fixes: [
+        'Memperbaiki watcher yang tidak menangkap transkrip pada direktori .gemini/antigravity-ide/brain.',
+        'Menjamin batas panjang tool name MCP <= 64 karakter agar lolos validasi regex IDE.'
+      ],
+      architecture: [
+        'Dual path monitoring thread di watcher.rs',
+        'Direct HTTP event bridge ke Hermes Review Receiver (Port 9125)'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.3/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.3/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.1',
       name: 'Hermes Hub Gateway v0.8.1 (Unified MCP Aggregator & Database Multiplexer)',
       date: '22 Oktober 2026',
       type: 'MAJOR',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Implementasi Arsitektur Satu Pintu (OmniRoute style): HHG bertindak sebagai Single MCP Multiplexer yang mengagregasikan seluruh SOP/Skills dan live sub-server MCP (termasuk Tabularis MariaDB SIMRS) tanpa konfigurasi ganda di IDE.',
       features: [
         'Single-Door MCP Multiplexing: IDE Antigravity cukup mendaftarkan hermes-hub-gateway untuk mengakses skills sekaligus tools database.',
