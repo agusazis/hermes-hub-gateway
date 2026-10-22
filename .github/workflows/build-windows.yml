@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.8
-          releaseName: "Hermes Hub Gateway v0.8.8"
-          releaseBody: "Release v0.8.8: Fixed Tauri command macro attribute for open_in_browser, removed Clear Logs button (Immutable Audit Trail), and enforced 24-hour time format."
+          tagName: v0.8.9
+          releaseName: "Hermes Hub Gateway v0.8.9"
+          releaseBody: "Release v0.8.9: Restored tray_by_id dynamic tooltip for Windows System Tray, bump UI header to v0.8.9, and enforced 24h format."
           releaseDraft: false
           prerelease: false
