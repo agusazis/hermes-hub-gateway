@@ -602,11 +602,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.16',
+      name: 'Hermes Hub Gateway v0.8.16 (Continuous Self-Improvement & MCP-First Soul)',
+      date: '22 Oktober 2026',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Continuous Self-Improvement & Protocol Turn-1: Integrasi kaidah self-improving memory ke dalam template AGENTS.md. Penegasan blind-spot mitigasi untuk tools lokal via bridge script, dan transformasi total dari orientasi folder ke MCP HHG.',
+      features: [
+        'Continuous Self-Improvement Mandate: Setiap prompt kompleks mewajibkan verifikasi memory usang dan pengecekan skill aktif terlebih dahulu.',
+        'Stale Memory Invalidation: Agent secara aktif merekam insight arsitektural dan edge-case baru ke Mnemosyne via mnemosyne_remember.',
+        'Blind Spot Local Tool Mitigation: Mitigasi khusus bagi agent yang buta tools lokal agar memanggil host bridge script saat butuh operasi OS/VM.',
+        'Total MCP-First Orientation: Menghilangkan dependensi hirarki folder .agents/ menjadi layanan dinamis MCP HHG.'
+      ],
+      fixes: [
+        'Menyempurnakan template AGENTS.md dengan protokol Turn-1 wajib periksa memory dan skills.'
+      ],
+      architecture: [
+        'Continuous Self-Improvement Protocol via Mnemosyne',
+        'Blind Spot Mitigation for Host OS Tools'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.16/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.16/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.15',
       name: 'Hermes Hub Gateway v0.8.15 (Multiplatform-Ready Dynamic Context Engine)',
       date: '22 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Multiplatform & Zero-Footprint Context Engine: Implementasi backend Rust mcp_bridge untuk hermes_get_rule, hermes_list_rules, dan hermes_consult_specialist dengan path resolusi dinamis cross-platform.',
       features: [
         'Multiplatform Dynamic Pathing: Menghilangkan seluruh hardcoded Windows path (C:\\Users\\...) menjadi path dinamis berbasis home_dir OS.',
@@ -2998,7 +3023,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.15</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.16</span>
                 </div>
               )}
             </div>
