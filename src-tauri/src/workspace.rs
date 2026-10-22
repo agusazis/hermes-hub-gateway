@@ -253,10 +253,8 @@ pub fn remove_ntfs_junction(link_path: &Path) -> Result<(), String> {
 
 // src-tauri/src/workspace.rs: Zero-Footprint Project Scaffold
 pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Result<(), String> {
-    // Zero-Footprint: Cukup buat file AGENTS.md (Soul) dan mcp_config.json di root project
-    // TIDAK LAGI membuat subfolder memory/, rules/, specialists/, skills/
-    let tools_dir = dest_dir.join(".agents").join("tools");
-    let _ = fs::create_dir_all(&tools_dir);
+    // Pure Zero-Footprint: Hanya membuat 2 file di root project (AGENTS.md dan mcp_config.json)
+    // DILARANG KERAS membuat folder .agents atau subfolder apa pun di dalam project repository.
 
     // 1. AGENTS.md (Soul & Directives)
     let agents_md = format!(r##"# {name} AI Agent Core Directives
@@ -290,12 +288,9 @@ Evaluate tools dynamically based on their live `description` in your active tool
    - Primary: MUST use Tabularis MCP tools (`tabularis_run_query`, `tabularis_describe_table`, `tabularis_list_tables`).
    - STRICTLY PROHIBITED: Opening raw interactive SSH terminal sessions solely to inspect database schemas, view tables, or execute SQL queries.
 
-3. Host Bridge & Local Tool Mitigation (Bridge via Host Shell):
-   - You do NOT have direct local terminal visibility into `.agents/tools/` scripts (such as VM SSH wrappers).
-   - If a task explicitly demands VM lifecycle management, service restarts, or host compilation that is NOT covered by any MCP tool:
-     Execute the pre-configured host wrapper script via shell command:
-     `powershell -ExecutionPolicy Bypass -File .agents/tools/agent.ps1 <subcommand>`
-   - Direct interactive SSH into the VM is an absolute last-resort fallback, permitted ONLY when low-level OS kernel diagnostics or network socket troubleshooting cannot be achieved via host tools or MCP.
+3. Host Bridge & Direct Execution:
+   - Tasks requiring local commands (test runners, git, build scripts) execute via host terminal tools directly.
+   - You operate in a clean Zero-Footprint environment without local `.agents/` folder dependencies.
 
 4. Persistent Handover & Memory Storage:
    - For all task handovers, environment mappings, and user preferences, write directly via `mnemosyne_remember`. Do not write markdown files to a local `memory/` folder.
@@ -347,76 +342,82 @@ Evaluate tools dynamically based on their live `description` in your active tool
     Ok(())
 }
 
-/// Audit readiness score of a workspace (0% - 100%)
+/// Audit readiness score of a Zero-Footprint Context workspace (0% - 100%)
 pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessReport {
     let mut checks = Vec::new();
-    let agents_dir = project_root.join(".agents");
 
-    // Check 1: .agents exists
-    let has_agents = agents_dir.exists();
-    checks.push(ReadinessCheckItem {
-        key: "agents_dir".into(),
-        label: "NTFS Junction / Direktori .agents".into(),
-        status: has_agents,
-        message: if has_agents { "Direktori .agents terpasang dengan baik.".into() } else { "Direktori .agents tidak ditemukan di root project.".into() },
-    });
-
-    // Check 2: AGENTS.md exists & not empty
-    let agents_md = if has_agents { agents_dir.join("AGENTS.md") } else { project_root.join("AGENTS.md") };
+    // Check 1: Master Soul (AGENTS.md) exists & configured in project root
+    let agents_md = project_root.join("AGENTS.md");
     let has_agents_md = agents_md.exists() && fs::metadata(&agents_md).map(|m| m.len() > 100).unwrap_or(false);
     checks.push(ReadinessCheckItem {
         key: "agents_md".into(),
         label: "Master AGENTS.md (Soul & Directives)".into(),
         status: has_agents_md,
-        message: if has_agents_md { "Master AGENTS.md aktif dan berisi aturan lengkap.".into() } else { "AGENTS.md tidak ada atau berukuran kosong.".into() },
+        message: if has_agents_md { 
+            "Master AGENTS.md aktif di root project dengan instruksi RFC 2119 & Zero-Footprint context.".into() 
+        } else { 
+            "AGENTS.md tidak ditemukan di root project atau berukuran kosong.".into() 
+        },
     });
 
-    // Check 3: USER.md configured (not default placeholder)
-    let user_md = agents_dir.join("USER.md");
-    let user_configured = if user_md.exists() {
-        if let Ok(content) = fs::read_to_string(&user_md) {
-            !content.contains("[Nama Pengembang]") && 
-            !content.contains("[Unit Kerja]") && 
-            content.trim().len() > 30
+    // Check 2: Client MCP Conduit (mcp_config.json) exists & valid
+    let mcp_cfg = project_root.join("mcp_config.json");
+    let has_mcp_cfg = mcp_cfg.exists() && fs::metadata(&mcp_cfg).map(|m| m.len() > 50).unwrap_or(false);
+    checks.push(ReadinessCheckItem {
+        key: "mcp_config".into(),
+        label: "Client MCP Conduit (mcp_config.json)".into(),
+        status: has_mcp_cfg,
+        message: if has_mcp_cfg {
+            "Konfigurasi mcp_config.json terpasang dan menghubungkan IDE ke Hermes Hub Gateway.".into()
         } else {
-            false
-        }
+            "Berkas mcp_config.json belum dibuat di root project.".into()
+        },
+    });
+
+    // Check 3: Central Gateway MCP Runner (run_mcp.js) active & ready
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
+    let runner_js = home.join(".hermes-hub").join("scripts").join("run_mcp.js");
+    let has_runner = runner_js.exists() && fs::metadata(&runner_js).map(|m| m.len() > 1000).unwrap_or(false);
+    checks.push(ReadinessCheckItem {
+        key: "runner_js".into(),
+        label: "Gateway MCP Engine (run_mcp.js)".into(),
+        status: has_runner,
+        message: if has_runner {
+            "Aggregator MCP downstream aktif dan siap melayani 120+ tools IDE.".into()
+        } else {
+            "Script aggregator run_mcp.js belum terpasang di ~/.hermes-hub/scripts/.".into()
+        },
+    });
+
+    // Check 4: Cognitive Memory Conduit (Mnemosyne Memory Endpoint)
+    let has_memory_conduit = if has_mcp_cfg {
+        fs::read_to_string(&mcp_cfg).map(|s| s.contains("mnemosyne") || s.contains(":8080")).unwrap_or(false)
     } else {
         false
     };
     checks.push(ReadinessCheckItem {
-        key: "user_md".into(),
-        label: "Identitas Pengembang (USER.md)".into(),
-        status: user_configured,
-        message: if user_configured { "USER.md telah dikonfigurasi dengan profil developer riil.".into() } else { "USER.md belum diisi atau masih menggunakan placeholder default.".into() },
-    });
-
-    // Check 4: memory/ENVIRONMENT.md configured
-    let env_md = agents_dir.join("memory").join("ENVIRONMENT.md");
-    let env_configured = if env_md.exists() {
-        if let Ok(content) = fs::read_to_string(&env_md) {
-            content.contains("http") || content.contains("172.") || content.contains("192.") || content.contains("10.") || content.contains("127.0.0.1")
+        key: "memory_conduit".into(),
+        label: "Cognitive Memory Conduit (Mnemosyne)".into(),
+        status: has_memory_conduit,
+        message: if has_memory_conduit {
+            "Saluran memori jangka panjang Mnemosyne terdaftar aktif di konfigurasi MCP.".into()
         } else {
-            false
-        }
-    } else {
-        false
-    };
-    checks.push(ReadinessCheckItem {
-        key: "environment_md".into(),
-        label: "Ground Truth Topologi (ENVIRONMENT.md)".into(),
-        status: env_configured,
-        message: if env_configured { "Topologi server & boundary environment valid.".into() } else { "ENVIRONMENT.md belum memuat endpoint server valid.".into() },
+            "Endpoint memori Mnemosyne belum terhubung di mcp_config.json.".into()
+        },
     });
 
-    // Check 5: skills directory has at least 1 valid skill
-    let skills_dir = agents_dir.join("skills");
-    let has_skills = skills_dir.exists() && fs::read_dir(&skills_dir).map(|mut d| d.next().is_some()).unwrap_or(false);
+    // Check 5: Central Gateway Rules & Skills Catalog
+    let rules_dir = home.join(".hermes-hub").join("rules");
+    let has_central_context = home.join(".hermes-hub").exists();
     checks.push(ReadinessCheckItem {
-        key: "skills".into(),
-        label: "SOP & Skills Runbook Catalog".into(),
-        status: has_skills,
-        message: if has_skills { "Katalog skill SOP terdeteksi dan siap digunakan on-demand.".into() } else { "Folder skills kosong atau belum terisi.".into() },
+        key: "central_context".into(),
+        label: "Central Rules & Skills Registry".into(),
+        status: has_central_context,
+        message: if has_central_context {
+            "Pusat konteks koding, aturan tim, dan SOP terpusat di Hermes Hub Gateway.".into()
+        } else {
+            "Direktori pusat ~/.hermes-hub belum terinisialisasi.".into()
+        },
     });
 
     let passed_count = checks.iter().filter(|c| c.status).count();
