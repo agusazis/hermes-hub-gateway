@@ -254,7 +254,7 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                         "properties": {
                             "name": {
                                 "type": "string",
-                                "description": "Nama skill (contoh: 'core-blueprint', 'git-workflow')"
+                                "description": "Nama skill (contoh: 'simgos2-db-audit', 'git-workflow')"
                             }
                         },
                         "required": ["name"]
@@ -266,6 +266,46 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                     "inputSchema": {
                         "type": "object",
                         "properties": {}
+                    }
+                },
+                {
+                    "name": "hermes_get_rule",
+                    "description": "Ambil isi aturan arsitektur koding spesifik (ExtJS, PHP 8.2, Query Policy) dari HHG.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "category": {
+                                "type": "string",
+                                "description": "Kategori aturan (contoh: 'extjs', 'php82', 'database', 'security')"
+                            }
+                        },
+                        "required": ["category"]
+                    }
+                },
+                {
+                    "name": "hermes_list_rules",
+                    "description": "Daftar seluruh aturan koding arsitektural yang aktif di HHG.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "hermes_consult_specialist",
+                    "description": "Konsultasi dengan persona spesialis virtual (DBA, Frontend Lead, Security Architect) untuk review teknis.",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "role": {
+                                "type": "string",
+                                "description": "Peran spesialis (contoh: 'dba', 'frontend_lead', 'security_architect')"
+                            },
+                            "context": {
+                                "type": "string",
+                                "description": "Konteks teknis atau kode yang ingin direview"
+                            }
+                        },
+                        "required": ["role"]
                     }
                 },
                 {
@@ -332,7 +372,7 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                 }
                 "hermes_list_skills" => {
                     let mut list = Vec::new();
-                    if let Ok(entries) = fs::read_dir(skills_dir) {
+                    if let Ok(entries) = fs::read_dir(&skills_dir) {
                         for e in entries.flatten() {
                             if e.path().is_dir() {
                                 if let Some(n) = e.file_name().to_str() {
@@ -349,6 +389,77 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                             "content": [{
                                 "type": "text",
                                 "text": serde_json::to_string_pretty(&list).unwrap_or_default()
+                            }]
+                        })),
+                        error: None,
+                    }
+                }
+                "hermes_get_rule" => {
+                    let category = arguments.get("category").and_then(|s| s.as_str()).unwrap_or("");
+                    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+                    let rules_dir = home.join(".hermes-hub").join("rules");
+                    let rule_file = rules_dir.join(format!("{}.md", category));
+
+                    let content = if rule_file.exists() {
+                        fs::read_to_string(&rule_file).unwrap_or_else(|_| format!("Gagal membaca aturan {}", category))
+                    } else {
+                        format!("Aturan '{}' belum didefinisikan di HHG rules repository.", category)
+                    };
+
+                    JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: Some(serde_json::json!({
+                            "content": [{
+                                "type": "text",
+                                "text": content
+                            }]
+                        })),
+                        error: None,
+                    }
+                }
+                "hermes_list_rules" => {
+                    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+                    let rules_dir = home.join(".hermes-hub").join("rules");
+                    let mut list = Vec::new();
+                    if let Ok(entries) = fs::read_dir(rules_dir) {
+                        for e in entries.flatten() {
+                            if let Some(n) = e.file_name().to_str() {
+                                if n.ends_with(".md") {
+                                    list.push(n.trim_end_matches(".md").to_string());
+                                }
+                            }
+                        }
+                    }
+
+                    JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: Some(serde_json::json!({
+                            "content": [{
+                                "type": "text",
+                                "text": serde_json::to_string_pretty(&list).unwrap_or_default()
+                            }]
+                        })),
+                        error: None,
+                    }
+                }
+                "hermes_consult_specialist" => {
+                    let role = arguments.get("role").and_then(|s| s.as_str()).unwrap_or("");
+                    let context_text = arguments.get("context").and_then(|s| s.as_str()).unwrap_or("");
+                    let advice = format!(
+                        "[HERMES SPECIALIST ADVISORY: {}]\nBerdasarkan standar arsitektur RSUD dr. H. Jusuf SK untuk konteks: '{}'\nPastikan pemenuhan Clean Architecture, zero credential leak, dan validasi fisik query via Tabularis.",
+                        role.to_uppercase(),
+                        context_text
+                    );
+
+                    JsonRpcResponse {
+                        jsonrpc: "2.0".to_string(),
+                        id: request.id,
+                        result: Some(serde_json::json!({
+                            "content": [{
+                                "type": "text",
+                                "text": advice
                             }]
                         })),
                         error: None,
