@@ -100,19 +100,6 @@ export default function App() {
         hashHex === '7f3b5dc985220c81dbbeae664db87e74880bb6b7e5e347ba504d603e8ff6026a';
 
       if (isOfficialKey) {
-        let fetchedBotToken = config.telegram_target?.bot_token || '';
-        let fetchedChatId = '-5594254057';
-
-        // Auto-fetch kredensial bot resmi organisasi langsung dari Hermes Server Evaluator
-        try {
-          const res = await fetch('http://172.168.1.202:9125/api/v1/provision/telegram-target');
-          if (res.ok) {
-            const data = await res.json();
-            if (data.bot_token) fetchedBotToken = data.bot_token;
-            if (data.chat_id) fetchedChatId = data.chat_id;
-          }
-        } catch (_) {}
-
         // Daftar MCP Server Resmi Organisasi (diaktifkan otomatis via One-Key)
         const officialMcpServers: McpServerEntry[] = [
           {
@@ -178,13 +165,7 @@ export default function App() {
           active_profile: config.active_profile || 'agus',
           default_hermes_evaluator_url: 'http://172.168.1.202:9125',
           default_mnemosyne_url: 'http://172.168.1.202:8080',
-          mcp_servers: config.mcp_servers && config.mcp_servers.length > 0 ? config.mcp_servers : officialMcpServers,
-          telegram_target: {
-            bot_token: fetchedBotToken,
-            chat_id: fetchedChatId,
-            topic_id: config.telegram_target?.topic_id || '',
-            enabled: true
-          }
+          mcp_servers: config.mcp_servers && config.mcp_servers.length > 0 ? config.mcp_servers : officialMcpServers
         };
 
         setConfig(provisionedConfig);
@@ -608,14 +589,16 @@ export default function App() {
       date: '22 Oktober 2026',
       type: 'PATCH',
       status: 'LATEST',
-      highlights: 'Menghilangkan konfigurasi form bot Telegram dari UI Settings demi kepatuhan arsitektur backend broadcast murni dan antarmuka yang bersih.',
+      highlights: 'Menghilangkan konfigurasi form bot Telegram dari UI Settings serta membersihkan bot token & chat id dari fitur One-Key Provisioning demi keamanan kredensial.',
       features: [
         'Streamlined Settings UI: Antarmuka Settings kini murni berfokus pada Gateway Server URL, Mnemosyne endpoint, dan MCP Server registry.',
+        'Secure One-Key Provisioning: One-Key murni mengisi konfigurasi endpoint server dan MCP tanpa mengekspos token bot Telegram.',
         'Telegram Decoupling: Notifikasi broadcast diserahkan sepenuhnya ke Hermes Evaluator backend service secara mandiri.',
         'Plugin Architecture for External Devs: Panduan setup bot mandiri tersedia eksklusif di plugins/telegram-notifier/README.md.'
       ],
       fixes: [
-        'Menghilangkan kerancuan input bot token Telegram lokal yang sebelumnya tidak sinkron dengan backend.'
+        'Menghilangkan kerancuan input bot token Telegram lokal yang sebelumnya tidak sinkron dengan backend.',
+        'Memastikan kredensial bot Telegram tidak lagi tersimpan di config klien HHG.'
       ],
       architecture: [
         'Pure Backend Broadcast Dispatcher',
@@ -2772,81 +2755,7 @@ export default function App() {
     e.target.value = '';
   };
 
-  const handleTestTelegram = async () => {
-    const botToken = config.telegram_target?.bot_token?.trim();
-    const chatId = config.telegram_target?.chat_id?.trim();
-    const topicId = config.telegram_target?.topic_id?.trim();
-
-    if (!botToken || !chatId) {
-      setTelegramTestResult({ success: false, message: 'Bot Token dan Target Chat ID wajib diisi terlebih dahulu.' });
-      setTimeout(() => setTelegramTestResult(null), 5000);
-      return;
-    }
-
-    if (botToken.includes('***')) {
-      setTelegramTestResult({ 
-        success: false, 
-        message: 'Bot Token masih berstatus placeholder/masking (***). Masukkan token Bot Telegram asli Anda (contoh dari @BotFather) sebelum melakukan pengujian.' 
-      });
-      setTimeout(() => setTelegramTestResult(null), 7000);
-      return;
-    }
-
-    setTestingTelegram(true);
-    setTelegramTestResult(null);
-
-    try {
-      // 1. Coba panggil native command Tauri di desktop Windows
-      const res: any = await invoke('test_telegram_broadcast', {
-        botToken: botToken,
-        chatId: chatId,
-        topicId: topicId || null
-      });
-
-      setTestingTelegram(false);
-      setTelegramTestResult({
-        success: true,
-        message: res?.message || `✓ Berhasil! Pesan uji resmi telah terkirim langsung ke Chat ID ${chatId} via Telegram Bot API!`
-      });
-    } catch (nativeErr: any) {
-      // 2. Fallback via browser fetch jika dipratinjau di web
-      try {
-        const payload: any = {
-          chat_id: chatId,
-          text: '🚀 [Hermes Hub Gateway] Uji koneksi notifikasi broadcast bot Telegram berhasil terhubung! Status: READY.',
-          parse_mode: 'HTML'
-        };
-        if (topicId) payload.message_thread_id = parseInt(topicId, 10);
-
-        const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await resp.json();
-
-        setTestingTelegram(false);
-        if (json.ok) {
-          setTelegramTestResult({
-            success: true,
-            message: `✓ Sukses Nyata! Pesan uji telah mendarat di Telegram Chat ID ${chatId}!`
-          });
-        } else {
-          setTelegramTestResult({
-            success: false,
-            message: `Telegram API Menolak (Error ${json.error_code}): ${json.description}`
-          });
-        }
-      } catch (fetchErr: any) {
-        setTestingTelegram(false);
-        setTelegramTestResult({
-          success: false,
-          message: `Gagal mengirim ke Telegram: ${nativeErr?.toString() || fetchErr?.message || 'Periksa koneksi internet dan keaslian Bot Token Anda.'}`
-        });
-      }
-    }
-    setTimeout(() => setTelegramTestResult(null), 6000);
-  };
+  // handleTestTelegram removed: Telegram broadcast is handled purely by the backend evaluator.
 
   const handleTestGatewayServer = async () => {
     if (!config.default_hermes_evaluator_url || !config.default_mnemosyne_url) {
