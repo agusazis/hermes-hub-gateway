@@ -425,18 +425,18 @@ export default function App() {
   const [testingAllMcp, setTestingAllMcp] = useState<boolean>(false);
   const DEFAULT_MCP_CATALOG: Record<string, { name: string; desc: string; enabled: boolean }[]> = {
     'database-simrs-readonly': [
-      { name: 'execute_sql', desc: 'Menjalankan query SQL SELECT read-only pada database SIMRS', enabled: true },
-      { name: 'get_table_schema', desc: 'Melihat definisi kolom, tipe data, dan index tabel SIMRS', enabled: true },
-      { name: 'list_tables', desc: 'Mendapatkan daftar seluruh tabel pada schema database SIMRS', enabled: true },
-      { name: 'explain_query', desc: 'Menganalisis execution plan query MySQL/MariaDB', enabled: true },
-      { name: 'get_slow_query_summary', desc: 'Melihat ringkasan metrics performa query lambat', enabled: true },
+      { name: 'execute_sql', desc: 'Eksekusi query SELECT read-only ke Database MariaDB SIMRS / Vagrant SIMGOS2', enabled: true },
+      { name: 'get_table_schema', desc: 'Melihat definisi struktur kolom, tipe data, dan index tabel database SIMRS', enabled: true },
+      { name: 'list_tables', desc: 'Mendapatkan daftar seluruh tabel pada schema database SIMRS SIMGOS2', enabled: true },
+      { name: 'explain_query', desc: 'Menganalisis execution plan query MySQL/MariaDB SIMRS', enabled: true },
+      { name: 'get_slow_query_summary', desc: 'Melihat ringkasan metrics performa query lambat database SIMRS', enabled: true },
     ],
     'tabularis': [
-      { name: 'run_query', desc: 'Eksekusi query SELECT langsung ke MariaDB/MySQL SIMRS', enabled: true },
-      { name: 'describe_table', desc: 'Melihat struktur field, tipe data, dan index tabel', enabled: true },
-      { name: 'list_tables', desc: 'Menampilkan seluruh daftar tabel aktif pada schema', enabled: true },
-      { name: 'list_databases', desc: 'Daftar database pada host database SIMRS', enabled: true },
-      { name: 'list_connections', desc: 'Status koneksi aktif dan pool worker database', enabled: true },
+      { name: 'run_query', desc: 'Eksekusi query SQL SELECT/SHOW/DESCRIBE langsung ke Database MariaDB SIMRS / SIMGOS2 (Vagrant/Production) via Tabularis Gateway', enabled: true },
+      { name: 'describe_table', desc: 'Inspeksi fisik struktur field, nama kolom asli, tipe data, dan index tabel database SIMRS SIMGOS2', enabled: true },
+      { name: 'list_tables', desc: 'Menampilkan seluruh daftar tabel aktif pada database SIMRS SIMGOS2', enabled: true },
+      { name: 'list_databases', desc: 'Daftar database pada host server MariaDB SIMRS', enabled: true },
+      { name: 'list_connections', desc: 'Status koneksi aktif dan pool worker database SIMRS', enabled: true },
     ],
     'grafana-observability': [
       { name: 'query_loki_logs', desc: 'Menarik log stream dari Loki (Nginx, Apache, MySQL slow log)', enabled: true },
@@ -595,11 +595,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.13',
+      name: 'Hermes Hub Gateway v0.8.13 (Dynamic Self-Discovery MCP & High-DPI Tray)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Self-Discovery MCP Architecture: Penegasan deskripsi semantik tools MCP dan protokol dynamic discovery di AGENTS.md, ditambah sinkronisasi tray icon High-DPI 64px.',
+      features: [
+        'Dynamic MCP Self-Discovery: Deskripsi tool database di HHG diperkaya dengan konteks schema MariaDB SIMRS SIMGOS2 agar agent otonom memilih tool yang tepat tanpa hardcoded rule.',
+        'Always-Synced Tray Icon: Perbaikan event loop polling agar icon tray selalu merender ulang status badge unread pada setiap siklus fetch.',
+        'High-DPI 64px Crisp Typography: Teks angka counter badge tajam dan mudah dibaca di Windows Taskbar.'
+      ],
+      fixes: [
+        'Sinkronisasi kondisi unread pada fetch interval polling agar selalu memicu update_tray_status.'
+      ],
+      architecture: [
+        'Dynamic Semantic MCP Descriptions',
+        'Universal Self-Discovery Protocol in AGENTS.md'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.13/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.13/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.12',
       name: 'Hermes Hub Gateway v0.8.12 (High-DPI 64px Tray Badge Icon)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'High-DPI Crisp Tray Badge: Resolusi canvas icon dinaikkan dari 32px ke 64px High-DPI dengan font tebal 20px dan badge merah ber-radius besar agar angka counter terbaca sangat jelas di Taskbar Windows.',
       features: [
         'Crisp High-DPI Render: Ukuran raster icon dinaikkan menjadi 64x64 pixel untuk layar Retina/High-DPI Windows.',
@@ -1979,33 +2003,29 @@ export default function App() {
         .then((data) => {
           if (Array.isArray(data)) {
             setEvolutionFeed(data);
+            let targetDiff = 0;
+            let summaryText = 'Semua log sudah dibaca';
+
             if (activeTab === 'logs') {
               setLastReadFeedCount(data.length);
               setUnreadEvolutionCount(0);
-              generateTrayBadgeIcon(0).then((iconRes) => {
-                invoke('update_tray_status', {
-                  tooltip: 'Semua log sudah dibaca',
-                  unreadCount: 0,
-                  iconRgba: iconRes?.rgba,
-                  iconWidth: iconRes?.width,
-                  iconHeight: iconRes?.height,
-                }).catch(() => {});
-              });
-            } else if (data.length > lastReadFeedCount) {
-              const diff = data.length - lastReadFeedCount;
-              setUnreadEvolutionCount(diff);
+              targetDiff = 0;
+            } else {
+              targetDiff = Math.max(0, data.length - lastReadFeedCount);
+              setUnreadEvolutionCount(targetDiff);
               const latest = data[0];
-              const summary = latest ? `[${latest.type.toUpperCase()}] ${latest.title}` : 'Update baru masuk';
-              generateTrayBadgeIcon(diff).then((iconRes) => {
-                invoke('update_tray_status', {
-                  tooltip: summary,
-                  unreadCount: diff,
-                  iconRgba: iconRes?.rgba,
-                  iconWidth: iconRes?.width,
-                  iconHeight: iconRes?.height,
-                }).catch(() => {});
-              });
+              summaryText = targetDiff > 0 && latest ? `[${latest.type.toUpperCase()}] ${latest.title}` : 'Semua log sudah dibaca';
             }
+
+            generateTrayBadgeIcon(targetDiff).then((iconRes) => {
+              invoke('update_tray_status', {
+                tooltip: summaryText,
+                unreadCount: targetDiff,
+                iconRgba: iconRes?.rgba,
+                iconWidth: iconRes?.width,
+                iconHeight: iconRes?.height,
+              }).catch(() => {});
+            });
           }
         })
         .catch(() => {});
@@ -2921,7 +2941,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.12</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.13</span>
                 </div>
               )}
             </div>
