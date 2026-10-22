@@ -325,6 +325,19 @@ export default function App() {
   const [selectedMcpName, setSelectedMcpName] = useState<string>('');
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
+  const [logFilterWorkspace, setLogFilterWorkspace] = useState<string>('all');
+  const [evolutionFeed, setEvolutionFeed] = useState<Array<{
+    id: string;
+    timestamp: string;
+    workspace_id: string;
+    author: string;
+    type: 'memory' | 'skill';
+    action_label: string;
+    target: string;
+    title: string;
+    content: string;
+    details?: string;
+  }>>([]);
   const [wsSearchQuery, setWsSearchQuery] = useState<string>('');
   const [testingMcpIndex, setTestingMcpIndex] = useState<number | null>(null);
   const [testingAllMcp, setTestingAllMcp] = useState<boolean>(false);
@@ -1684,8 +1697,23 @@ export default function App() {
       })
       .catch((err) => console.error('Failed to load system config:', err));
 
+    const fetchEvolutionFeed = () => {
+      fetch(`${config.default_hermes_evaluator_url || 'http://172.168.1.202:9125'}/api/v1/evolution-events`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setEvolutionFeed(data);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchEvolutionFeed();
+    const feedInterval = setInterval(fetchEvolutionFeed, 5000);
+
     const unlistenWatcher = listen<any>('watcher-event', (event) => {
       const p = event.payload;
+      fetchEvolutionFeed();
       setLogs((prev) => [
         { time: new Date().toLocaleTimeString(), event: `[WATCHER] Transkrip ${p.conversation_id} terdeteksi -> kirim review ke ${config.default_hermes_evaluator_url}` },
         ...prev.slice(0, 50)
@@ -1694,6 +1722,7 @@ export default function App() {
 
     const unlistenLesson = listen<any>('lesson-learned', (event) => {
       const p = event.payload;
+      fetchEvolutionFeed();
       setLogs((prev) => [
         { time: new Date().toLocaleTimeString(), event: `🎉 [NEW RULE LEARNED] ${p.skill_name}: Aturan baru berhasil di-push ke GitLab!` },
         ...prev.slice(0, 50)
@@ -1705,6 +1734,7 @@ export default function App() {
     });
 
     return () => {
+      clearInterval(feedInterval);
       unlistenWatcher.then((f) => f());
       unlistenLesson.then((f) => f());
       unlistenTraySync.then((f) => f());
@@ -4700,18 +4730,34 @@ export default function App() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className={`text-xs font-semibold flex items-center gap-1.5 ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>
-                  <Terminal className="w-4 h-4 text-cyan-500" /> Watcher Telemetry & Evolution Logs
+                  <Terminal className="w-4 h-4 text-cyan-500" /> Watcher Telemetry & Evolution Feed
                 </span>
                 <p className="text-[11px] text-slate-400">
-                  Total <b>{logs.length} event telemetri</b> transkrip koding tercatat secara real-time.
+                  Total <b>{evolutionFeed.length} event pembelajaran</b> (Mnemosyne & GitLab Skills) identik dengan notifikasi Telegram.
                 </p>
               </div>
-              <button 
-                onClick={() => setLogs([])}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800" : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs"}`}
-              >
-                Bersihkan Log
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Filter Workspace */}
+                <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-mono px-1">Workspace:</span>
+                  <select
+                    value={logFilterWorkspace}
+                    onChange={(e) => setLogFilterWorkspace(e.target.value)}
+                    className="bg-slate-950 text-cyan-300 text-xs font-mono rounded-lg px-2 py-1 border border-slate-800 focus:outline-none"
+                  >
+                    <option value="all">Semua Workspace</option>
+                    {config.workspaces.map((w) => (
+                      <option key={w.id} value={w.id}>{w.name || w.id}</option>
+                    ))}
+                  </select>
+                </div>
+                <button 
+                  onClick={() => setLogs([])}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800" : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs"}`}
+                >
+                  Bersihkan Log
+                </button>
+              </div>
             </div>
 
             {/* Split-Pane: Panel Kiri (Daftar Event Logs) + Panel Kanan (Detail Payload JSON & Trace) */}
@@ -4735,48 +4781,172 @@ export default function App() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-                  {logs
-                    .filter(l => {
-                      const q = (logFilterQuery || '').toLowerCase();
-                      const evt = (l.event || '').toLowerCase();
-                      const c = (l.conv || '').toLowerCase();
-                      const f = (l.file || '').toLowerCase();
-                      return evt.includes(q) || c.includes(q) || f.includes(q);
-                    })
-                    .map((item, idx) => {
-                      const isSelected = selectedLogIndex === idx;
-                      const isLesson = (item.event || '').includes("Lesson") || (item.event || '').includes("learned");
+                  {evolutionFeed.length > 0 ? (
+                    evolutionFeed
+                      .filter(ev => {
+                        if (logFilterWorkspace !== 'all' && ev.workspace_id !== logFilterWorkspace) return false;
+                        const q = (logFilterQuery || '').toLowerCase();
+                        if (!q) return true;
+                        return (ev.title || '').toLowerCase().includes(q) ||
+                               (ev.content || '').toLowerCase().includes(q) ||
+                               (ev.author || '').toLowerCase().includes(q) ||
+                               (ev.target || '').toLowerCase().includes(q);
+                      })
+                      .map((item, idx) => {
+                        const isSelected = selectedLogIndex === idx;
+                        const isMemory = item.type === 'memory';
+                        return (
+                          <div 
+                            key={item.id || idx}
+                            onClick={() => setSelectedLogIndex(idx)}
+                            className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                              isSelected 
+                                ? (effectiveTheme === 'dark' ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" : "bg-cyan-50/80 border-cyan-400/60 shadow-sm")
+                                : (effectiveTheme === 'dark' ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`font-mono text-xs font-bold truncate flex items-center gap-1.5 ${isMemory ? "text-cyan-400" : "text-emerald-400"}`}>
+                                <span>{isMemory ? "🧠" : "✨"}</span>
+                                <span>{item.action_label}</span>
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-500">
+                                {new Date(item.timestamp).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-200 font-medium truncate mb-1">
+                              {item.title}
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                              <span>Ws: <b className="text-cyan-300">{item.workspace_id}</b></span>
+                              <span>Author: <b className="text-amber-300">{item.author}</b></span>
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    logs
+                      .filter(l => {
+                        const q = (logFilterQuery || '').toLowerCase();
+                        const evt = (l.event || '').toLowerCase();
+                        const c = (l.conv || '').toLowerCase();
+                        const f = (l.file || '').toLowerCase();
+                        return evt.includes(q) || c.includes(q) || f.includes(q);
+                      })
+                      .map((item, idx) => {
+                        const isSelected = selectedLogIndex === idx;
+                        const isLesson = (item.event || '').includes("Lesson") || (item.event || '').includes("learned");
 
-                      return (
-                        <div 
-                          key={idx}
-                          onClick={() => setSelectedLogIndex(idx)}
-                          className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                            isSelected 
-                              ? (effectiveTheme === 'dark' ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" : "bg-cyan-50/80 border-cyan-400/60 shadow-sm")
-                              : (effectiveTheme === 'dark' ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className={`font-mono text-xs font-bold truncate ${isLesson ? "text-emerald-400" : isSelected ? "text-cyan-300" : "text-slate-300"}`}>
-                              {item.event || 'System Event'}
-                            </span>
-                            <span className="text-[10px] font-mono text-slate-500">
-                              {item.time}
-                            </span>
+                        return (
+                          <div 
+                            key={idx}
+                            onClick={() => setSelectedLogIndex(idx)}
+                            className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                              isSelected 
+                                ? (effectiveTheme === 'dark' ? "bg-cyan-500/10 border-cyan-500/40 shadow-sm" : "bg-cyan-50/80 border-cyan-400/60 shadow-sm")
+                                : (effectiveTheme === 'dark' ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200" : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900")
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`font-mono text-xs font-bold truncate ${isLesson ? "text-emerald-400" : isSelected ? "text-cyan-300" : "text-slate-300"}`}>
+                                {item.event || 'System Event'}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-500">
+                                {item.time}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono truncate">
+                              Conv: {item.conv}
+                            </div>
                           </div>
-                          <div className="text-[10px] text-slate-400 font-mono truncate">
-                            Conv: {item.conv}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                  )}
                 </div>
               </div>
 
               {/* Panel Kanan (Col 8): Detail Payload & Trace Inspection */}
               <div className={`col-span-8 border rounded-2xl p-5 flex flex-col justify-between transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
                 {(() => {
+                  if (evolutionFeed.length > 0) {
+                    const filtered = evolutionFeed.filter(ev => {
+                      if (logFilterWorkspace !== 'all' && ev.workspace_id !== logFilterWorkspace) return false;
+                      const q = (logFilterQuery || '').toLowerCase();
+                      if (!q) return true;
+                      return (ev.title || '').toLowerCase().includes(q) ||
+                             (ev.content || '').toLowerCase().includes(q) ||
+                             (ev.author || '').toLowerCase().includes(q) ||
+                             (ev.target || '').toLowerCase().includes(q);
+                    });
+                    const currentEv = filtered[selectedLogIndex] || filtered[0];
+                    if (!currentEv) return (
+                      <div className="p-12 text-center text-xs text-slate-500 font-mono">
+                        Tidak ada log pembelajaran untuk filter ini.
+                      </div>
+                    );
+
+                    const isMemory = currentEv.type === 'memory';
+                    return (
+                      <div className="space-y-4 flex-1 flex flex-col">
+                        <div className={`flex items-start justify-between pb-4 border-b ${effectiveTheme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">{isMemory ? "🧠" : "✨"}</span>
+                              <h3 className={`font-bold text-base font-mono ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>
+                                {currentEv.action_label}
+                              </h3>
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-cyan-400 border border-slate-700 text-[10px] font-mono">
+                                {new Date(currentEv.timestamp).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                              <span>Workspace: <b className="text-cyan-300">{currentEv.workspace_id}</b></span>
+                              <span>Author: <b className="text-amber-300">{currentEv.author}</b></span>
+                              <span>Target: <code className="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded">{currentEv.target}</code></span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Telegram Style Preview Card */}
+                        <div className={`p-4 rounded-xl border space-y-2.5 ${effectiveTheme === 'dark' ? 'bg-slate-950/70 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                          <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold flex items-center gap-2">
+                            <span>Telegram Alert Replica Card</span>
+                            <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.2 rounded border border-cyan-500/20">LIVE SYNC</span>
+                          </div>
+                          <div className="p-3.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-xs font-mono space-y-2 leading-relaxed">
+                            <div className="font-bold text-cyan-300">
+                              {isMemory ? "🧠 Self-improvement review: Canonical memory saved to Mnemosyne" : "✨ Self-improvement review: " + currentEv.action_label}
+                            </div>
+                            <div>• <b>Workspace</b>: <code className="text-amber-300">{currentEv.workspace_id}</code></div>
+                            <div>• <b>Author</b>: <b>{currentEv.author}</b></div>
+                            {isMemory ? (
+                              <>
+                                <div>• <b>Slot</b>: <code className="text-emerald-300">{currentEv.target}</code></div>
+                                <div>• <b>Konten</b>: {currentEv.content}</div>
+                              </>
+                            ) : (
+                              <>
+                                <div>• <b>File</b>: <code className="text-emerald-300">{currentEv.target}</code></div>
+                                <div>• <b>Aturan</b>: {currentEv.title}</div>
+                                <div>• <b>Kaidah</b>: {currentEv.content}</div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 flex-1 flex flex-col">
+                          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                            <span>Audit Metadata JSON</span>
+                            <span className="text-[10px] text-slate-500 font-mono">Event ID: {currentEv.id}</span>
+                          </div>
+                          <pre className={`flex-1 p-3.5 rounded-xl font-mono text-[11px] whitespace-pre-wrap leading-relaxed overflow-y-auto border transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-50 border-slate-200 text-slate-800 shadow-inner"}`}>
+{JSON.stringify(currentEv, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   const currentLog = logs[selectedLogIndex] || logs[0];
                   if (!currentLog) return (
                     <div className="p-12 text-center text-xs text-slate-500 font-mono">
