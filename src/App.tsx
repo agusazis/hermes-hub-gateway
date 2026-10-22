@@ -520,11 +520,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.9',
+      name: 'Hermes Hub Gateway v0.8.9 (Tray Dynamic Tooltip & Header Sync)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Sinkronisasi update status tooltip ke Windows System Tray via tray_by_id, sinkronisasi teks header Gateway v0.8.9, dan format waktu 24 jam.',
+      features: [
+        'Tray Dynamic Tooltip: Menampilkan jumlah update unread dan judul evolusi terakhir saat kursor mouse di-hover di atas tray icon.',
+        'Evolution Logs +N Badge: Badge counter visual unread di menu sidebar logs.',
+        '24-Hour Format: Seluruh timestamp kini konsisten berformat 24 jam (HH:mm:ss).'
+      ],
+      fixes: [
+        'Memperbaiki implementasi update_tray_status agar langsung mengubah tooltip tray icon Windows.'
+      ],
+      architecture: [
+        'app.tray_by_id("main-tray").set_tooltip() di Rust',
+        'Standardized formatTime24 helper with hour12: false'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.9/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.9/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.8',
       name: 'Hermes Hub Gateway v0.8.8 (Fixed Tauri Macros & 24-Hour Time Format)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Perbaikan atribut macro #[tauri::command] pada open_in_browser, penghapusan tombol Bersihkan Log demi integritas audit, dan standardisasi format jam 24 jam (HH:mm:ss).',
       features: [
         'Immutable Audit Trail: Menghilangkan tombol Bersihkan Log agar seluruh riwayat koding aman dan permanen.',
@@ -2734,7 +2758,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.2</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.9</span>
                 </div>
               )}
             </div>
