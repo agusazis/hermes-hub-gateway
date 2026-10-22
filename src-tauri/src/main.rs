@@ -235,7 +235,7 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
 
     let ws = config::Workspace {
         id: id.clone(),
-        name,
+        name: name.clone(),
         target_path: target_path.clone(),
         internal_skills_path: internal_skills_path.to_string_lossy().to_string(),
         hermes_evaluator_url: cfg.default_hermes_evaluator_url.clone(),
