@@ -15,6 +15,12 @@ pub struct JsonRpcRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JsonRpcError {
+    pub code: i64,
+    pub message: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JsonRpcResponse {
     pub jsonrpc: String,
     pub id: Option<serde_json::Value>,
@@ -476,10 +482,10 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                             jsonrpc: "2.0".to_string(),
                             id: request.id,
                             result: None,
-                            error: Some(JsonRpcError {
+                            error: Some(serde_json::to_value(JsonRpcError {
                                 code: -32602,
                                 message: "Parameter 'category' dan 'content' wajib diisi.".to_string(),
-                            }),
+                            }).unwrap_or_default()),
                         }
                     } else {
                         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
@@ -509,10 +515,10 @@ pub async fn handle_mcp_call(request: JsonRpcRequest, skills_dir: &PathBuf) -> J
                                 jsonrpc: "2.0".to_string(),
                                 id: request.id,
                                 result: None,
-                                error: Some(JsonRpcError {
+                                error: Some(serde_json::to_value(JsonRpcError {
                                     code: -32603,
                                     message: format!("Gagal menulis file aturan: {}", e),
-                                }),
+                                }).unwrap_or_default()),
                             },
                         }
                     }
