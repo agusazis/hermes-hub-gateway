@@ -3023,70 +3023,6 @@ export default function App() {
         {/* TAB 2: WORKSPACES (UNIFORM SPLIT-PANE HIERARCHY) */}
         {activeTab === "workspaces" && (
           <div className="space-y-4">
-            {/* IDE Connection Setup & Auto-Discovery Helper */}
-            <div className={`p-4 rounded-2xl flex items-center justify-between transition-colors ${
-              effectiveTheme === 'dark' 
-                ? 'bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/30 border border-cyan-500/30 shadow-lg' 
-                : 'bg-cyan-50/70 border border-cyan-200/80 shadow-sm'
-            }`}>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg border ${
-                    effectiveTheme === 'dark' 
-                      ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
-                      : 'bg-white text-cyan-700 border-cyan-200 shadow-xs'
-                  }`}>
-                    <Network className="w-4 h-4" />
-                  </div>
-                  <h4 className={`text-xs font-bold uppercase tracking-wider ${
-                    effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
-                  }`}>
-                    Koneksi IDE (Antigravity / VS Code / Cursor) ke HHG
-                  </h4>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-medium">
-                    UNIFIED BRIDGE READY
-                  </span>
-                </div>
-                <p className={`text-xs leading-snug ${
-                  effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-                }`}>
-                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan via Named Pipe <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>\\.\pipe\hhg-bridge</code>.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    handleCopySnippet(JSON.stringify({
-                      mcpServers: {
-                        "hermes-hub-gateway": {
-                          command: "powershell",
-                          args: [
-                            "-NoProfile",
-                            "-ExecutionPolicy", "Bypass",
-                            "-File", "C:\\\\Users\\\\user\\\\.hermes-hub\\\\scripts\\\\pipe-bridge.ps1"
-                          ]
-                        }
-                      }
-                    }, null, 2), "ide_json");
-                  }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all whitespace-nowrap"
-                >
-                  {copiedSnippet === "ide_json" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-300" />
-                      <span>Copied JSON!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy IDE MCP Config</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -3832,6 +3768,68 @@ export default function App() {
         {/* TAB 3: MCP SERVERS HUB (IDE-STYLE MASTER-DETAIL) */}
         {activeTab === "mcp_hub" && (
           <div className="space-y-4">
+            {/* IDE Connection Setup & Auto-Discovery Helper */}
+            <div className={`p-4 rounded-2xl flex items-center justify-between transition-colors ${
+              effectiveTheme === 'dark' 
+                ? 'bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/30 border border-cyan-500/30 shadow-lg' 
+                : 'bg-cyan-50/70 border border-cyan-200/80 shadow-sm'
+            }`}>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg border ${
+                    effectiveTheme === 'dark' 
+                      ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
+                      : 'bg-white text-cyan-700 border-cyan-200 shadow-xs'
+                  }`}>
+                    <Network className="w-4 h-4" />
+                  </div>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider ${
+                    effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                  }`}>
+                    Koneksi IDE (Antigravity / VS Code / Cursor) ke HHG
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-medium">
+                    UNIFIED BRIDGE READY
+                  </span>
+                </div>
+                <p className={`text-xs leading-snug ${
+                  effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
+                }`}>
+                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan dengan namespace masing-masing server via <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>run_mcp.js</code>.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    handleCopySnippet(JSON.stringify({
+                      mcpServers: {
+                        "hermes-hub-gateway": {
+                          command: "C:/Users/user/AppData/Local/hermes/node/node.exe",
+                          args: [
+                            "C:/Users/user/.hermes-hub/scripts/run_mcp.js"
+                          ]
+                        }
+                      }
+                    }, null, 2), "ide_json");
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all whitespace-nowrap"
+                >
+                  {copiedSnippet === "ide_json" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Copied JSON!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy IDE MCP Config</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
