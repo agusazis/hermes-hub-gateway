@@ -610,6 +610,7 @@ export default function App() {
       status: 'LATEST',
       highlights: 'Zero-Footprint Readiness Audit: Menyelaraskan seluruh logika evaluasi kesiapan workspace (Readiness Audit) ke era MCP tanpa menuntut folder .agents fisik di project.',
       features: [
+        'Complete 6-Tool Hermes Suite: hermes_list_skills, hermes_get_skill, hermes_list_rules, hermes_get_rule, hermes_save_rule, hermes_consult_specialist.',
         'Pure Zero-Footprint Scaffold: Menghapus total pembuatan folder .agents/tools di project koding.',
         'Modern MCP Readiness Audit: Evaluasi berbasis AGENTS.md, mcp_config.json, run_mcp.js, dan Mnemosyne conduit.',
         '100% Ready Detection: Workspace dengan arsitektur MCP modern langsung terverifikasi hijau sempurna.'
