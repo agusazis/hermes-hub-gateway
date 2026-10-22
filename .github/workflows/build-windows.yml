@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.5
-          releaseName: "Hermes Hub Gateway v0.8.5"
-          releaseBody: "Release v0.8.5: Tray Ambient Unread Badges & Dynamic Evolution Tooltip without intrusive OS popups, bundled Companion Daemon pack (server/install.sh)."
+          tagName: v0.8.6
+          releaseName: "Hermes Hub Gateway v0.8.6"
+          releaseBody: "Release v0.8.6: Tray Managed State Dynamic Tooltip, removed accidental Clear Logs button, bundled Companion Daemon pack (server/install.sh)."
           releaseDraft: false
           prerelease: false
