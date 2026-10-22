@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.18
-          releaseName: "Hermes Hub Gateway v0.8.18"
-          releaseBody: "Release v0.8.18: Fix JsonRpcError serialization and PathBuf scoping in mcp_bridge. Bidirectional MCP Knowledge & Rule Authoring Engine."
+          tagName: v0.8.19
+          releaseName: "Hermes Hub Gateway v0.8.19"
+          releaseBody: "Release v0.8.19: Fix PathBuf import in workspace.rs. Stable multiplatform context engine and bidirectional rules MCP authoring."
           releaseDraft: false
           prerelease: false
