@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.15
-          releaseName: "Hermes Hub Gateway v0.8.15"
-          releaseBody: "Release v0.8.15: Multiplatform-Ready Dynamic Context Engine. Dynamic OS path resolution, native rules & specialist MCP handlers in Rust, high-compliance RFC 2119 English-first AGENTS.md template."
+          tagName: v0.8.16
+          releaseName: "Hermes Hub Gateway v0.8.16"
+          releaseBody: "Release v0.8.16: Continuous Self-Improvement & Protocol Turn-1. Total MCP-first orientation, mandatory memory/skill staleness checks, and blind spot mitigation for local host tools."
           releaseDraft: false
           prerelease: false
