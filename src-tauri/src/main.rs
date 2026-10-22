@@ -282,9 +282,15 @@ async fn trigger_manual_sync() -> serde_json::Value {
     // Sinkronkan secara langsung (await) agar selesai sebelum response dikembalikan ke frontend
     watcher::sync_rules_from_git(&ws).await;
 
+    // Otomatis regenerate / timpa AGENTS.md dan mcp_config.json di project tujuan (reset ke default)
+    let target_dir = std::path::PathBuf::from(&ws.target_path);
+    if target_dir.exists() {
+        let _ = workspace::scaffold_new_agents_structure(&target_dir, &ws.name);
+    }
+
     serde_json::json!({
         "success": true,
-        "message": "Sinkronisasi aturan dan SOP dari GitLab/GitHub berhasil dijalankan."
+        "message": "Sinkronisasi aturan dan SOP dari Git berhasil, serta AGENTS.md berhasil di-regenerate!"
     })
 }
 
