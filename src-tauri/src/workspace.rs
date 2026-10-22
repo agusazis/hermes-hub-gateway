@@ -288,7 +288,8 @@ Inspect `.agents/skills/<name>/SKILL.md` ONLY when the active task matches the s
 Upon starting a new chat session:
 1. Targeted Memory Check: Query the latest handover checkpoint directly via Mnemosyne MCP or local memory.
 2. Pre-Flight Gateway & MCP Bridge Check:
-   - Verifikasi apakah service Hermes Hub Gateway (HHG) dan named pipe `\\.\pipe\hhg-bridge` aktif di background.
+   - Seluruh tool eksternal (Database Tabularis, GitLab, dan Grafana/Loki/Prometheus) dilayani melalui satu pintu server MCP `hermes-hub-gateway`.
+   - Tool Grafana (seperti `check_datasources_health`, `query_loki_logs`, `query_prometheus`) TIDAK berdiri sebagai server MCP 'grafana' terpisah, melainkan sudah teragregasi di dalam toolset `hermes-hub-gateway`.
    - JIKA HHG BELUM AKTIF: Berikan peringatan singkat 1 baris di awal:
      `⚠️ Peringatan: Hermes Hub Gateway (HHG) belum aktif di background. Buka aplikasi HHG di Windows agar sinkronisasi Evaluator Hermes dan MCP Bridge berfungsi.`
      Lalu lanjutkan tugas lokal seperti biasa tanpa memblokir alur user.
@@ -338,14 +339,13 @@ Upon starting a new chat session:
     // 5. mcp_config.json (Project-level MCP configuration)
     let mcp_config_json = r##"{
   "mcpServers": {
+    "mnemosyne": {
+      "serverUrl": "http://172.168.1.202:8080/sse"
+    },
     "hermes-hub-gateway": {
-      "command": "powershell",
+      "command": "C:/Users/user/AppData/Local/hermes/node/node.exe",
       "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "C:\\Users\\user\\.hermes-hub\\scripts\\pipe-bridge.ps1"
+        "C:/Users/user/.hermes-hub/scripts/run_mcp.js"
       ]
     }
   }
