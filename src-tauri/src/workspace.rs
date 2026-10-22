@@ -327,7 +327,7 @@ Evaluate tools dynamically based on their live `description` in your active tool
     #[cfg(not(windows))]
     let node_cmd = PathBuf::from("node");
 
-    let run_mcp_script = home.join(".hermes-hub").join("scripts").join("mcp_server.js");
+    let run_mcp_script = home.join(".hermes-hub").join("scripts").join("run_mcp.js");
 
     let mcp_config_json = serde_json::json!({
         "mcpServers": {
