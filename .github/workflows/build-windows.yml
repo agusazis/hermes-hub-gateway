@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.7
-          releaseName: "Hermes Hub Gateway v0.8.7"
-          releaseBody: "Release v0.8.7: Removed clear logs button (Immutable Audit Trail), full OS locale time alignment, bundled Companion Daemon pack (server/install.sh)."
+          tagName: v0.8.8
+          releaseName: "Hermes Hub Gateway v0.8.8"
+          releaseBody: "Release v0.8.8: Fixed Tauri command macro attribute for open_in_browser, removed Clear Logs button (Immutable Audit Trail), and enforced 24-hour time format."
           releaseDraft: false
           prerelease: false
