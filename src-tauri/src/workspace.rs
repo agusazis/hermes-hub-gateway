@@ -296,8 +296,8 @@ Evaluate tools dynamically based on their live `description` in your active tool
    - For all task handovers, environment mappings, and user preferences, write directly via `mnemosyne_remember`. Do not write markdown files to a local `memory/` folder.
 
 ## NON-NEGOTIABLE CONSTRAINTS
-1. Zero Root Clutter & Scratchpad Discipline: STRICTLY PROHIBITED from creating temporary helper scripts, JSON-RPC payload files, scratchpads, test runners, or probe artifacts (e.g. `test_*.js`, `test_*.json`, `probe_*.py`, `temp_*`) inside the project repository root. All temporary execution files MUST be written strictly to `~/.hermes-hub/tmp/` or the operating system temp directory.
-2. Direct MCP Invocation: You possess 168+ live native MCP tools. NEVER write local JavaScript or Python scripts just to simulate or invoke an MCP tool (such as calling Loki or Tabularis via local `node script.js`). Invoke the MCP tool directly in your tool-call turn.
+1. Zero Root Clutter & Scratchpad Discipline: STRICTLY PROHIBITED from creating temporary helper scripts, JSON-RPC payload files, scratchpads, test runners, or probe artifacts (e.g. `test_*.js`, `test_*.json`, `probe_*.py`, `generate_*.js`, `temp_*`) inside the project repository root. All temporary execution files MUST be written strictly to `~/.hermes-hub/tmp/` or the operating system temp directory.
+2. Direct MCP Invocation: ALWAYS use the live native MCP tools available in your active tool catalog. NEVER write local helper scripts (such as Node.js or Python scripts) solely to simulate or call APIs, databases, or log services that are already accessible via your MCP tools. Invoke the relevant MCP tool directly in your tool-call turn.
 3. Zero Hallucinated Schema: Never infer database columns, tables, or relationships. Mandatory physical schema inspection via Tabularis MCP prior to SQL generation.
 4. Zero Credential Leaks: NEVER persist passwords, private keys, API tokens, or root credentials into Mnemosyne memory or code commits.
 5. Dynamic Self-Discovery: Rely on live MCP tool names and descriptions presented in your active session rather than hardcoded assumptions.
