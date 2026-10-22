@@ -331,13 +331,15 @@ export default function App() {
     timestamp: string;
     workspace_id: string;
     author: string;
-    type: 'memory' | 'skill';
+    type: 'skill' | 'memory';
     action_label: string;
     target: string;
     title: string;
     content: string;
-    details?: string;
+    details: string;
   }>>([]);
+  const [lastReadFeedCount, setLastReadFeedCount] = useState<number>(0);
+  const [unreadEvolutionCount, setUnreadEvolutionCount] = useState<number>(0);
   const [wsSearchQuery, setWsSearchQuery] = useState<string>('');
   const [testingMcpIndex, setTestingMcpIndex] = useState<number | null>(null);
   const [testingAllMcp, setTestingAllMcp] = useState<boolean>(false);
@@ -513,11 +515,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.5',
+      name: 'Hermes Hub Gateway v0.8.5 (Tray Ambient Unread Badges & Companion Daemon Pack)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Hadirnya indikator ambient di Windows System Tray: unread count badge & dynamic evolution tooltip tanpa popup yang mengganggu, paket instalasi mandiri server/install.sh untuk server Hermes fresh install.',
+      features: [
+        'Tray Dynamic Tooltip: Menampilkan jumlah update unread dan judul evolusi terakhir saat kursor mouse di-hover di atas tray icon.',
+        'Unread Badge Counter: Indikator badge +N di sidebar menu Evolution Logs yang otomatis ter-reset saat tab log dibuka.',
+        'Companion Daemon Auto-Installer: Skrip server/install.sh one-liner untuk fresh install server Hermes.'
+      ],
+      fixes: [
+        'Mencegah popup notifikasi Windows yang mengotori layar koding programmer.',
+        'Menyediakan panduan one-liner copyable saat test koneksi gateway gagal.'
+      ],
+      architecture: [
+        'Tauri Tray API set_tooltip dynamic bridge',
+        'State unread tracking di React Frontend'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.5/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.5/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.4',
       name: 'Hermes Hub Gateway v0.8.4 (Dual-Brain Watcher & Realtime Evolution Feed)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Dukungan pemindaian konkuren untuk path brain Antigravity (.gemini/antigravity & .gemini/antigravity-ide), intersepsi langsung mutasi memori Mnemosyne ke Telegram, dan panel feed Evolution Logs per workspace.',
       features: [
         'Dual-Brain Real-Time Watcher: Memantau .gemini/antigravity/brain dan .gemini/antigravity-ide/brain secara bersamaan.',
@@ -1728,6 +1755,17 @@ export default function App() {
         .then((data) => {
           if (Array.isArray(data)) {
             setEvolutionFeed(data);
+            if (activeTab === 'logs') {
+              setLastReadFeedCount(data.length);
+              setUnreadEvolutionCount(0);
+              invoke('update_tray_status', { tooltip: 'Semua log sudah dibaca', unreadCount: 0 }).catch(() => {});
+            } else if (data.length > lastReadFeedCount) {
+              const diff = data.length - lastReadFeedCount;
+              setUnreadEvolutionCount(diff);
+              const latest = data[0];
+              const summary = latest ? `[${latest.type.toUpperCase()}] ${latest.title}` : 'Update baru masuk';
+              invoke('update_tray_status', { tooltip: summary, unreadCount: diff }).catch(() => {});
+            }
           }
         })
         .catch(() => {});
@@ -2702,13 +2740,31 @@ export default function App() {
               <Layers className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>MCP Servers Hub</span>}
             </button>
             <button 
-              onClick={() => setActiveTab('logs')}
+              onClick={() => {
+                setActiveTab('logs');
+                setLastReadFeedCount(evolutionFeed.length);
+                setUnreadEvolutionCount(0);
+                invoke('update_tray_status', { tooltip: 'Semua log sudah dibaca', unreadCount: 0 }).catch(() => {});
+              }}
               title={isSidebarCollapsed ? "Evolution Logs" : undefined}
-              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all relative ${
                 activeTab === 'logs' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
               }`}
             >
-              <Terminal className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Evolution Logs</span>}
+              <Terminal className="w-4 h-4 shrink-0" /> 
+              {!isSidebarCollapsed && (
+                <div className="flex items-center justify-between flex-1">
+                  <span>Evolution Logs</span>
+                  {unreadEvolutionCount > 0 && (
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500 text-black">
+                      +{unreadEvolutionCount}
+                    </span>
+                  )}
+                </div>
+              )}
+              {isSidebarCollapsed && unreadEvolutionCount > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500"></span>
+              )}
             </button>
           </nav>
         </div>
