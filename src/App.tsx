@@ -329,7 +329,8 @@ export default function App() {
   // Helper membuat icon tray dengan badge angka merah dinamis (Dynamic Canvas Icon Generator)
   const generateTrayBadgeIcon = async (count: number): Promise<{ rgba: number[]; width: number; height: number } | null> => {
     try {
-      const size = 32;
+      // Windows High-DPI tray icons render best at 64x64 or 128x128
+      const size = 64;
       const canvas = document.createElement('canvas');
       canvas.width = size;
       canvas.height = size;
@@ -337,47 +338,56 @@ export default function App() {
       if (!ctx) return null;
 
       // Base icon: background rounded persegi biru gelap dengan huruf H putih
-      ctx.fillStyle = '#0f172a'; // slate-900
+      ctx.fillStyle = '#090d16'; // deep slate
       ctx.beginPath();
-      ctx.roundRect(0, 0, size, size, 6);
+      ctx.roundRect(2, 2, size - 4, size - 4, 12);
       ctx.fill();
 
       // Border halus cyan
       ctx.strokeStyle = '#06b6d4';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 3;
       ctx.stroke();
 
       // Huruf H di tengah
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px "Segoe UI", sans-serif';
+      ctx.font = '900 32px "Segoe UI", Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('H', size / 2, size / 2);
+      ctx.fillText('H', size / 2, size / 2 + 1);
 
-      // Jika ada unread count, gambar badge merah di pojok kanan atas
+      // Jika ada unread count, gambar badge merah bulat besar di pojok kanan atas
       if (count > 0) {
-        const badgeRadius = 8;
-        const bx = size - badgeRadius;
-        const by = badgeRadius;
+        const badgeRadius = 18;
+        const bx = size - badgeRadius - 1;
+        const by = badgeRadius + 1;
 
-        // Lingkaran merah
-        ctx.fillStyle = '#ef4444'; // red-500
+        // Shadow halus untuk kontras tinggi
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 4;
+
+        // Lingkaran merah pekat
+        ctx.fillStyle = '#dc2626'; // red-600
         ctx.beginPath();
         ctx.arc(bx, by, badgeRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Border badge putih tipis
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+
+        // Border badge putih tegas
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // Teks counter
+        // Teks counter: Bold, kontras tinggi & terbaca jelas di taskbar Windows
         ctx.fillStyle = '#ffffff';
         const displayCount = count > 99 ? '99+' : count.toString();
-        ctx.font = 'bold 9px "Segoe UI", sans-serif';
+        const fontSize = displayCount.length >= 3 ? 16 : 20;
+        ctx.font = `bold ${fontSize}px "Segoe UI", Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(displayCount, bx, by);
+        ctx.fillText(displayCount, bx, by + 1);
       }
 
       const imgData = ctx.getImageData(0, 0, size, size);
@@ -585,11 +595,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.12',
+      name: 'Hermes Hub Gateway v0.8.12 (High-DPI 64px Tray Badge Icon)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'High-DPI Crisp Tray Badge: Resolusi canvas icon dinaikkan dari 32px ke 64px High-DPI dengan font tebal 20px dan badge merah ber-radius besar agar angka counter terbaca sangat jelas di Taskbar Windows.',
+      features: [
+        'Crisp High-DPI Render: Ukuran raster icon dinaikkan menjadi 64x64 pixel untuk layar Retina/High-DPI Windows.',
+        'High Contrast Badge: Teks angka counter unread diperbesar 2x lipat dan diberi border putih tegas.',
+        'Zero Blurriness: Angka 2 digit dan 3 digit (99+) kini terbaca tajam dan tidak pecah.'
+      ],
+      fixes: [
+        'Memperbaiki ukuran font dan radius badge agar terbaca jelas saat di-downscale ke tray Windows.'
+      ],
+      architecture: [
+        'High-DPI 64x64 Canvas with 20px Ultra-bold Segoe UI typography',
+        'RGBA Streaming to Tauri Native Tray'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.12/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.12/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.11',
       name: 'Hermes Hub Gateway v0.8.11 (Dynamic Canvas Tray Badge Icon)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Hadirnya Dynamic Canvas Tray Badge Icon: Tray icon Windows kini menampilkan bulatan merah penanda angka unread layaknya aplikasi chat modern (seperti Telegram/WhatsApp).',
       features: [
         'Dynamic Tray Badge Icon: Saat ada pembaruan log koding/memori baru, icon tray di Windows otomatis digambar ulang dengan badge angka merah terang.',
@@ -2887,7 +2921,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.11</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.12</span>
                 </div>
               )}
             </div>
