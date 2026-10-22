@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent, TrayIcon};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, Emitter, WindowEvent};
 use std::path::PathBuf;
 
@@ -65,6 +65,7 @@ fn update_tray_status(_app: tauri::AppHandle, _tooltip: String, _unread_count: u
     Ok(())
 }
 
+#[tauri::command]
 fn open_in_browser(url: String) -> Result<(), String> {
     if url.trim().is_empty() {
         return Ok(());
