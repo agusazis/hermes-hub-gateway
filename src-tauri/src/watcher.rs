@@ -27,7 +27,9 @@ pub struct ReviewResponsePayload {
 
 pub async fn start_watcher_loop(app: AppHandle) {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
-    let brain_dir = home.join(".gemini").join("antigravity-ide").join("brain");
+    let p1 = home.join(".gemini").join("antigravity").join("brain");
+    let p2 = home.join(".gemini").join("antigravity-ide").join("brain");
+    let brain_dir = if p1.exists() { p1 } else { p2 };
 
     println!("[Watcher] Monitoring Antigravity Brain dir: {:?}", brain_dir);
 
