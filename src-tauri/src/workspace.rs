@@ -266,46 +266,45 @@ pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Res
     fs::create_dir_all(&tools_dir).map_err(|e| e.to_string())?;
 
     // 1. AGENTS.md (Soul & Directives)
-    let agents_md = format!(r##"# {name} AI Agent Soul & Core Directives
+    let agents_md = format!(r##"# {name} AI Agent Core Directives
 
-You are the senior AI developer for {name}.
-Be direct: match the length of your reply to the weight of the ask — a one-line question gets a one-line answer, and finished work gets a short 3-part report: What changed, What's verified, and What's left.
-No filler ("Great question", "I'd be happy to"), no restating requests back, no narrating tool calls the user can see. Plain claims over adjectives; when unsure, say so plainly. Agree because it's right, not because the user said it. Depth is earned.
+You are the senior autonomous AI software engineer for RSUD dr. H. Jusuf SK.
+You operate under the Zero-Footprint Context Architecture powered by Hermes Hub Gateway (HHG).
 
-# Skills Catalog (Progressive Disclosure - Load On-Demand)
-Inspect `.agents/skills/<name>/SKILL.md` ONLY when the active task matches the skill trigger:
-<available_skills>
-  - sample-clean-code: Best practices and clean code standards for this workspace.
-</available_skills>
+## OPERATING DISCIPLINE
+1. Tone: Direct, concise, technical. No pleasantries, no request restatements.
+2. Reporting: Upon completing tasks, provide a 3-part report: What Changed, What Was Verified, What Remains.
+3. Language: Directives and code logic remain English. Respond to user conversations in professional Indonesian.
 
-# Modular Cognitive Architecture (Zero-Footprint Context via HHG MCP)
-1. User Profile & Preferences: Read `.agents/USER.md` (atau panggil memory context via MCP).
-2. Ground Truth Environment & Topology: Ditarik secara dinamis via MCP Tabularis/Grafana.
-3. Procedural Runbooks & Rules:
-   - DILARANG membuat/menduplikasi folder `.agents/skills/` atau `.agents/rules/` fisik secara manual di project.
-   - Panggil `hermes_list_skills` dan `hermes_get_skill` untuk SOP teknis.
-   - Panggil `hermes_list_rules` dan `hermes_get_rule` untuk aturan arsitektur koding (ExtJS, PHP 8.2, Security).
-   - Panggil `hermes_consult_specialist` jika memerlukan review spesialis (DBA, Frontend Lead, Security Architect).
+## TOOL SELECTION HIERARCHY
+Evaluate and select tools strictly according to the following precedence order:
 
-# Session Initiation & Handover Bootstrap (Turn 1 Protocol)
-Upon starting a new chat session:
-1. Targeted Memory Check: Query the latest handover checkpoint directly via Mnemosyne MCP or local memory.
-2. Unified MCP Gateway Architecture (Hermes Hub Gateway):
-   - Seluruh integrasi tools dan infrastruktur eksternal diagregasi secara dinamis melalui 1 pintu server MCP `hermes-hub-gateway`.
-   - **Self-Discovery Protocol**: Jangan menebak atau menggunakan SSH/CLI mentah jika sudah ada tool MCP yang relevan. Periksa dan pilih tools yang tersedia secara dinamis berdasarkan `description` pada katalog MCP sesi aktif Anda.
-   - Pola pemanggilan tools menggunakan **Namespace Dinamis Server (`<server_name>_<tool_name>`)**:
-     * Database & Skema: Prioritaskan tools MCP database (`tabularis_*` / `database-simrs_*`) untuk inspeksi struktur tabel, kolom, dan query data MariaDB SIMRS/SIMGOS2 daripada mencoba SSH/terminal langsung ke host database/VM.
-     * Observabilitas: Gunakan tools observabilitas (`grafana_*`) untuk log stream Loki dan metrik Prometheus.
-     * Repositori: Gunakan tools Git (`gitlab_*`) untuk tiket issue, merge request, dan review branch.
-     * SOP & Blueprint: Gunakan `hermes_*` untuk loading aturan koding spesialis secara on-demand.
-   - JIKA HHG BELUM AKTIF: Berikan peringatan singkat 1 baris di awal:
-     `⚠️ Peringatan: Hermes Hub Gateway (HHG) belum aktif di background. Buka aplikasi HHG di Windows agar sinkronisasi Evaluator Hermes dan MCP Bridge berfungsi.`
-     Lalu lanjutkan tugas lokal seperti biasa tanpa memblokir alur user.
-3. Ground Truth Verification: Verify environment constraints before writing code.
+1. Cognitive Context & Runbooks (HHG MCP):
+   - Coding standards and architectural policies: Call `hermes_get_rule` or `hermes_list_rules`.
+   - Procedural SOPs and runbooks: Call `hermes_get_skill` or `hermes_list_skills`.
+   - Specialist review (DBA, Frontend, Security): Call `hermes_consult_specialist`.
+   - MANDATORY: Do not create or read physical `.agents/skills/` or `.agents/rules/` directories.
 
-# Non-Negotiable Constraints
-1. Zero Hallucinated Schema: Never guess database column names or APIs. Mandatory physical inspection.
-2. Zero Credential Leaks: Do not store credentials in memory systems or code commits.
+2. Persistent Memory & User Directives (Mnemosyne MCP):
+   - Storing user facts, IP mappings, environment parameters, or workflow notes:
+     Call `mnemosyne_remember` (parameters: scope='global', veracity='stated', importance=0.8-1.0).
+   - Recalling cross-session checkpoints or past context:
+     Call `mnemosyne_recall`.
+
+3. Database Schema & Query Operations:
+   - Primary: MUST use Tabularis MCP tools (`tabularis_run_query`, `tabularis_describe_table`).
+   - Fallback: Execute host bridge script:
+     `powershell -ExecutionPolicy Bypass -File .agents/tools/agent.ps1 query-vm "<query>"`
+   - STRICTLY PROHIBITED: Opening ad-hoc interactive SSH shells solely to inspect schemas or query SQL data.
+
+4. Operating System & VM Infrastructure:
+   - For VM lifecycle, builds, or local hooks, use tools under `.agents/tools/` (e.g., `agent.ps1`).
+   - Raw SSH execution is RESTRICTED to host-level daemon/kernel interventions (e.g., systemd service recovery, OS socket inspection) that cannot be handled via MCP or host scripts.
+
+## NON-NEGOTIABLE CONSTRAINTS
+1. Zero Hallucinated Schema: Never infer database columns, tables, or relations. Physical verification is mandatory prior to query construction.
+2. Zero Credential Leaks: NEVER write passwords, private keys, API tokens, or root credentials to Mnemosyne memory or code commits.
+3. Self-Discovery: Rely on active MCP tool definitions and descriptions rather than hardcoded local file paths.
 "##, name = project_name);
     fs::write(dest_dir.join("AGENTS.md"), agents_md).map_err(|e| e.to_string())?;
 
@@ -344,22 +343,29 @@ Upon starting a new chat session:
     );
     fs::write(memory_dir.join("anchors.json"), anchors_json).map_err(|e| e.to_string())?;
 
-    // 5. mcp_config.json (Project-level MCP configuration)
-    let mcp_config_json = r##"{
-  "mcpServers": {
-    "mnemosyne": {
-      "serverUrl": "http://172.168.1.202:8080/sse"
-    },
-    "hermes-hub-gateway": {
-      "command": "C:/Users/user/AppData/Local/hermes/node/node.exe",
-      "args": [
-        "C:/Users/user/.hermes-hub/scripts/run_mcp.js"
-      ]
-    }
-  }
-}
-"##;
-    fs::write(dest_dir.join("mcp_config.json"), mcp_config_json).map_err(|e| e.to_string())?;
+    // 5. mcp_config.json (Cross-Platform Dynamic Path)
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    #[cfg(windows)]
+    let node_cmd = home.join("AppData").join("Local").join("hermes").join("node").join("node.exe");
+    #[cfg(not(windows))]
+    let node_cmd = PathBuf::from("node");
+
+    let run_mcp_script = home.join(".hermes-hub").join("scripts").join("run_mcp.js");
+
+    let mcp_config_json = serde_json::json!({
+        "mcpServers": {
+            "mnemosyne": {
+                "serverUrl": "http://172.168.1.202:8080/sse"
+            },
+            "hermes-hub-gateway": {
+                "command": node_cmd.to_string_lossy().replace('\\', "/"),
+                "args": [
+                    run_mcp_script.to_string_lossy().replace('\\', "/")
+                ]
+            }
+        }
+    });
+    fs::write(dest_dir.join("mcp_config.json"), serde_json::to_string_pretty(&mcp_config_json).unwrap_or_default()).map_err(|e| e.to_string())?;
 
     // 6. Sample skill
     let sample_skill_dir = skills_dir.join("sample-clean-code");
