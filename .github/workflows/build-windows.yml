@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.17
-          releaseName: "Hermes Hub Gateway v0.8.17"
-          releaseBody: "Release v0.8.17: Bidirectional MCP Knowledge & Rule Authoring Engine. hermes_save_rule native implementation in Rust backend, enabling IDE agents to record architectural rules directly into HHG."
+          tagName: v0.8.18
+          releaseName: "Hermes Hub Gateway v0.8.18"
+          releaseBody: "Release v0.8.18: Fix JsonRpcError serialization and PathBuf scoping in mcp_bridge. Bidirectional MCP Knowledge & Rule Authoring Engine."
           releaseDraft: false
           prerelease: false
