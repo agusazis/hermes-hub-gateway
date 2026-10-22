@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.11
-          releaseName: "Hermes Hub Gateway v0.8.11"
-          releaseBody: "Release v0.8.11: Fixed Image::new_owned return type for dynamic tray badge icon."
+          tagName: v0.8.12
+          releaseName: "Hermes Hub Gateway v0.8.12"
+          releaseBody: "Release v0.8.12: High-DPI 64px Tray Badge Icon with ultra-bold typography for crisp readability on Windows Taskbar."
           releaseDraft: false
           prerelease: false
