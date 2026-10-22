@@ -606,7 +606,9 @@ export default function App() {
       ],
       downloads: [
         { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.26/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
-        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.26/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.26/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'hermes-hub-gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Standalone)', size: '75.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.26/hermes-hub-gateway_0.1.0_amd64.AppImage' },
+        { name: 'hermes-hub-gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '12.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.26/hermes-hub-gateway_0.1.0_amd64.deb' }
       ]
     },
     {
