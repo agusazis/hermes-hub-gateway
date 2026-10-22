@@ -520,11 +520,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.8',
+      name: 'Hermes Hub Gateway v0.8.8 (Fixed Tauri Macros & 24-Hour Time Format)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Perbaikan atribut macro #[tauri::command] pada open_in_browser, penghapusan tombol Bersihkan Log demi integritas audit, dan standardisasi format jam 24 jam (HH:mm:ss).',
+      features: [
+        'Immutable Audit Trail: Menghilangkan tombol Bersihkan Log agar seluruh riwayat koding aman dan permanen.',
+        '24-Hour Standard Time (HH:mm:ss): Seluruh panel log event koding, riwayat mutasi memori, dan status transkrip kini tampil dalam format 24 jam.',
+        'Evolution Logs Unread Badge: Badge counter visual +N pada menu navigasi sidebar.'
+      ],
+      fixes: [
+        'Menambahkan decorator #[tauri::command] pada fungsi open_in_browser di main.rs yang menyebabkan macro __cmd__open_in_browser gagal compile.'
+      ],
+      architecture: [
+        'Clean Tauri 2.0 command registration',
+        'Standardized formatTime24 helper with hour12: false'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.8/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.8/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.7',
       name: 'Hermes Hub Gateway v0.8.7 (Clean Audit Trail & 24-Hour Time Format)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penghapusan tombol Bersihkan Log demi integritas Immutable Audit Trail, standardisasi seluruh format jam ke format 24 jam (HH:mm:ss), dan stabilitas Rust Tauri Tray build.',
       features: [
         'Immutable Audit Trail: Menghilangkan tombol Bersihkan Log agar seluruh riwayat koding aman dan permanen.',
