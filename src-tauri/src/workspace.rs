@@ -320,29 +320,7 @@ Evaluate tools dynamically based on their live `description` in your active tool
 "##;
     fs::write(dest_dir.join("USER.md"), user_md).map_err(|e| e.to_string())?;
 
-    // 3. memory/ENVIRONMENT.md
-    let env_md = r##"# Authoritative Environment & Infrastructure Boundaries
-
-## Servers & Networks
-- **Development Server**: `http://127.0.0.1:8000`
-- **Database Host**: `127.0.0.1:3306` (MariaDB/MySQL)
-- **Hermes Evaluator**: `http://172.168.1.202:9125`
-- **Mnemosyne Memory**: `http://172.168.1.202:8080`
-
-## Operational Constraints
-- Dilarang menjalankan query `DROP TABLE` tanpa konfirmasi eksplisit.
-- Seluruh endpoint API internal terlindung di jaringan intranet.
-"##;
-    fs::write(memory_dir.join("ENVIRONMENT.md"), env_md).map_err(|e| e.to_string())?;
-
-    // 4. memory/anchors.json
-    let anchors_json = format!(
-        "{{\n  \"project_name\": \"{}\",\n  \"gitlab_project_id\": null,\n  \"created_at\": \"2026-10-20\"\n}}",
-        project_name
-    );
-    fs::write(memory_dir.join("anchors.json"), anchors_json).map_err(|e| e.to_string())?;
-
-    // 5. mcp_config.json (Cross-Platform Dynamic Path)
+    // 3. mcp_config.json (Cross-Platform Dynamic Path)
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     #[cfg(windows)]
     let node_cmd = home.join("AppData").join("Local").join("hermes").join("node").join("node.exe");
@@ -365,22 +343,6 @@ Evaluate tools dynamically based on their live `description` in your active tool
         }
     });
     fs::write(dest_dir.join("mcp_config.json"), serde_json::to_string_pretty(&mcp_config_json).unwrap_or_default()).map_err(|e| e.to_string())?;
-
-    // 6. Sample skill
-    let sample_skill_dir = skills_dir.join("sample-clean-code");
-    fs::create_dir_all(&sample_skill_dir).map_err(|e| e.to_string())?;
-    let sample_skill = r##"---
-name: sample-clean-code
-description: Panduan penulisan clean code dan arsitektur modular.
----
-
-# Clean Code Guidelines
-
-1. Gunakan nama variabel dan fungsi yang mencerminkan intent bisnis.
-2. Hindari fungsi yang melebihi 50 baris kode (Separation of Concerns).
-3. Selalu tangani exception secara terisolasi tanpa membiarkan crash fatal.
-"##;
-    fs::write(sample_skill_dir.join("SKILL.md"), sample_skill).map_err(|e| e.to_string())?;
 
     Ok(())
 }
