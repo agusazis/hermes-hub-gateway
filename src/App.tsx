@@ -603,11 +603,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.20',
+      name: 'Hermes Hub Gateway v0.8.20 (Zero-Footprint Workspace UI & Dual Scripts Sync)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Zero-Footprint UI & Dual Runner Sync: Menghilangkan seluruh teks dan logika pembuatan NTFS Junction pada modal Tambah Workspace. Menyelaraskan runner script run_mcp.js dan mcp_server.js di runtime Rust.',
+      features: [
+        'Pure Zero-Footprint Workspace: Modal tambah workspace kini murni menghubungkan project via AGENTS.md dan mcp_config.json tanpa junction NTFS.',
+        'Dual Runner Fallback: Backend Rust otomatis memastikan kedua file run_mcp.js dan mcp_server.js selalu terisi kode aggregator MCP downstream.',
+        'Direct Node MCP Compatibility: IDE Antigravity / Gemini CLI dapat langsung terhubung tanpa runtime MODULE_NOT_FOUND error.'
+      ],
+      fixes: [
+        'Menghilangkan sisa string Pasang Junction pada tombol dan modal Workspace.',
+        'Memperbaiki nama runner script MCP yang diinjeksi ke mcp_config.json.'
+      ],
+      architecture: [
+        'Pure Zero-Footprint Workspace Connection',
+        'Dual Embedded MCP Script Provisioning'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.20/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.20/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.19',
       name: 'Hermes Hub Gateway v0.8.19 (Stable Multiplatform Engine & Rule Authoring)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Compiler Import Fix: Menambahkan import std::path::PathBuf di workspace.rs untuk resolusi path dinamis multiplatform.',
       features: [
         'IDE Rule Authoring (hermes_save_rule): Agent di IDE dapat menyimpan aturan koding imperatif langsung ke ~/.hermes-hub/rules/ via MCP.',
@@ -2458,17 +2483,17 @@ export default function App() {
         }
       }
 
-      // Pastikan NTFS Junction terpasang ke project tujuan
+      // Pastikan workspace terhubung dengan Zero-Footprint context
       try {
-        await invoke('link_workspace_junction', {
-          projectPath: newWsPath,
-          agentsSourcePath: created.internal_skills_path
+        await invoke('scaffold_new_agents_project', {
+          destPath: newWsPath,
+          projectName: created.name
         });
       } catch (linkErr) {
-        console.error("Gagal link junction:", linkErr);
+        console.error("Gagal scaffold zero-footprint context:", linkErr);
       }
 
-      // Audit readiness setelah sync dan junction terpasang
+      // Audit readiness setelah sync
       try {
         const report: any = await invoke('check_workspace_readiness', { projectPath: newWsPath });
         if (report) {
@@ -2482,7 +2507,7 @@ export default function App() {
       setNewWsGitRepoUrl("");
       setNewWsGitProjectId("");
       setNewWsGitToken("");
-      showToast('success', 'Workspace Berhasil Dihubungkan', `Workspace "${created.name}" aktif! NTFS Junction .agents dan SOP/Skills otomatis terpasang.`);
+      showToast('success', 'Workspace Berhasil Dihubungkan', `Workspace "${created.name}" aktif dengan arsitektur Zero-Footprint Context via MCP.`);
     } catch (err) {
       showToast('error', 'Gagal Membuat Workspace', String(err));
     } finally {
@@ -3099,7 +3124,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.19</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.20</span>
                 </div>
               )}
             </div>
@@ -3254,7 +3279,7 @@ export default function App() {
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               {activeTab === 'settings' && 'Profil utama aplikasi & pusat koneksi server Hermes Evaluator, Mnemosyne Shared Memory, dan One-Key Provisioning.'}
-              {activeTab === 'workspaces' && 'Katalog rules, specialists, dan skills modular via NTFS Junction.'}
+              {activeTab === 'workspaces' && 'Katalog rules, specialists, dan skills modular via Zero-Footprint MCP.'}
               {activeTab === 'mcp_hub' && 'Akses seluruh tools MCP tanpa konfigurasi terpisah.'}
               {activeTab === 'dashboard' && 'Continuous self-improvement loop bridge active for Developer Workspace.'}
               {activeTab === 'logs' && 'Real-time telemetry stream between IDE Watcher & Evaluator Server.'}
@@ -3972,10 +3997,10 @@ export default function App() {
                     )}
                     <span>
                       {isSubmittingWorkspace 
-                        ? "Memproses & Memasang Junction..."
+                        ? "Menghubungkan Workspace..."
                         : editingWorkspaceIndex !== null 
-                          ? "Simpan & Pasang Ulang Junction (.agents)" 
-                          : "Pasang Junction (.agents) & Hubungkan Workspace"}
+                          ? "Simpan & Sinkronkan Workspace" 
+                          : "Hubungkan Workspace (Zero-Footprint Context)"}
                     </span>
                   </button>
                 </div>
@@ -4332,7 +4357,7 @@ export default function App() {
                 <p className={`text-xs leading-snug ${
                   effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
                 }`}>
-                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan dengan namespace masing-masing server via <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>run_mcp.js</code>.
+                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan dengan namespace masing-masing server via <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>mcp_server.js</code>.
                 </p>
               </div>
 
@@ -4344,7 +4369,7 @@ export default function App() {
                         "hermes-hub-gateway": {
                           command: "C:/Users/user/AppData/Local/hermes/node/node.exe",
                           args: [
-                            "C:/Users/user/.hermes-hub/scripts/run_mcp.js"
+                            "C:/Users/user/.hermes-hub/scripts/mcp_server.js"
                           ]
                         }
                       }
