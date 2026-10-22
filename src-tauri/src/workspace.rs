@@ -278,11 +278,14 @@ Inspect `.agents/skills/<name>/SKILL.md` ONLY when the active task matches the s
   - sample-clean-code: Best practices and clean code standards for this workspace.
 </available_skills>
 
-# Modular Cognitive Architecture (SoC Pointers)
-1. User Profile & Preferences: Read `.agents/USER.md` for developer identity, role, and output expectations.
-2. Ground Truth Environment: Read `.agents/memory/ENVIRONMENT.md` for authoritative IP addresses, database topologies, and server boundaries.
-3. Mechanical Anchors: Read `.agents/memory/anchors.json` for verified deterministic IDs.
-4. Procedural Runbooks: Inspect `<available_skills>` above and load `.agents/skills/<domain>/SKILL.md` on-demand before modifying codebase.
+# Modular Cognitive Architecture (Zero-Footprint Context via HHG MCP)
+1. User Profile & Preferences: Read `.agents/USER.md` (atau panggil memory context via MCP).
+2. Ground Truth Environment & Topology: Ditarik secara dinamis via MCP Tabularis/Grafana.
+3. Procedural Runbooks & Rules:
+   - DILARANG membuat/menduplikasi folder `.agents/skills/` atau `.agents/rules/` fisik secara manual di project.
+   - Panggil `hermes_list_skills` dan `hermes_get_skill` untuk SOP teknis.
+   - Panggil `hermes_list_rules` dan `hermes_get_rule` untuk aturan arsitektur koding (ExtJS, PHP 8.2, Security).
+   - Panggil `hermes_consult_specialist` jika memerlukan review spesialis (DBA, Frontend Lead, Security Architect).
 
 # Session Initiation & Handover Bootstrap (Turn 1 Protocol)
 Upon starting a new chat session:
