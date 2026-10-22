@@ -603,11 +603,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.26',
+      name: 'Hermes Hub Gateway v0.8.26 (Streamlined Settings & Telegram Decoupling)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menghilangkan konfigurasi form bot Telegram dari UI Settings demi kepatuhan arsitektur backend broadcast murni dan antarmuka yang bersih.',
+      features: [
+        'Streamlined Settings UI: Antarmuka Settings kini murni berfokus pada Gateway Server URL, Mnemosyne endpoint, dan MCP Server registry.',
+        'Telegram Decoupling: Notifikasi broadcast diserahkan sepenuhnya ke Hermes Evaluator backend service secara mandiri.',
+        'Plugin Architecture for External Devs: Panduan setup bot mandiri tersedia eksklusif di plugins/telegram-notifier/README.md.'
+      ],
+      fixes: [
+        'Menghilangkan kerancuan input bot token Telegram lokal yang sebelumnya tidak sinkron dengan backend.'
+      ],
+      architecture: [
+        'Pure Backend Broadcast Dispatcher',
+        'Clean Desktop Settings Interface'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.26/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.26/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.25',
       name: 'Hermes Hub Gateway v0.8.25 (One-Click AGENTS.md Reset on Sync & Pure Zero-Root)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Tombol Sync Rules Now kini otomatis me-regenerate dan menimpa AGENTS.md di root project target ke default state, serta menghapus total pembuatan USER.md.',
       features: [
         'One-Click AGENTS.md Reset: Menekan tombol "Sync Rules Now" otomatis memperbarui/menimpa AGENTS.md di project tujuan dengan template master standar.',
@@ -3246,7 +3270,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.25</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.26</span>
                 </div>
               )}
             </div>
@@ -5953,155 +5977,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Global Central Telegram Notification Config */}
-            <div className={`p-5 rounded-2xl space-y-4 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>
-                    <Send className="w-4 h-4 text-cyan-500 dark:text-cyan-400" /> Notifikasi Terpusat Telegram (Global Broadcast Bot)
-                  </h3>
-                  <p className="text-[11px] text-slate-400">
-                    Bot notifikasi terpusat untuk mem-broadcast review transkrip dan penambahan skills baru ke grup developer.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const updated = { ...config };
-                    if (!updated.telegram_target) {
-                      updated.telegram_target = { bot_token: "", chat_id: "", topic_id: "", enabled: true };
-                    } else {
-                      updated.telegram_target.enabled = !updated.telegram_target.enabled;
-                    }
-                    setConfig(updated);
-                  }}
-                  className={`px-3 py-1 rounded-full text-[10px] font-mono border transition-all ${
-                    config.telegram_target?.enabled 
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                      : "bg-slate-800 text-slate-400 border-slate-700"
-                  }`}
-                >
-                  {config.telegram_target?.enabled ? "BROADCAST AKTIF" : "NONAKTIF"}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5 col-span-2">
-                  <label className="text-xs text-slate-400 font-medium">Bot Token Telegram (Centralized Broadcast)</label>
-                  <input 
-                    type="password" 
-                    placeholder="Contoh: 7829104523:AAFnJ39..."
-                    value={config.telegram_target?.bot_token || ""}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (!updated.telegram_target) {
-                        updated.telegram_target = { bot_token: e.target.value, chat_id: "", topic_id: "", enabled: true };
-                      } else {
-                        updated.telegram_target.bot_token = e.target.value;
-                      }
-                      setConfig(updated);
-                    }}
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs"}`}
-                  />
-                  <span className="text-[10px] text-slate-500 block">
-                    * Token bot ini otomatis dikirim ke Hermes Evaluator pada saat handshake review transkrip.
-                  </span>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Target Chat / Group ID</label>
-                  <input 
-                    type="text" 
-                    placeholder="Contoh: -10023456789 atau @channel"
-                    value={config.telegram_target?.chat_id || ""}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (!updated.telegram_target) {
-                        updated.telegram_target = { bot_token: "", chat_id: e.target.value, topic_id: "", enabled: true };
-                      } else {
-                        updated.telegram_target.chat_id = e.target.value;
-                      }
-                      setConfig(updated);
-                    }}
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs"}`}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-400 font-medium">Topic / Thread ID (Opsional)</label>
-                  <input 
-                    type="text" 
-                    placeholder="Contoh: 84 (kosongkan jika grup biasa)"
-                    value={config.telegram_target?.topic_id || ""}
-                    onChange={(e) => {
-                      const updated = { ...config };
-                      if (!updated.telegram_target) {
-                        updated.telegram_target = { bot_token: "", chat_id: "", topic_id: e.target.value, enabled: true };
-                      } else {
-                        updated.telegram_target.topic_id = e.target.value;
-                      }
-                      setConfig(updated);
-                    }}
-                    className={`w-full px-3 py-2 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-cyan-300 focus:border-cyan-500" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-cyan-500 shadow-xs"}`}
-                  />
-                </div>
-              </div>
-
-              {/* Telegram Test Button & Result Banner */}
-              <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400">
-                    Kirim pesan broadcast uji coba untuk memverifikasi Bot Token dan Group ID.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleTestTelegram}
-                    disabled={testingTelegram}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 rounded-lg text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
-                  >
-                    {testingTelegram ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
-                        <span>Menguji Bot...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Test Kirim Pesan Telegram</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {telegramTestResult && (
-                  <div className={`p-3 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-center gap-3 ${
-                    telegramTestResult.success
-                      ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
-                      : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
-                  }`}>
-                    <div className={`p-1.5 rounded-lg border flex-shrink-0 ${
-                      telegramTestResult.success
-                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                        : "bg-rose-500/20 text-rose-400 border-rose-500/40"
-                    }`}>
-                      {telegramTestResult.success ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-rose-400" />
-                      )}
-                    </div>
-                    <div className="space-y-0.5">
-                      <div className={`text-[10px] font-bold uppercase tracking-wider ${
-                        telegramTestResult.success ? "text-emerald-400" : "text-rose-400"
-                      }`}>
-                        {telegramTestResult.success ? "Hasil Uji Telegram (Sukses Terkirim)" : "Hasil Uji Telegram (Gagal)"}
-                      </div>
-                      <span className="font-semibold">{telegramTestResult.message}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Global Central Telegram Notification Config - DEPRECATED / REMOVED FROM UI (Handled purely by backend evaluator) */}
 
             <div className={`p-5 rounded-2xl space-y-4 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Konfigurasi Gateway Server</h3>
