@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.21
-          releaseName: "Hermes Hub Gateway v0.8.21"
-          releaseBody: "Release v0.8.21: Compiler variable cleanup in workspace.rs and main.rs for pure zero-footprint context scaffolding."
+          tagName: v0.8.22
+          releaseName: "Hermes Hub Gateway v0.8.22"
+          releaseBody: "Release v0.8.22: Architecture specifications lock, single-script MCP contract (run_mcp.js), and Rust atomic safe-write engine."
           releaseDraft: false
           prerelease: false
