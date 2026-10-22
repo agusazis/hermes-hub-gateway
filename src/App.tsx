@@ -326,6 +326,11 @@ export default function App() {
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [logFilterWorkspace, setLogFilterWorkspace] = useState<string>('all');
+  // Helper format jam 24 jam (HH:mm:ss)
+  const formatTime24 = (dateInput?: string | number | Date) => {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    return d.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
   const [evolutionFeed, setEvolutionFeed] = useState<Array<{
     id: string;
     timestamp: string;
@@ -516,21 +521,21 @@ export default function App() {
   const releaseLogs: ReleaseLog[] = [
     {
       version: 'v0.8.7',
-      name: 'Hermes Hub Gateway v0.8.7 (Clean Audit Trail & Local Time Integration)',
+      name: 'Hermes Hub Gateway v0.8.7 (Clean Audit Trail & 24-Hour Time Format)',
       date: '22 Oktober 2026',
       type: 'PATCH',
       status: 'LATEST',
-      highlights: 'Penghapusan tombol Bersihkan Log untuk menjaga integritas jejak audit, penyelarasan format waktu dengan konfigurasi lokal perangkat Windows, dan pembersihan tray build pipeline.',
+      highlights: 'Penghapusan tombol Bersihkan Log demi integritas Immutable Audit Trail, standardisasi seluruh format jam ke format 24 jam (HH:mm:ss), dan stabilitas Rust Tauri Tray build.',
       features: [
-        'Immutable Audit Trail: Tombol Bersihkan Log dihapus permanen agar log historis tidak hilang sengaja maupun tidak sengaja.',
-        'Windows Locale Time Alignment: Format timestamp log dan status sinkronisasi secara presisi mengikuti jam sistem operasi Windows pengguna.',
-        'Evolution Logs Unread Badge: Tampilan visual badge +N pada menu sidebar logs.'
+        'Immutable Audit Trail: Menghilangkan tombol Bersihkan Log agar seluruh riwayat koding aman dan permanen.',
+        '24-Hour Standard Time (HH:mm:ss): Seluruh panel log event koding, riwayat mutasi memori, dan status transkrip kini tampil dalam format 24 jam.',
+        'Evolution Logs Unread Badge: Badge counter visual +N pada menu navigasi sidebar.'
       ],
       fixes: [
         'Memperbaiki Rust Tray build agar stabil tanpa error tipe di Tauri v2.'
       ],
       architecture: [
-        'Intl.DateTimeFormat browser/OS locale detection',
+        'Standardized formatTime24 helper with hour12: false',
         'Stable Tauri 2.0 TrayIcon initialization'
       ],
       downloads: [
@@ -1749,10 +1754,10 @@ export default function App() {
   ];
 
   const [logs, setLogs] = useState<{ time: string; event: string; conv?: string; file?: string }[]>([
-    { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
-    { time: new Date().toLocaleTimeString(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
-    { time: new Date().toLocaleTimeString(), event: 'Hermes Hub Gateway Engine online & ready.' },
-    { time: new Date().toLocaleTimeString(), event: 'Single Instance IPC Daemon active (re-launching brings app to focus).' }
+    { time: formatTime24(), event: 'Hermes Hub Gateway Engine & Watcher online.' },
+    { time: formatTime24(), event: 'Unified MCP Named Pipe initialized on \\\\.\\pipe\\hhg-bridge.' },
+    { time: formatTime24(), event: 'Hermes Hub Gateway Engine online & ready.' },
+    { time: formatTime24(), event: 'Single Instance IPC Daemon active (re-launching brings app to focus).' }
   ]);
 
   // Load Real Config from Rust
@@ -1802,16 +1807,16 @@ export default function App() {
       const p = event.payload;
       fetchEvolutionFeed();
       setLogs((prev) => [
-        { time: new Date().toLocaleTimeString(), event: `[WATCHER] Transkrip ${p.conversation_id} terdeteksi -> kirim review ke ${config.default_hermes_evaluator_url}` },
+        { time: formatTime24(), event: `[WATCHER] Transkrip ${p.conversation_id} terdeteksi -> kirim review ke ${config.default_hermes_evaluator_url}` },
         ...prev.slice(0, 50)
       ]);
     });
 
-    const unlistenLesson = listen<any>('lesson-learned', (event) => {
+    const unlistenEvaluator = listen<any>('evaluator-event', (event) => {
       const p = event.payload;
       fetchEvolutionFeed();
       setLogs((prev) => [
-        { time: new Date().toLocaleTimeString(), event: `🎉 [NEW RULE LEARNED] ${p.skill_name}: Aturan baru berhasil di-push ke GitLab!` },
+        { time: formatTime24(), event: `🎉 [NEW RULE LEARNED] ${p.skill_name}: Aturan baru berhasil di-push ke GitLab!` },
         ...prev.slice(0, 50)
       ]);
     });
@@ -1823,7 +1828,7 @@ export default function App() {
     return () => {
       clearInterval(feedInterval);
       unlistenWatcher.then((f) => f());
-      unlistenLesson.then((f) => f());
+      unlistenEvaluator.then((f) => f());
       unlistenTraySync.then((f) => f());
     };
   }, []);
@@ -4910,7 +4915,7 @@ export default function App() {
                                 <span>{item.action_label}</span>
                               </span>
                               <span className="text-[10px] font-mono text-slate-500">
-                                {new Date(item.timestamp).toLocaleTimeString()}
+                                {formatTime24(item.timestamp)}
                               </span>
                             </div>
                             <div className="text-xs text-slate-200 font-medium truncate mb-1">
@@ -4995,7 +5000,7 @@ export default function App() {
                                 {currentEv.action_label}
                               </h3>
                               <span className="px-2 py-0.5 rounded-md bg-slate-800 text-cyan-400 border border-slate-700 text-[10px] font-mono">
-                                {new Date(currentEv.timestamp).toLocaleTimeString()}
+                                {formatTime24(currentEv.timestamp)}
                               </span>
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
