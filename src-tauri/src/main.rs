@@ -61,7 +61,7 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn update_tray_status(app: tauri::AppHandle, tooltip: String, unread_count: u32) -> Result<(), String> {
+fn update_tray_status(app: tauri::AppHandle, tooltip: String, unread_count: u32, icon_rgba: Option<Vec<u8>>, icon_width: Option<u32>, icon_height: Option<u32>) -> Result<(), String> {
     if let Some(tray) = app.tray_by_id("main-tray") {
         let display_tooltip = if unread_count > 0 {
             format!("Hermes Hub Gateway ({} update baru)\n{}", unread_count, tooltip)
@@ -69,6 +69,12 @@ fn update_tray_status(app: tauri::AppHandle, tooltip: String, unread_count: u32)
             "Hermes Hub Gateway (Active Background)".to_string()
         };
         let _ = tray.set_tooltip(Some(display_tooltip));
+
+        if let (Some(rgba), Some(w), Some(h)) = (icon_rgba, icon_width, icon_height) {
+            if let Ok(icon) = tauri::image::Image::new_owned(rgba, w, h) {
+                let _ = tray.set_icon(Some(icon));
+            }
+        }
     }
     Ok(())
 }
