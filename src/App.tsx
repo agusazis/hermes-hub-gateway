@@ -603,11 +603,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.18',
+      name: 'Hermes Hub Gateway v0.8.18 (Bidirectional MCP Knowledge & Rule Authoring Engine)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Rust Bridge Fix: Memperbaiki serialisasi JsonRpcError pada mcp_bridge. Penambahan tool hermes_save_rule untuk bidirectional knowledge authoring dari IDE.',
+      features: [
+        'IDE Rule Authoring (hermes_save_rule): Agent di IDE dapat menyimpan aturan koding imperatif langsung ke ~/.hermes-hub/rules/ via MCP.',
+        'Bidirectional Knowledge Loop: Evaluator menyuplai skill terkurasi, sedangkan IDE menyuplai pattern koding spesifik proyek.',
+        'Fresh Install Out-of-the-Box: Struktur direktori rules otomatis diinisialisasi oleh gateway saat pertama kali menyimpan aturan.',
+        'High-Compliance AGENTS.md Directives: Penambahan panduan penyimpanan aturan baru ke dalam tool execution matrix.'
+      ],
+      fixes: [
+        'Memperbaiki Rust type mismatch pada JsonRpcError struct serialization.'
+      ],
+      architecture: [
+        'Bidirectional Context-as-a-Service',
+        'Zero-Footprint Persistent Rule Repository'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.18/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.18/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.17',
       name: 'Hermes Hub Gateway v0.8.17 (Bidirectional MCP Knowledge & Rule Authoring Engine)',
       date: '22 Oktober 2026',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Bidirectional Knowledge Authoring: Menambahkan tool penulisan hermes_save_rule agar IDE dapat mencatat pola arsitektur & CRUD pattern langsung ke HHG tanpa mengotori project lokal.',
       features: [
         'IDE Rule Authoring (hermes_save_rule): Agent di IDE dapat menyimpan aturan koding imperatif langsung ke ~/.hermes-hub/rules/ via MCP.',
@@ -3049,7 +3074,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.17</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.18</span>
                 </div>
               )}
             </div>
