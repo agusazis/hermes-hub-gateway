@@ -22,7 +22,7 @@
 ### A. Workspace Engine (`src-tauri/src/workspace.rs` & `src-tauri/src/main.rs`)
 * **Role:** Connects codebases to the gateway without directory clutter or OS-level junction symlinks.
 * **Scaffold Invariants (Pure 2 Artifacts):**
-  1. `AGENTS.md`: High-compliance system prompt adhering to RFC 2119 English directives, Turn-1 memory staleness checks, bidirectional rule authoring, Zero-Root Clutter discipline, and Direct MCP Invocation.
+  1. `AGENTS.md`: High-compliance system prompt adhering to RFC 2119 English directives, Turn-1 memory staleness checks, bidirectional rule authoring, Zero-Root Clutter discipline, and Direct MCP Invocation (agnostic to individual MCP tool counts).
   2. `mcp_config.json`: Standard client config mapping `hermes-hub-gateway` to `run_mcp.js` and `mnemosyne` to the SSE endpoint.
 * **Idempotent Reset on Sync:** Whenever "Sync Rules Now" is triggered, HHG automatically pulls the latest rules and re-scaffolds `AGENTS.md` in the target workspace, allowing developers to restore default directives with one click.
 * **Zero Local Folder:** No `.agents/` folder or subdirectories are created inside the project repository.
