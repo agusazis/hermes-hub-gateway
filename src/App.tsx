@@ -603,11 +603,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.24',
+      name: 'Hermes Hub Gateway v0.8.24 (Dynamic Cache Injection & 6 Hermes Tools)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Dynamic Cache Injection: Memastikan seluruh 6 tool kognitif Hermes langsung muncul di IDE tanpa terhalang cache lama mcp_tools_cache.json.',
+      features: [
+        'Dynamic Cache Tool Injection: getCachedData() otomatis menginjeksi seluruh tool hermes_ ke cache lama.',
+        'Intelligent Runner Upgrade: Backend Rust otomatis memperbarui runner script jika terdeteksi versi lama (<15 KB).',
+        'Complete 6-Tool Suite Guaranteed: hermes_list_skills, hermes_get_skill, hermes_list_rules, hermes_get_rule, hermes_save_rule, hermes_consult_specialist.'
+      ],
+      fixes: [
+        'Memperbaiki masalah tool Hermes yang tidak muncul di IDE akibat pembacaan file cache lama mcp_tools_cache.json.'
+      ],
+      architecture: [
+        'Dynamic In-Memory Cache Merge',
+        'Zero-Drift Runner Updater'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.60 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.24/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '3.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.24/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' }
+      ]
+    },
+    {
       version: 'v0.8.23',
       name: 'Hermes Hub Gateway v0.8.23 (Zero-Footprint Readiness Audit & Clean Workspace)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Zero-Footprint Readiness Audit: Menyelaraskan seluruh logika evaluasi kesiapan workspace (Readiness Audit) ke era MCP tanpa menuntut folder .agents fisik di project.',
       features: [
         'Complete 6-Tool Hermes Suite: hermes_list_skills, hermes_get_skill, hermes_list_rules, hermes_get_rule, hermes_save_rule, hermes_consult_specialist.',
@@ -3198,7 +3222,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.23</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.24</span>
                 </div>
               )}
             </div>
