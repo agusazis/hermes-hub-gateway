@@ -21,10 +21,10 @@
 
 ### A. Workspace Engine (`src-tauri/src/workspace.rs` & `src-tauri/src/main.rs`)
 * **Role:** Connects codebases to the gateway without directory clutter or OS-level junction symlinks.
-* **Scaffold Invariants (Exactly 3 Artifacts):**
+* **Scaffold Invariants (Pure 2 Artifacts):**
   1. `AGENTS.md`: High-compliance system prompt adhering to RFC 2119 English directives, Turn-1 memory staleness checks, and bidirectional rule authoring.
   2. `mcp_config.json`: Standard client config mapping `hermes-hub-gateway` to `run_mcp.js` and `mnemosyne` to the SSE endpoint.
-  3. `.agents/tools/agent.ps1`: Deterministic fallback wrapper for commands requiring host VM or raw network access.
+* **Zero Local Folder:** No `.agents/` folder or subdirectories are created inside the project repository.
 * **Prohibited Behavior:**
   - `mklink /J` or `std::os::windows::fs::symlink_dir` MUST NOT be invoked.
   - Physical subfolders `.agents/skills`, `.agents/rules`, `.agents/memory` MUST NOT be created inside the workspace.
