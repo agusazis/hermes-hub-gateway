@@ -54,8 +54,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.9
-          releaseName: "Hermes Hub Gateway v0.8.9"
-          releaseBody: "Release v0.8.9: Restored tray_by_id dynamic tooltip for Windows System Tray, bump UI header to v0.8.9, and enforced 24h format."
+          tagName: v0.8.10
+          releaseName: "Hermes Hub Gateway v0.8.10"
+          releaseBody: "Release v0.8.10: Dynamic Canvas Tray Badge Icon (chat-style red unread badge on Windows tray icon)."
           releaseDraft: false
           prerelease: false
