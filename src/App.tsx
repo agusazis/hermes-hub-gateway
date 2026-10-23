@@ -597,26 +597,27 @@ export default function App() {
   const releaseLogs: ReleaseLog[] = [
     {
       version: 'v0.8.27',
-      name: 'Hermes Hub Gateway v0.8.27 (True Single-File Workspace, Floppy Disk Skills Icon & Timestamp Unread Reset)',
-      date: '22 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.27 (Dynamic Multi-Server Conduit & True Single-File Workspace)',
+      date: '23 Oktober 2026',
       type: 'PATCH',
       status: 'LATEST',
-      highlights: 'Menghapus total pembuatan mcp_config.json dari project root (Pure 1 Artifact: AGENTS.md), menyematkan ikon disket 💾 untuk skill Hermes, dan menerapkan sistem reset unread logs berbasis persistent timestamp.',
+      highlights: 'Menyajikan generator konfigurasi MCP IDE dinamis multi-server terisolasi (<30 tools per proses) untuk mencegah drop schema IDE, menghapus total mcp_config.json dari root project, menyematkan ikon disket 💾 untuk skill Hermes, dan persisten unread counter berbasis timestamp.',
       features: [
+        'Dynamic Multi-Server IDE Conduit: Tombol "Salin Konfigurasi IDE" kini mem-parsing seluruh server MCP aktif menjadi entri mandiri terisolasi (--server=<name>) sehingga muatan schema terbagi rata dan lolos batas validator IDE.',
         'True Single-File Workspace: Root project koding murni HANYA memuat 1 file: AGENTS.md. Menghilangkan total pembuatan mcp_config.json lokal.',
         'Floppy Disk 💾 Icon for Skills: Mengubah visual indikator SOP & skill pembelajaran di Evolution Logs menjadi ikon disket 💾 yang konsisten dengan notifikasi Telegram.',
-        'Persistent Timestamp-Based Unread Counter: Notasi badge logs kini menghitung event baru secara presisi berdasarkan timestamp terakhir dibaca (tersimpan di localStorage) sehingga badge otomatis bersih (0) setelah diklik dan tidak terus menampilkan +100.',
-        'Zero-Clutter Readiness Gatekeeper: Indikator kesiapan memvalidasi ketiadaan file sampah lokal (.agents, USER.md, mcp_config.json).',
+        'Persistent Timestamp-Based Unread Counter: Notasi badge logs menghitung event baru secara presisi berdasarkan timestamp terakhir dibaca (tersimpan di localStorage) sehingga badge otomatis bersih (0) setelah diklik dan tidak terus menampilkan +100.',
         'Official Linux & Windows Binaries: Tersedia paket AppImage, Deb, RPM untuk Linux serta Setup EXE & MSI untuk Windows.'
       ],
       fixes: [
-        'Memperbaiki masalah badge +100 pada Evolution Logs yang terus muncul akibat perbandingan array length.',
+        'Memperbaiki drop schema pada Antigravity IDE akibat penggabungan 168 tools ke dalam satu pipa stdio raksasa (>550 KB).',
+        'Memperbaiki badge +100 pada Evolution Logs yang terus muncul akibat perbandingan array length.',
         'Mencegah file mcp_config.json mengotori status git di root project target.'
       ],
       architecture: [
+        'Dynamic Multi-Server Scoping (--server=...) Protocol',
         'Pure 1-File AGENTS.md Contract',
-        'Timestamp Delta Log Counter',
-        'Global IDE Level MCP Binding'
+        'Timestamp Delta Log Counter'
       ],
       downloads: [
         { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
@@ -4441,64 +4442,96 @@ export default function App() {
         {activeTab === "mcp_hub" && (
           <div className="space-y-4">
             {/* IDE Connection Setup & Auto-Discovery Helper */}
-            <div className={`p-4 rounded-2xl flex items-center justify-between transition-colors ${
+            <div className={`p-4 rounded-2xl space-y-3 transition-colors ${
               effectiveTheme === 'dark' 
                 ? 'bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/30 border border-cyan-500/30 shadow-lg' 
                 : 'bg-cyan-50/70 border border-cyan-200/80 shadow-sm'
             }`}>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg border ${
-                    effectiveTheme === 'dark' 
-                      ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
-                      : 'bg-white text-cyan-700 border-cyan-200 shadow-xs'
-                  }`}>
-                    <Network className="w-4 h-4" />
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-1.5 rounded-lg border ${
+                      effectiveTheme === 'dark' 
+                        ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
+                        : 'bg-white text-cyan-700 border-cyan-200 shadow-xs'
+                    }`}>
+                      <Network className="w-4 h-4" />
+                    </div>
+                    <h4 className={`text-xs font-bold uppercase tracking-wider ${
+                      effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                    }`}>
+                      Koneksi IDE (Antigravity / VS Code / Cursor) ke HHG
+                    </h4>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-medium">
+                      DYNAMIC MULTI-SERVER READY
+                    </span>
                   </div>
-                  <h4 className={`text-xs font-bold uppercase tracking-wider ${
-                    effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'
+                  <p className={`text-xs leading-relaxed ${
+                    effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
                   }`}>
-                    Koneksi IDE (Antigravity / VS Code / Cursor) ke HHG
-                  </h4>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-medium">
-                    UNIFIED BRIDGE READY
-                  </span>
+                    Konfigurasi MCP IDE kini di-generate secara <b>dinamis per server</b> dari katalog aktif HHG. Setiap server terisolasi ke proses child (&lt;30 tools per server) untuk <b>mencegah drop schema akibat batas payload IDE</b>. Kredensial sensitif tetap aman di brankas HHG.
+                  </p>
                 </div>
-                <p className={`text-xs leading-snug ${
-                  effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
-                }`}>
-                  Cukup daftarkan <b>1 konfigurasi MCP tunggal</b> ini di IDE Anda. Seluruh server koding (Database, Storage, Router, Grafana, & SOP Skills) otomatis terhubung secara transparan dengan namespace masing-masing server via <code className={`px-1.5 py-0.5 rounded font-mono text-[11px] ${effectiveTheme === 'dark' ? 'bg-slate-950 text-cyan-300' : 'bg-white border border-cyan-200 text-cyan-800'}`}>run_mcp.js</code>.
-                </p>
+
+                <div className="shrink-0">
+                  <button
+                    onClick={() => {
+                      const home = "C:/Users/user";
+                      const nodePath = `${home}/AppData/Local/hermes/node/node.exe`;
+                      const runnerPath = `${home}/.hermes-hub/scripts/run_mcp.js`;
+
+                      const serversObj: Record<string, any> = {
+                        "hermes-gateway": {
+                          command: nodePath,
+                          args: [runnerPath, "--server=hermes"]
+                        }
+                      };
+
+                      (config.mcp_servers || []).filter(s => s.enabled).forEach(s => {
+                        const sName = (s.name || "server").toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+                        if (sName === "mnemosyne" && s.args && s.args.some((a: string) => a.includes("http"))) {
+                          const urlArg = s.args.find((a: string) => a.startsWith("http")) || "http://172.168.1.202:8080/sse";
+                          serversObj["mnemosyne"] = {
+                            serverUrl: urlArg.replace(/\/mcp$/, "/sse")
+                          };
+                        } else {
+                          serversObj[sName] = {
+                            command: nodePath,
+                            args: [runnerPath, `--server=${sName}`]
+                          };
+                        }
+                      });
+
+                      handleCopySnippet(JSON.stringify({ mcpServers: serversObj }, null, 2), "ide_json");
+                    }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all whitespace-nowrap"
+                  >
+                    {copiedSnippet === "ide_json" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>Copied JSON!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin Konfigurasi IDE (Semua Server)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    handleCopySnippet(JSON.stringify({
-                      mcpServers: {
-                        "hermes-hub-gateway": {
-                          command: "C:/Users/user/AppData/Local/hermes/node/node.exe",
-                          args: [
-                            "C:/Users/user/.hermes-hub/scripts/run_mcp.js"
-                          ]
-                        }
-                      }
-                    }, null, 2), "ide_json");
-                  }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all whitespace-nowrap"
-                >
-                  {copiedSnippet === "ide_json" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-300" />
-                      <span>Copied JSON!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy IDE MCP Config</span>
-                    </>
-                  )}
-                </button>
+              {/* Callout Penegasan Wajib Salin Ulang */}
+              <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-center gap-2.5 ${
+                effectiveTheme === 'dark' ? 'bg-amber-950/30 border-amber-800/40 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'
+              }`}>
+                <span className="text-base shrink-0">⚠️</span>
+                <div>
+                  <b>PENTING: SINKRONISASI KONFIGURASI IDE</b>
+                  <p className="opacity-90">
+                    Setiap kali Anda <b>menambah, mengubah, atau menghapus server MCP</b> di HHG, Anda wajib mengklik tombol <b>"Salin Konfigurasi IDE"</b> di atas lalu menempelkan (paste) ke pengaturan MCP IDE Anda (menu <i>Manage MCP Servers</i>) agar server baru langsung terbaca dan aktif.
+                  </p>
+                </div>
               </div>
             </div>
 
