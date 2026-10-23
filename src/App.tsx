@@ -66,6 +66,18 @@ interface SkillHierarchyItem {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+
+  const [lastReadTimestamp, setLastReadTimestamp] = useState<number>(() => {
+    try {
+      return parseInt(localStorage.getItem('hhg_last_read_log_ts') || '0', 10);
+    } catch (_) {
+      return 0;
+    }
+  });
+  const lastReadTimestampRef = useRef(lastReadTimestamp);
+  lastReadTimestampRef.current = lastReadTimestamp;
   const [wsDetailTab, setWsDetailTab] = useState<'readiness' | 'skills'>('readiness');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
 
@@ -585,22 +597,25 @@ export default function App() {
   const releaseLogs: ReleaseLog[] = [
     {
       version: 'v0.8.27',
-      name: 'Hermes Hub Gateway v0.8.27 (True Single-File Workspace & Multi-Platform Release)',
+      name: 'Hermes Hub Gateway v0.8.27 (True Single-File Workspace, Floppy Disk Skills Icon & Timestamp Unread Reset)',
       date: '22 Oktober 2026',
       type: 'PATCH',
       status: 'LATEST',
-      highlights: 'Menghapus total pembuatan mcp_config.json dari project root (Pure 1 Artifact: AGENTS.md), menyelaraskan Readiness Audit ke Pure Zero-Clutter, dan merilis paket multi-platform resmi.',
+      highlights: 'Menghapus total pembuatan mcp_config.json dari project root (Pure 1 Artifact: AGENTS.md), menyematkan ikon disket 💾 untuk skill Hermes, dan menerapkan sistem reset unread logs berbasis persistent timestamp.',
       features: [
         'True Single-File Workspace: Root project koding murni HANYA memuat 1 file: AGENTS.md. Menghilangkan total pembuatan mcp_config.json lokal.',
-        'Global IDE Configuration Standard: Menetapkan pola registrasi MCP terpusat via tombol "Salin Konfigurasi IDE" di UI HHG langsung ke setting IDE.',
+        'Floppy Disk 💾 Icon for Skills: Mengubah visual indikator SOP & skill pembelajaran di Evolution Logs menjadi ikon disket 💾 yang konsisten dengan notifikasi Telegram.',
+        'Persistent Timestamp-Based Unread Counter: Notasi badge logs kini menghitung event baru secara presisi berdasarkan timestamp terakhir dibaca (tersimpan di localStorage) sehingga badge otomatis bersih (0) setelah diklik dan tidak terus menampilkan +100.',
         'Zero-Clutter Readiness Gatekeeper: Indikator kesiapan memvalidasi ketiadaan file sampah lokal (.agents, USER.md, mcp_config.json).',
         'Official Linux & Windows Binaries: Tersedia paket AppImage, Deb, RPM untuk Linux serta Setup EXE & MSI untuk Windows.'
       ],
       fixes: [
+        'Memperbaiki masalah badge +100 pada Evolution Logs yang terus muncul akibat perbandingan array length.',
         'Mencegah file mcp_config.json mengotori status git di root project target.'
       ],
       architecture: [
         'Pure 1-File AGENTS.md Contract',
+        'Timestamp Delta Log Counter',
         'Global IDE Level MCP Binding'
       ],
       downloads: [
@@ -2348,12 +2363,20 @@ export default function App() {
             let targetDiff = 0;
             let summaryText = 'Semua log sudah dibaca';
 
-            if (activeTab === 'logs') {
-              setLastReadFeedCount(data.length);
+            const currentActiveTab = activeTabRef.current;
+            const currentLastReadTs = lastReadTimestampRef.current;
+
+            if (currentActiveTab === 'logs') {
+              const newestTs = data[0]?.timestamp ? new Date(data[0].timestamp).getTime() : Date.now();
+              setLastReadTimestamp(newestTs);
+              try { localStorage.setItem('hhg_last_read_log_ts', newestTs.toString()); } catch (_) {}
               setUnreadEvolutionCount(0);
               targetDiff = 0;
             } else {
-              targetDiff = Math.max(0, data.length - lastReadFeedCount);
+              targetDiff = data.filter((item: any) => {
+                const itemTs = item.timestamp ? new Date(item.timestamp).getTime() : 0;
+                return itemTs > currentLastReadTs;
+              }).length;
               setUnreadEvolutionCount(targetDiff);
               const latest = data[0];
               summaryText = targetDiff > 0 && latest ? `[${latest.type.toUpperCase()}] ${latest.title}` : 'Semua log sudah dibaca';
@@ -3270,7 +3293,9 @@ export default function App() {
             <button 
               onClick={() => {
                 setActiveTab('logs');
-                setLastReadFeedCount(evolutionFeed.length);
+                const newestTs = evolutionFeed[0]?.timestamp ? new Date(evolutionFeed[0].timestamp).getTime() : Date.now();
+                setLastReadTimestamp(newestTs);
+                try { localStorage.setItem('hhg_last_read_log_ts', newestTs.toString()); } catch (_) {}
                 setUnreadEvolutionCount(0);
                 generateTrayBadgeIcon(0).then((iconRes) => {
                   invoke('update_tray_status', {
@@ -3293,7 +3318,7 @@ export default function App() {
                   <span>Evolution Logs</span>
                   {unreadEvolutionCount > 0 && (
                     <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500 text-black">
-                      +{unreadEvolutionCount}
+                      {unreadEvolutionCount > 99 ? '99+' : unreadEvolutionCount}
                     </span>
                   )}
                 </div>
@@ -5346,9 +5371,20 @@ export default function App() {
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <span className={`text-xs font-semibold flex items-center gap-1.5 ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>
-                  <Terminal className="w-4 h-4 text-cyan-500" /> Watcher Telemetry & Evolution Feed
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-semibold flex items-center gap-1.5 ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>
+                    <Terminal className="w-4 h-4 text-cyan-500" /> Watcher Telemetry & Evolution Feed
+                  </span>
+                  {unreadEvolutionCount > 0 ? (
+                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      {unreadEvolutionCount} Baru
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-mono rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                      Semua Sudah Dibaca
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-slate-400">
                   Total <b>{evolutionFeed.length} event pembelajaran</b> (Mnemosyne & GitLab Skills) identik dengan notifikasi Telegram.
                 </p>
@@ -5418,7 +5454,7 @@ export default function App() {
                           >
                             <div className="flex items-center justify-between mb-1">
                               <span className={`font-mono text-xs font-bold truncate flex items-center gap-1.5 ${isMemory ? "text-cyan-400" : "text-emerald-400"}`}>
-                                <span>{isMemory ? "🧠" : "✨"}</span>
+                                <span>{isMemory ? "🧠" : "💾"}</span>
                                 <span>{item.action_label}</span>
                               </span>
                               <span className="text-[10px] font-mono text-slate-500">
@@ -5502,7 +5538,7 @@ export default function App() {
                         <div className={`flex items-start justify-between pb-4 border-b ${effectiveTheme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xl">{isMemory ? "🧠" : "✨"}</span>
+                              <span className="text-xl">{isMemory ? "🧠" : "💾"}</span>
                               <h3 className={`font-bold text-base font-mono ${effectiveTheme === "dark" ? "text-white" : "text-slate-900"}`}>
                                 {currentEv.action_label}
                               </h3>
@@ -5526,7 +5562,7 @@ export default function App() {
                           </div>
                           <div className="p-3.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-xs font-mono space-y-2 leading-relaxed">
                             <div className="font-bold text-cyan-300">
-                              {isMemory ? "🧠 Self-improvement review: Canonical memory saved to Mnemosyne" : "✨ Self-improvement review: " + currentEv.action_label}
+                              {isMemory ? "🧠 Self-improvement review: Canonical memory saved to Mnemosyne" : "💾 Self-improvement review: " + currentEv.action_label}
                             </div>
                             <div>• <b>Workspace</b>: <code className="text-amber-300">{currentEv.workspace_id}</code></div>
                             <div>• <b>Author</b>: <b>{currentEv.author}</b></div>
