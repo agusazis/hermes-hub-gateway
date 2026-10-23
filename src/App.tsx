@@ -539,8 +539,78 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.1');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.31');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
+
+  // Auto-Update & Update Notification State
+  const APP_VERSION = 'v0.8.31';
+  const [updateInfo, setUpdateInfo] = useState<{
+    has_update: boolean;
+    latest_version: string;
+    release_name: string;
+    release_notes: string;
+    html_url: string;
+    download_url?: string;
+    asset_name?: string;
+  } | null>(null);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [updateStatusMsg, setUpdateStatusMsg] = useState<string>('');
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
+
+  const handleCheckUpdate = async (isManual = false) => {
+    setIsCheckingUpdate(true);
+    setUpdateStatusMsg('');
+    try {
+      const res = await invoke<any>('check_app_update', { currentVersion: APP_VERSION });
+      setUpdateInfo(res);
+      if (res?.has_update) {
+        setShowUpdateModal(true);
+      } else if (isManual) {
+        setUpdateStatusMsg(`Aplikasi sudah dalam versi terbaru (${APP_VERSION})`);
+        setTimeout(() => setUpdateStatusMsg(''), 4000);
+      }
+    } catch (err: any) {
+      if (isManual) {
+        setUpdateStatusMsg(`Gagal memeriksa update: ${err?.toString() || 'Koneksi gagal'}`);
+        setTimeout(() => setUpdateStatusMsg(''), 5000);
+      }
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleExecuteUpdate = async () => {
+    if (!updateInfo?.download_url || !updateInfo?.asset_name) {
+      if (updateInfo?.html_url) {
+        invoke('open_in_browser', { url: updateInfo.html_url }).catch(() => {});
+      }
+      return;
+    }
+
+    setIsUpdating(true);
+    setUpdateStatusMsg(`Mengunduh installer ${updateInfo.asset_name}...`);
+    try {
+      const msg = await invoke<string>('download_and_install_update', {
+        downloadUrl: updateInfo.download_url,
+        assetName: updateInfo.asset_name
+      });
+      setUpdateStatusMsg(msg);
+      setTimeout(() => setShowUpdateModal(false), 3000);
+    } catch (err: any) {
+      setUpdateStatusMsg(`Gagal instalasi: ${err?.toString() || 'Error eksekusi installer'}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check update on launch (delayed 3s)
+    const timer = setTimeout(() => {
+      handleCheckUpdate(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   interface ReleaseLog {
     version: string;
@@ -557,11 +627,40 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.31',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.31 (One-Click Auto Update & Desktop Notification)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Fitur Pembaruan Otomatis Terintegrasi: Auto-check rilis baru di background, popup modal notifikasi update dengan catatan rilis resmi, serta tombol eksekusi update 1-klik langsung dari aplikasi tanpa perlu download manual.',
+      features: [
+        'One-Click Auto Update: Tombol Update Sekarang otomatis mengunduh installer resmi (.exe / .AppImage / .deb) dan langsung meluncurkan proses pembaruan sistem.',
+        'Desktop Release Notification: Banner & indikator badge dinamis di header serta popup rilis resmi saat versi baru terdeteksi di GitHub Releases.',
+        'Manual Check Trigger: Tombol periksa update manual di header dan tab Version Logs untuk memverifikasi versi terkini on-demand.',
+        'Cross-Platform SemVer Evaluator: Komparasi versi cerdas untuk memastikan kompatibilitas rilis Windows, Linux, dan macOS.'
+      ],
+      fixes: [
+        'Memperbaiki alur pembaruan yang sebelumnya mewajibkan pengguna mengunduh manual dari browser.',
+        'Menyempurnakan integrasi rilis resmi ke antarmuka aplikasi.'
+      ],
+      architecture: [
+        'Native Background Updater Bridge (Reqwest HTTP Streaming)',
+        'Platform-Aware Installer Launcher (Windows Shell Execute & Linux Executable Permissions)'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.31/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.20 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.31/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.31/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.31/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.31/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.30',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.30 (Cross-Platform OS Detection, Mnemosyne Direct Route & Privacy Isolation)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Dukungan lintas OS penuh: Native File Picker Linux (zenity/kdialog), Direct Routing otomatis untuk Mnemosyne (mnemosyne_remember & recall), Auto-Detect path OS dinamis untuk snippet IDE, format khusus Zed Editor (~/.config/zed/settings.json), serta isolasi privasi total pada One-Key Provisioning.',
       features: [
         'Automatic Mnemosyne Direct Route: Memperbaiki kendala namespace routing mnemosyne_* di IDE Antigravity dengan bridging HTTP JSON-RPC langsung ke server memori terpusat.',
@@ -3429,6 +3528,47 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Tombol Periksa Update / Notifikasi Update */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  if (updateInfo?.has_update) {
+                    setShowUpdateModal(true);
+                  } else {
+                    handleCheckUpdate(true);
+                  }
+                }}
+                disabled={isCheckingUpdate || isUpdating}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                  updateInfo?.has_update
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 shadow-md animate-pulse'
+                    : effectiveTheme === 'dark'
+                      ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+                      : 'bg-white border-slate-300 text-slate-700 hover:text-slate-900 shadow-xs'
+                }`}
+                title="Periksa rilis dan pembaruan aplikasi"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin text-cyan-400' : updateInfo?.has_update ? 'text-amber-400' : 'text-slate-400'}`} />
+                <span>
+                  {isCheckingUpdate
+                    ? 'Memeriksa...'
+                    : updateInfo?.has_update
+                      ? `Update Baru (${updateInfo.latest_version})`
+                      : `v0.8.30`}
+                </span>
+                {updateInfo?.has_update && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                )}
+              </button>
+
+              {updateStatusMsg && !showUpdateModal && (
+                <div className="absolute right-0 top-full mt-2 z-50 px-3 py-1.5 rounded-lg bg-slate-950/95 border border-cyan-500/30 text-[11px] font-mono text-cyan-300 shadow-xl whitespace-nowrap animate-in fade-in">
+                  {updateStatusMsg}
+                </div>
+              )}
+            </div>
+
             {/* Theme Mode Toggle (Dark / Light / System) */}
             <div className={`flex items-center p-1 rounded-xl border transition-all ${
               effectiveTheme === 'dark' 
@@ -5773,6 +5913,15 @@ export default function App() {
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCheckUpdate(true)}
+                  disabled={isCheckingUpdate}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-mono font-semibold transition-all shadow-xs"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                  <span>{isCheckingUpdate ? 'Memeriksa...' : 'Cek Update Rilis'}</span>
+                </button>
                 <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-semibold">
                   TOTAL: {releaseLogs.length} RILIS RESMI
                 </span>
@@ -6367,6 +6516,100 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* POPUP MODAL NOTIFIKASI UPDATE APLIKASI */}
+      {showUpdateModal && updateInfo?.has_update && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className={`w-full max-w-lg rounded-2xl border p-6 space-y-5 shadow-2xl transition-all ${
+            effectiveTheme === 'dark' ? 'bg-slate-900 border-amber-500/40' : 'bg-white border-amber-300'
+          }`}>
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl">
+                  <RefreshCw className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500 text-slate-950">
+                      UPDATE TERSEDIA
+                    </span>
+                    <span className="text-xs font-mono text-slate-400">
+                      {APP_VERSION} → <strong className="text-amber-400">{updateInfo.latest_version}</strong>
+                    </span>
+                  </div>
+                  <h3 className={`text-base font-bold mt-1 ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                    {updateInfo.release_name || `Hermes Hub Gateway ${updateInfo.latest_version}`}
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUpdateModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={`p-4 rounded-xl border max-h-48 overflow-y-auto space-y-2 text-xs font-mono leading-relaxed ${
+              effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+            }`}>
+              <div className="text-[10px] font-bold text-slate-500 uppercase">Catatan Rilis (Release Notes):</div>
+              <div className="whitespace-pre-wrap">{updateInfo.release_notes || 'Pembaruan stabilitas sistem, performa MCP runner, dan peningkatan lintas OS.'}</div>
+            </div>
+
+            {updateStatusMsg && (
+              <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-xs font-mono text-cyan-300 flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                <span>{updateStatusMsg}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  if (updateInfo.html_url) {
+                    invoke('open_in_browser', { url: updateInfo.html_url }).catch(() => {});
+                  }
+                }}
+                className="text-xs text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                Lihat di GitHub Releases ↗
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUpdateModal(false)}
+                  disabled={isUpdating}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                >
+                  Nanti Saja
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteUpdate}
+                  disabled={isUpdating}
+                  className="flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 transition-all"
+                >
+                  {isUpdating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Memasang...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span>Update Sekarang</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

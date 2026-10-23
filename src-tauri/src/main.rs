@@ -193,6 +193,222 @@ fn open_in_browser(url: String) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct AppUpdateInfo {
+    pub current_version: String,
+    pub latest_version: String,
+    pub has_update: bool,
+    pub release_name: String,
+    pub release_notes: String,
+    pub published_at: String,
+    pub html_url: String,
+    pub download_url: Option<String>,
+    pub asset_name: Option<String>,
+}
+
+#[tauri::command]
+async fn check_app_update(current_version: String) -> Result<AppUpdateInfo, String> {
+    let client = reqwest::Client::builder()
+        .user_agent("HermesHubGateway-Updater")
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("Gagal inisialisasi HTTP client: {}", e))?;
+
+    let url = "https://api.github.com/repos/agusazis/hermes-hub-gateway/releases/latest";
+    let resp = client.get(url)
+        .header("Accept", "application/vnd.github.v3+json")
+        .send()
+        .await
+        .map_err(|e| format!("Gagal menghubungi server update: {}", e))?;
+
+    if !resp.status().is_success() {
+        return Err(format!("Server update mengembalikan status HTTP {}", resp.status()));
+    }
+
+    let release_val: serde_json::Value = resp.json().await
+        .map_err(|e| format!("Gagal mem-parsing metadata rilis: {}", e))?;
+
+    let tag_name = release_val.get("tag_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    let release_name = release_val.get("name")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&tag_name)
+        .to_string();
+
+    let release_notes = release_val.get("body")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    let published_at = release_val.get("published_at")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    let html_url = release_val.get("html_url")
+        .and_then(|v| v.as_str())
+        .unwrap_or("https://github.com/agusazis/hermes-hub-gateway/releases")
+        .to_string();
+
+    // Normalisasi versi string (contoh: v0.8.30 vs 0.8.30)
+    let clean_curr = current_version.trim_start_matches('v').trim();
+    let clean_latest = tag_name.trim_start_matches('v').trim();
+
+    // Simple SemVer comparison helper
+    fn parse_semver(s: &str) -> Vec<u64> {
+        s.split('.')
+            .map(|p| p.chars().take_while(|c| c.is_ascii_digit()).collect::<String>())
+            .filter_map(|p| p.parse::<u64>().ok())
+            .collect()
+    }
+
+    let curr_parts = parse_semver(clean_curr);
+    let latest_parts = parse_semver(clean_latest);
+
+    let mut has_update = false;
+    for i in 0..std::cmp::max(curr_parts.len(), latest_parts.len()) {
+        let c = curr_parts.get(i).copied().unwrap_or(0);
+        let l = latest_parts.get(i).copied().unwrap_or(0);
+        if l > c {
+            has_update = true;
+            break;
+        } else if l < c {
+            has_update = false;
+            break;
+        }
+    }
+
+    // Deteksi aset binary yang tepat sesuai platform client saat ini
+    let mut download_url = None;
+    let mut asset_name = None;
+
+    if let Some(assets) = release_val.get("assets").and_then(|v| v.as_array()) {
+        #[cfg(windows)]
+        let target_ext = "-setup.exe";
+        #[cfg(target_os = "linux")]
+        let target_ext = ".AppImage";
+        #[cfg(target_os = "macos")]
+        let target_ext = ".dmg";
+
+        for asset in assets {
+            if let Some(name) = asset.get("name").and_then(|v| v.as_str()) {
+                if name.ends_with(target_ext) {
+                    asset_name = Some(name.to_string());
+                    download_url = asset.get("browser_download_url").and_then(|v| v.as_str()).map(|s| s.to_string());
+                    break;
+                }
+            }
+        }
+
+        // Fallback jika installer spesifik di atas tidak ditemukan
+        if download_url.is_none() {
+            for asset in assets {
+                if let Some(name) = asset.get("name").and_then(|v| v.as_str()) {
+                    #[cfg(windows)]
+                    let matched = name.ends_with(".exe") || name.ends_with(".msi");
+                    #[cfg(target_os = "linux")]
+                    let matched = name.ends_with(".AppImage") || name.ends_with(".deb") || name.ends_with(".rpm");
+                    #[cfg(target_os = "macos")]
+                    let matched = name.ends_with(".dmg") || name.ends_with(".tar.gz");
+
+                    if matched {
+                        asset_name = Some(name.to_string());
+                        download_url = asset.get("browser_download_url").and_then(|v| v.as_str()).map(|s| s.to_string());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(AppUpdateInfo {
+        current_version,
+        latest_version: tag_name,
+        has_update,
+        release_name,
+        release_notes,
+        published_at,
+        html_url,
+        download_url,
+        asset_name,
+    })
+}
+
+#[tauri::command]
+async fn download_and_install_update(download_url: String, asset_name: String) -> Result<String, String> {
+    if download_url.trim().is_empty() {
+        return Err("URL download pembaruan tidak valid.".to_string());
+    }
+
+    let client = reqwest::Client::builder()
+        .user_agent("HermesHubGateway-Updater")
+        .build()
+        .map_err(|e| format!("Gagal inisialisasi HTTP client: {}", e))?;
+
+    let resp = client.get(&download_url)
+        .send()
+        .await
+        .map_err(|e| format!("Gagal mengunduh file pembaruan: {}", e))?;
+
+    if !resp.status().is_success() {
+        return Err(format!("Gagal download file rilis (HTTP {})", resp.status()));
+    }
+
+    let bytes = resp.bytes().await
+        .map_err(|e| format!("Gagal membaca buffer paket rilis: {}", e))?;
+
+    let temp_dir = std::env::temp_dir();
+    let target_file_path = temp_dir.join(&asset_name);
+
+    std::fs::write(&target_file_path, &bytes)
+        .map_err(|e| format!("Gagal menyimpan installer rilis ke disk: {}", e))?;
+
+    let installer_str = target_file_path.to_string_lossy().to_string();
+
+    #[cfg(windows)]
+    {
+        // Jalankan installer setup di Windows
+        let _ = std::process::Command::new("cmd")
+            .args(&["/c", "start", "", &installer_str])
+            .spawn()
+            .map_err(|e| format!("Gagal meluncurkan installer Windows: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(metadata) = std::fs::metadata(&target_file_path) {
+            let mut perms = metadata.permissions();
+            perms.set_mode(0o755);
+            let _ = std::fs::set_permissions(&target_file_path, perms);
+        }
+
+        if asset_name.ends_with(".AppImage") {
+            let _ = std::process::Command::new(&target_file_path)
+                .spawn()
+                .map_err(|e| format!("Gagal mengeksekusi AppImage Linux: {}", e))?;
+        } else {
+            let _ = std::process::Command::new("xdg-open")
+                .arg(&target_file_path)
+                .spawn()
+                .map_err(|e| format!("Gagal membuka installer Linux: {}", e))?;
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("open")
+            .arg(&target_file_path)
+            .spawn()
+            .map_err(|e| format!("Gagal membuka paket instalasi macOS: {}", e))?;
+    }
+
+    Ok(format!("Installer {} berhasil diunduh dan diluncurkan.", asset_name))
+}
+
 #[tauri::command]
 fn remove_workspace_junction(target_path: String) -> Result<(), String> {
     if target_path.trim().is_empty() {
@@ -716,6 +932,8 @@ async fn main() {
             link_workspace_junction,
             remove_workspace_junction,
             open_in_browser,
+            check_app_update,
+            download_and_install_update,
             update_tray_status
         ])
         .run(tauri::generate_context!())
