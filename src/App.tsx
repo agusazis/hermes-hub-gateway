@@ -676,14 +676,16 @@ export default function App() {
       name: 'Hermes Hub Gateway v0.8.35 (Remote SSH Multi-Target MCP & Isolated Ed25519 Vault)',
       type: 'FEATURE',
       status: 'LATEST',
-      highlights: 'Fitur Unggulan Remote SSH Gateway: Mengontrol multi-target VM (Almalinux/Ubuntu/Debian) langsung dari IDE melalui 1 discrete server remote-ssh, dilengkapi automated SSH key provisioning, Zero-Password Persistence, dan toggle izin aman (ReadOnly vs Full Sudo).',
+      highlights: 'Fitur Unggulan Remote SSH Gateway & Seamless Auto-Relaunch: Mengontrol multi-target VM (Almalinux/Ubuntu/Debian) langsung dari IDE melalui 1 discrete server remote-ssh, isolasi Ed25519 key, serta perbaikan updater otomatis agar aplikasi langsung terbuka kembali setelah instalasi selesai.',
       features: [
         'Discrete Remote-SSH MCP: IDE Antigravity dan Zed Editor dapat mengontrol banyak server/VM sekaligus hanya dengan 1 baris server remote-ssh tanpa spam konfigurasi.',
+        'Seamless Update & Auto-Relaunch: Setelah update terpasang di background, HHG otomatis terbuka kembali tanpa perlu di-klik manual dari desktop.',
         'Isolated Ed25519 Key Vault: Kunci privat disimpan secara terisolasi di ~/.hermes-hub/vault/ssh_keys/ sehingga terminal lokal Windows tidak dapat sembarangan membuka SSH langsung.',
         'Zero-Password Persistence: Password root/user hanya digunakan sekali saat pairing public key awal lalu langsung dihapus bersih dari memori.',
         'Dynamic Permission Toggle: Kendali fleksibel Read-Only (Safe Audit) vs Full Sudo (Maintenance/Migrasi PHP) langsung dari antarmuka HHG.'
       ],
       fixes: [
+        'Memperbaiki kendala aplikasi HHG yang tidak otomatis membuka kembali setelah proses silent update selesai.',
         'Mencegah risiko kebocoran SSH key antar programmer dengan isolasi identitas user per-laptop.',
         'Menyediakan tool native ssh_list_hosts, ssh_run_command, ssh_read_file, dan ssh_write_file untuk seluruh agent IDE.'
       ],

@@ -376,11 +376,23 @@ async fn download_and_install_update(download_url: String, asset_name: String) -
 
     #[cfg(windows)]
     {
-        // Jalankan installer setup di Windows secara silent/background (/S) lalu beri jeda singkat
+        // Ambil path executable HHG yang sedang berjalan agar bisa di-launch ulang setelah update
+        let current_exe = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("Hermes Hub Gateway.exe"));
+        let current_exe_str = current_exe.to_string_lossy().to_string();
+
+        // Buat batch script wrapper di temp: jalankan installer silent (/S), tunggu hingga selesai, lalu start kembali aplikasi HHG
+        let restart_bat = temp_dir.join("hhg_update_restart.bat");
+        let bat_content = format!(
+            "@echo off\r\ntimeout /t 2 /nobreak >nul\r\nstart /wait \"\" \"{installer}\" /S\r\ntimeout /t 1 /nobreak >nul\r\nstart \"\" \"{app_exe}\"\r\ndel \"%~f0\"\r\n",
+            installer = installer_str,
+            app_exe = current_exe_str
+        );
+        let _ = std::fs::write(&restart_bat, bat_content);
+
         let _ = std::process::Command::new("cmd")
-            .args(&["/c", "start", "", &installer_str, "/S"])
+            .args(&["/c", "start", "", &restart_bat.to_string_lossy().to_string()])
             .spawn()
-            .map_err(|e| format!("Gagal meluncurkan installer Windows: {}", e))?;
+            .map_err(|e| format!("Gagal meluncurkan script updater restart Windows: {}", e))?;
     }
 
     #[cfg(target_os = "linux")]
@@ -393,9 +405,20 @@ async fn download_and_install_update(download_url: String, asset_name: String) -
         }
 
         if asset_name.ends_with(".AppImage") {
-            let _ = std::process::Command::new(&target_file_path)
-                .spawn()
-                .map_err(|e| format!("Gagal mengeksekusi AppImage Linux: {}", e))?;
+            let restart_sh = temp_dir.join("hhg_update_restart.sh");
+            let sh_content = format!(
+                "#!/bin/bash\nsleep 2\n\"{}\" &\nrm -f \"$0\"\n",
+                target_file_path.to_string_lossy()
+            );
+            let _ = std::fs::write(&restart_sh, sh_content);
+            if let Ok(meta) = std::fs::metadata(&restart_sh) {
+                let mut p = meta.permissions();
+                p.set_mode(0o755);
+                let _ = std::fs::set_permissions(&restart_sh, p);
+            }
+            let _ = std::process::Command::new("bash")
+                .arg(restart_sh.to_str().unwrap_or(""))
+                .spawn();
         } else {
             let _ = std::process::Command::new("xdg-open")
                 .arg(&target_file_path)

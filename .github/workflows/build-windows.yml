@@ -64,6 +64,6 @@ jobs:
         with:
           tagName: v0.8.35
           releaseName: "Hermes Hub Gateway v0.8.35"
-          releaseBody: "Release v0.8.35: Remote SSH Multi-Target MCP Gateway, Isolated Ed25519 Key Vault, Dynamic ReadOnly vs Full (Sudo) Access Controls, and Direct IDE Bridge."
+          releaseBody: "Release v0.8.35: Remote SSH Multi-Target MCP Gateway, Isolated Ed25519 Key Vault, Dynamic ReadOnly vs Full (Sudo) Access Controls, and Seamless Auto-Relaunch on Background Update."
           releaseDraft: false
           prerelease: false
