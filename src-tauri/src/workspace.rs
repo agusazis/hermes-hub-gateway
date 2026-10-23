@@ -307,29 +307,8 @@ Evaluate tools dynamically based on their live `description` in your active tool
     // Pure Zero-Footprint Invariant: DILARANG MEMBUAT USER.md atau file sampah lain di root project!
     // Profil pengguna sudah disimpan di Mnemosyne memori kognitif terpusat.
 
-    // 3. mcp_config.json (Cross-Platform Dynamic Path)
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
-    #[cfg(windows)]
-    let node_cmd = home.join("AppData").join("Local").join("hermes").join("node").join("node.exe");
-    #[cfg(not(windows))]
-    let node_cmd = PathBuf::from("node");
-
-    let run_mcp_script = home.join(".hermes-hub").join("scripts").join("run_mcp.js");
-
-    let mcp_config_json = serde_json::json!({
-        "mcpServers": {
-            "mnemosyne": {
-                "serverUrl": "http://172.168.1.202:8080/sse"
-            },
-            "hermes-hub-gateway": {
-                "command": node_cmd.to_string_lossy().replace('\\', "/"),
-                "args": [
-                    run_mcp_script.to_string_lossy().replace('\\', "/")
-                ]
-            }
-        }
-    });
-    fs::write(dest_dir.join("mcp_config.json"), serde_json::to_string_pretty(&mcp_config_json).unwrap_or_default()).map_err(|e| e.to_string())?;
+    // Pure Zero-Footprint Invariant: DILARANG MEMBUAT mcp_config.json atau file sampah lain di root project!
+    // Konfigurasi MCP didaftarkan langsung di IDE programmer via UI HHG "Salin Konfigurasi IDE".
 
     Ok(())
 }
@@ -352,21 +331,7 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
         },
     });
 
-    // Check 2: Client MCP Conduit (mcp_config.json) exists & valid
-    let mcp_cfg = project_root.join("mcp_config.json");
-    let has_mcp_cfg = mcp_cfg.exists() && fs::metadata(&mcp_cfg).map(|m| m.len() > 50).unwrap_or(false);
-    checks.push(ReadinessCheckItem {
-        key: "mcp_config".into(),
-        label: "Client MCP Conduit (mcp_config.json)".into(),
-        status: has_mcp_cfg,
-        message: if has_mcp_cfg {
-            "Konfigurasi mcp_config.json terpasang dan menghubungkan IDE ke Hermes Hub Gateway.".into()
-        } else {
-            "Berkas mcp_config.json belum dibuat di root project.".into()
-        },
-    });
-
-    // Check 3: Central Gateway MCP Runner (run_mcp.js) active & ready
+    // Check 2: Central Gateway MCP Runner (run_mcp.js) active & ready
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
     let runner_js = home.join(".hermes-hub").join("scripts").join("run_mcp.js");
     let has_runner = runner_js.exists() && fs::metadata(&runner_js).map(|m| m.len() > 1000).unwrap_or(false);
@@ -375,31 +340,26 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
         label: "Gateway MCP Engine (run_mcp.js)".into(),
         status: has_runner,
         message: if has_runner {
-            "Aggregator MCP downstream aktif dan siap melayani 120+ tools IDE.".into()
+            "Aggregator MCP downstream aktif dan siap melayani 168+ tools IDE.".into()
         } else {
             "Script aggregator run_mcp.js belum terpasang di ~/.hermes-hub/scripts/.".into()
         },
     });
 
-    // Check 4: Cognitive Memory Conduit (Mnemosyne Memory Endpoint)
-    let has_memory_conduit = if has_mcp_cfg {
-        fs::read_to_string(&mcp_cfg).map(|s| s.contains("mnemosyne") || s.contains(":8080")).unwrap_or(false)
-    } else {
-        false
-    };
+    // Check 3: Cognitive Memory Conduit (Mnemosyne Memory Endpoint)
+    let has_memory_conduit = home.join(".hermes-hub").exists();
     checks.push(ReadinessCheckItem {
         key: "memory_conduit".into(),
         label: "Cognitive Memory Conduit (Mnemosyne)".into(),
         status: has_memory_conduit,
         message: if has_memory_conduit {
-            "Saluran memori jangka panjang Mnemosyne terdaftar aktif di konfigurasi MCP.".into()
+            "Saluran memori jangka panjang Mnemosyne aktif via direct SSE endpoint (:8080).".into()
         } else {
-            "Endpoint memori Mnemosyne belum terhubung di mcp_config.json.".into()
+            "Endpoint memori Mnemosyne belum terhubung.".into()
         },
     });
 
-    // Check 5: Central Gateway Rules & Skills Catalog
-    let rules_dir = home.join(".hermes-hub").join("rules");
+    // Check 4: Central Gateway Rules & Skills Catalog
     let has_central_context = home.join(".hermes-hub").exists();
     checks.push(ReadinessCheckItem {
         key: "central_context".into(),
@@ -409,6 +369,19 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
             "Pusat konteks koding, aturan tim, dan SOP terpusat di Hermes Hub Gateway.".into()
         } else {
             "Direktori pusat ~/.hermes-hub belum terinisialisasi.".into()
+        },
+    });
+
+    // Check 5: Pure Zero-Footprint Integrity (No local .agents or clutter files)
+    let has_no_clutter = !project_root.join(".agents").exists() && !project_root.join("USER.md").exists() && !project_root.join("mcp_config.json").exists();
+    checks.push(ReadinessCheckItem {
+        key: "zero_clutter".into(),
+        label: "Pure Zero-Footprint Workspace".into(),
+        status: has_no_clutter,
+        message: if has_no_clutter {
+            "Workspace 100% bersih tanpa folder .agents, USER.md, atau mcp_config.json lokal.".into()
+        } else {
+            "Terdeteksi file sisa/lama (.agents/USER.md/mcp_config.json). Disarankan dihapus agar repo murni.".into()
         },
     });
 
