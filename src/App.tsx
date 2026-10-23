@@ -4554,12 +4554,16 @@ export default function App() {
                         "hermes-gateway": {
                           command: nodePath,
                           args: [runnerPath, "--server=hermes"]
+                        },
+                        "mnemosyne": {
+                          command: nodePath,
+                          args: [runnerPath, "--server=mnemosyne"]
                         }
                       };
 
                       (config.mcp_servers || []).filter(s => s.enabled).forEach((s: any) => {
                         const sRaw = (s.name || s.id || "server").toLowerCase();
-                        if (sRaw === "mnemosyne") return; // Mnemosyne dihandle otomatis via Gateway Server URL
+                        if (sRaw === "mnemosyne" || sRaw.includes("mnemo")) return; // Mnemosyne dihandle otomatis sebagai first-class server
 
                         const sName = sRaw.replace(/[^a-z0-9_-]/g, "_");
                         serversObj[sName] = {
@@ -4568,22 +4572,12 @@ export default function App() {
                         };
                       });
 
-                      // Injeksi otomatis Mnemosyne SSE dari Gateway Config
-                      const mnemoHost = ((config as any).mnemosyne_server_url || "http://172.168.1.202:8080").replace(/\/+$/, "");
-                      const sseUrl = mnemoHost.endsWith("/sse") ? mnemoHost : `${mnemoHost}/sse`;
-                      
                       if (isZed) {
-                        // Format Zed Editor: menggunakan root key 'context_servers' dan field SSE 'url'
-                        serversObj["mnemosyne"] = {
-                          url: sseUrl
-                        };
+                        // Format Zed Editor: menggunakan root key 'context_servers'
                         const zedPayload = { context_servers: serversObj };
                         handleCopySnippet(JSON.stringify(zedPayload, null, 2), "ide_json");
                       } else {
-                        // Format Antigravity / Claude / Cursor: root key 'mcpServers' dan field SSE 'serverUrl'
-                        serversObj["mnemosyne"] = {
-                          serverUrl: sseUrl
-                        };
+                        // Format Antigravity / Claude / Cursor: root key 'mcpServers'
                         const standardPayload = { mcpServers: serversObj };
                         handleCopySnippet(JSON.stringify(standardPayload, null, 2), "ide_json");
                       }
