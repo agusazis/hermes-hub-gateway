@@ -218,10 +218,14 @@ export default function App() {
   const [toastNotification, setToastNotification] = useState<{ type: 'success' | 'error' | 'info'; title: string; message: string } | null>(null);
 
   const showToast = (type: 'success' | 'error' | 'info', title: string, message: string) => {
+    // Abaikan jika pesan kosong, tidak valid, atau bernilai null/undefined
+    if (!message || message.trim() === '' || message.includes('null') || message.includes('undefined')) {
+      return;
+    }
     setToastNotification({ type, title, message });
     setTimeout(() => {
       setToastNotification((curr) => (curr?.message === message ? null : curr));
-    }, 4500);
+    }, 6000);
   };
   const [errorMessage, setErrorMessage] = useState('');
   const [showAddWsModal, setShowAddWsModal] = useState(false);
@@ -539,11 +543,11 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.33');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.34');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.33';
+  const APP_VERSION = 'v0.8.34';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -629,11 +633,39 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.34',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.34 (Toast Alert Sanitization & Catalog Tools Hydration)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Sanitasi Total Notifikasi Toast & Validasi Nilai Null: Mencegah munculnya pop-up toast error tidak valid saat backend offline/migrasi PHP, serta memulihkan penghitungan fungsi tools calling MCP dari katalog bawaan.',
+      features: [
+        'Strict Toast Sanitization: Seluruh notifikasi yang bernilai null, undefined, atau string kosong otomatis disupresi dan tidak akan memunculkan popup toast mengganggu.',
+        'Catalog Tools Hydration: Dashboard secara akurat menghitung fungsi tools aktif dari katalog default server terdaftar tanpa harus menunggu handshake manual.',
+        'Zero-False-Alarm UX: Menghilangkan alert palsu saat backend web service sedang dalam proses deployment atau restart.'
+      ],
+      fixes: [
+        'Memperbaiki kemunculan notifikasi error kosong/tidak valid saat backend bermasalah.',
+        'Memperbaiki tampilan 0 Fungsi pada kartu dashboard Tools Calling MCP.'
+      ],
+      architecture: [
+        'Non-Null Guard in Toast Dispatcher',
+        'Fallback Catalog Mapping Evaluator'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.8.34_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.82 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.34/Hermes.Hub.Gateway_0.8.34_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.8.34_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.23 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.34/Hermes.Hub.Gateway_0.8.34_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.8.34_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.34/Hermes.Hub.Gateway_0.8.34_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.8.34_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.34/Hermes.Hub.Gateway_0.8.34_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.8.34-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.34/Hermes.Hub.Gateway-0.8.34-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.33',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.33 (True Background Silent Auto-Update & Zero-Loop UI)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Pembaruan Siklus Auto-Update Mulus (Seamless Background Update): Menggunakan flag silent instalasi (/S) pada NSIS Windows sehingga proses update berjalan senyap tanpa modal wizard berulang, otomatis menutup aplikasi untuk melepaskan file lock, dan mencegah loop notifikasi update.',
       features: [
         'Silent Background Installation: Eksekusi installer setup berjalan di latar belakang tanpa memunculkan wizard dialog Next/Install yang membingungkan.',
@@ -3149,7 +3181,7 @@ export default function App() {
   const getTotalToolsCount = () => {
     let total = 0;
     config.mcp_servers.forEach((server) => {
-      const tools = mcpToolsDiscovery[server.name] || [];
+      const tools = mcpToolsDiscovery[server.name] || DEFAULT_MCP_CATALOG[server.name] || [];
       total += tools.length;
     });
     return total;
@@ -3689,7 +3721,7 @@ export default function App() {
         </header>
 
         {/* Global Floating Toast Notification */}
-        {toastNotification && (
+        {toastNotification && toastNotification.message && toastNotification.message.trim() !== '' && (
           <div className={`fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-xl border shadow-2xl flex items-start gap-3 animate-in slide-in-from-bottom-4 duration-300 ${
             toastNotification.type === 'success'
               ? 'bg-slate-900 border-emerald-500/60 text-emerald-300 shadow-emerald-950/40'
