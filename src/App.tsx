@@ -584,11 +584,39 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.27',
+      name: 'Hermes Hub Gateway v0.8.27 (True Single-File Workspace & Multi-Platform Release)',
+      date: '22 Oktober 2026',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Menghapus total pembuatan mcp_config.json dari project root (Pure 1 Artifact: AGENTS.md), menyelaraskan Readiness Audit ke Pure Zero-Clutter, dan merilis paket multi-platform resmi.',
+      features: [
+        'True Single-File Workspace: Root project koding murni HANYA memuat 1 file: AGENTS.md. Menghilangkan total pembuatan mcp_config.json lokal.',
+        'Global IDE Configuration Standard: Menetapkan pola registrasi MCP terpusat via tombol "Salin Konfigurasi IDE" di UI HHG langsung ke setting IDE.',
+        'Zero-Clutter Readiness Gatekeeper: Indikator kesiapan memvalidasi ketiadaan file sampah lokal (.agents, USER.md, mcp_config.json).',
+        'Official Linux & Windows Binaries: Tersedia paket AppImage, Deb, RPM untuk Linux serta Setup EXE & MSI untuk Windows.'
+      ],
+      fixes: [
+        'Mencegah file mcp_config.json mengotori status git di root project target.'
+      ],
+      architecture: [
+        'Pure 1-File AGENTS.md Contract',
+        'Global IDE Level MCP Binding'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.20 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.26',
       name: 'Hermes Hub Gateway v0.8.26 (Streamlined Settings & Telegram Decoupling)',
       date: '22 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menghilangkan konfigurasi form bot Telegram dari UI Settings serta membersihkan bot token & chat id dari fitur One-Key Provisioning demi keamanan kredensial.',
       features: [
         'Streamlined Settings UI: Antarmuka Settings kini murni berfokus pada Gateway Server URL, Mnemosyne endpoint, dan MCP Server registry.',
@@ -3181,7 +3209,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.26</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.27</span>
                 </div>
               )}
             </div>
