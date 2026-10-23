@@ -539,11 +539,11 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.31');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.33');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.31';
+  const APP_VERSION = 'v0.8.33';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -589,17 +589,19 @@ export default function App() {
     }
 
     setIsUpdating(true);
-    setUpdateStatusMsg(`Mengunduh installer ${updateInfo.asset_name}...`);
+    setUpdateStatusMsg(`Mengunduh dan memasang pembaruan ${updateInfo.asset_name}...`);
     try {
       const msg = await invoke<string>('download_and_install_update', {
         downloadUrl: updateInfo.download_url,
         assetName: updateInfo.asset_name
       });
-      setUpdateStatusMsg(msg);
-      setTimeout(() => setShowUpdateModal(false), 3000);
+      setUpdateStatusMsg(`${msg} Aplikasi akan ditutup untuk menerapkan versi baru...`);
+      // Tutup aplikasi otomatis setelah 2.5 detik agar installer NSIS /S menimpa binary tanpa file-lock
+      setTimeout(() => {
+        window.close();
+      }, 2500);
     } catch (err: any) {
       setUpdateStatusMsg(`Gagal instalasi: ${err?.toString() || 'Error eksekusi installer'}`);
-    } finally {
       setIsUpdating(false);
     }
   };
@@ -627,11 +629,39 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.33',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.33 (True Background Silent Auto-Update & Zero-Loop UI)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Pembaruan Siklus Auto-Update Mulus (Seamless Background Update): Menggunakan flag silent instalasi (/S) pada NSIS Windows sehingga proses update berjalan senyap tanpa modal wizard berulang, otomatis menutup aplikasi untuk melepaskan file lock, dan mencegah loop notifikasi update.',
+      features: [
+        'Silent Background Installation: Eksekusi installer setup berjalan di latar belakang tanpa memunculkan wizard dialog Next/Install yang membingungkan.',
+        'Zero-Loop Version Sync: Konstanta APP_VERSION disinkronkan secara presisi sehingga aplikasi tidak lagi menganggap dirinya versi lama setelah pembaruan.',
+        'Auto Graceful Restart: Aplikasi otomatis bersiap melepaskan file process lock saat installer silent menimpa binary baru.'
+      ],
+      fixes: [
+        'Memperbaiki masalah looping notifikasi update yang muncul kembali setelah proses install.',
+        'Menghilangkan keharusan mengklik tombol Next/Install secara manual pada wizard Windows.'
+      ],
+      architecture: [
+        'Silent Process Spawn Runner (/S flag)',
+        'Synchronous App Lifecycle Release Hook'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.82 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.33/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.23 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.33/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.33/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.33/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.33/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.32',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.32 (Dedicated In-App Updater & Multi-Surface Release Controls)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyempurnaan Total Visibilitas Fitur Update: Penambahan Tombol Periksa Update di Top Header, Kartu Update Dedicated di tab Settings & System Configuration, serta integrasi tombol quick-check di sidebar footer.',
       features: [
         'Multi-Surface Update Triggers: Tombol periksa update kini dapat diakses langsung dari Header atas, kartu khusus di menu Settings, dan link versi di Sidebar.',

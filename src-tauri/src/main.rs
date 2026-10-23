@@ -269,15 +269,20 @@ async fn check_app_update(current_version: String) -> Result<AppUpdateInfo, Stri
     let latest_parts = parse_semver(clean_latest);
 
     let mut has_update = false;
-    for i in 0..std::cmp::max(curr_parts.len(), latest_parts.len()) {
-        let c = curr_parts.get(i).copied().unwrap_or(0);
-        let l = latest_parts.get(i).copied().unwrap_or(0);
-        if l > c {
-            has_update = true;
-            break;
-        } else if l < c {
-            has_update = false;
-            break;
+    // Jangan munculkan update jika versi sama atau versi latest lebih rendah/sama
+    if clean_curr == clean_latest {
+        has_update = false;
+    } else {
+        for i in 0..std::cmp::max(curr_parts.len(), latest_parts.len()) {
+            let c = curr_parts.get(i).copied().unwrap_or(0);
+            let l = latest_parts.get(i).copied().unwrap_or(0);
+            if l > c {
+                has_update = true;
+                break;
+            } else if l < c {
+                has_update = false;
+                break;
+            }
         }
     }
 
@@ -370,9 +375,9 @@ async fn download_and_install_update(download_url: String, asset_name: String) -
 
     #[cfg(windows)]
     {
-        // Jalankan installer setup di Windows
+        // Jalankan installer setup di Windows secara silent/background (/S) lalu beri jeda singkat
         let _ = std::process::Command::new("cmd")
-            .args(&["/c", "start", "", &installer_str])
+            .args(&["/c", "start", "", &installer_str, "/S"])
             .spawn()
             .map_err(|e| format!("Gagal meluncurkan installer Windows: {}", e))?;
     }
