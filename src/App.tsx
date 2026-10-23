@@ -559,11 +559,12 @@ export default function App() {
     {
       version: 'v0.8.30',
       date: '23 Oktober 2026',
-      name: 'Hermes Hub Gateway v0.8.30 (Cross-Platform OS Detection, Zed Editor Support & Privacy Isolation)',
+      name: 'Hermes Hub Gateway v0.8.30 (Cross-Platform OS Detection, Mnemosyne Direct Route & Privacy Isolation)',
       type: 'PATCH',
       status: 'LATEST',
-      highlights: 'Dukungan lintas OS penuh: Native File Picker Linux (zenity/kdialog), Auto-Detect path OS dinamis untuk snippet IDE, format khusus Zed Editor (~/.config/zed/settings.json), serta isolasi privasi total pada One-Key Provisioning.',
+      highlights: 'Dukungan lintas OS penuh: Native File Picker Linux (zenity/kdialog), Direct Routing otomatis untuk Mnemosyne (mnemosyne_remember & recall), Auto-Detect path OS dinamis untuk snippet IDE, format khusus Zed Editor (~/.config/zed/settings.json), serta isolasi privasi total pada One-Key Provisioning.',
       features: [
+        'Automatic Mnemosyne Direct Route: Memperbaiki kendala namespace routing mnemosyne_* di IDE Antigravity dengan bridging HTTP JSON-RPC langsung ke server memori terpusat.',
         'Native Linux Folder Picker: Menghubungkan pemilihan folder workspace di Linux menggunakan zenity / kdialog (serta osascript di macOS).',
         'Dynamic Cross-Platform IDE Snippet: Tombol salin konfigurasi otomatis mendeteksi OS client (Linux/Windows/macOS) untuk menghasilkan path yang valid.',
         'Zed Editor Native Support: Pilihan tab format context_servers dan SSE url khusus untuk Zed Editor (~/.config/zed/settings.json).',
@@ -571,8 +572,9 @@ export default function App() {
         'Dynamic Default Profile: Menghilangkan nilai profil ter-hardcode demi integritas multi-user.'
       ],
       fixes: [
+        'Memperbaiki error "Tool mnemosyne_remember tidak dikenali di routing namespace" di Antigravity IDE.',
         'Memperbaiki tombol "Pilih Folder" yang sebelumnya tidak merespons di lingkungan Linux.',
-        'Memperbaiki path Windows C:/Users/user yang sebelumnya statis pada snippet IDE saat dibuka di Linux.'
+        'Memperbaiki form tambah workspace yang macet loading saat pertama kali dibuka.'
       ],
       architecture: [
         'Multi-Platform GUI Bridge (Zenity / Kdialog / Windows Forms)',
