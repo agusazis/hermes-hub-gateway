@@ -596,8 +596,8 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
-      version: 'v0.8.27',
-      name: 'Hermes Hub Gateway v0.8.27 (Dynamic Multi-Server Conduit & True Single-File Workspace)',
+      version: 'v0.8.28',
+      name: 'Hermes Hub Gateway v0.8.28 (Dynamic Multi-Server Conduit & True Single-File Workspace)',
       date: '23 Oktober 2026',
       type: 'PATCH',
       status: 'LATEST',
@@ -620,11 +620,11 @@ export default function App() {
         'Timestamp Delta Log Counter'
       ],
       downloads: [
-        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
-        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.20 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
-        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
-        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
-        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.27/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.28/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.20 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.28/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.28/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.28/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.28/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
       ]
     },
     {
@@ -3233,7 +3233,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.27</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.28</span>
                 </div>
               )}
             </div>
