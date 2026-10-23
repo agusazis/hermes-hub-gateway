@@ -10,6 +10,7 @@ mod mcp_bridge;
 mod vault;
 mod config;
 mod workspace;
+pub mod ssh_vault;
 
 #[tauri::command]
 fn get_system_config() -> config::GlobalConfig {
@@ -939,7 +940,11 @@ async fn main() {
             open_in_browser,
             check_app_update,
             download_and_install_update,
-            update_tray_status
+            update_tray_status,
+            ssh_vault::list_ssh_hosts,
+            ssh_vault::provision_ssh_host,
+            ssh_vault::remove_ssh_host,
+            ssh_vault::toggle_ssh_host_permission
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");

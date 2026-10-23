@@ -6,7 +6,7 @@ import {
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
   BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen, Edit3, Trash2, Bell, Send, MessageSquare,
-  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders
+  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders, ShieldCheck
 } from 'lucide-react';
 
 interface GitTarget {
@@ -32,6 +32,19 @@ interface McpServerEntry {
   env: Record<string, string>;
   enabled: boolean;
   description: string;
+}
+
+interface SshHostConfig {
+  id: string;
+  alias: string;
+  host: string;
+  port: number;
+  user: string;
+  tier: 'production' | 'development' | string;
+  key_path: string;
+  allow_elevated: boolean;
+  description?: string;
+  created_at: string;
 }
 
 interface Workspace {
@@ -379,6 +392,18 @@ export default function App() {
       { name: 'save_rule', desc: 'Menyimpan atau memperbarui aturan arsitektur / pola koding baru ke repository HHG langsung dari IDE', enabled: true },
       { name: 'consult_specialist', desc: 'Konsultasi dengan persona spesialis (DBA, Frontend Lead, Security Architect) untuk review', enabled: true },
     ],
+    'remote-ssh': [
+      { name: 'ssh_list_hosts', desc: 'Menampilkan daftar seluruh host VM/Server yang terdaftar di HHG (IP, User, Port, Tier: Prod/Dev, Status Elevasi)', enabled: true },
+      { name: 'ssh_run_command', desc: 'Eksekusi perintah terminal shell ke host VM via SSH terisolasi dengan pembatasan hak akses (ReadOnly/Full)', enabled: true },
+      { name: 'ssh_read_file', desc: 'Membaca konten file dari remote VM via SCP/SFTP', enabled: true },
+      { name: 'ssh_write_file', desc: 'Menulis/mengunggah file ke remote VM (hanya diizinkan jika mode Full aktif di HHG)', enabled: true },
+    ],
+    'ssh': [
+      { name: 'ssh_list_hosts', desc: 'Menampilkan daftar seluruh host VM/Server yang terdaftar di HHG (IP, User, Port, Tier: Prod/Dev, Status Elevasi)', enabled: true },
+      { name: 'ssh_run_command', desc: 'Eksekusi perintah terminal shell ke host VM via SSH terisolasi dengan pembatasan hak akses (ReadOnly/Full)', enabled: true },
+      { name: 'ssh_read_file', desc: 'Membaca konten file dari remote VM via SCP/SFTP', enabled: true },
+      { name: 'ssh_write_file', desc: 'Menulis/mengunggah file ke remote VM (hanya diizinkan jika mode Full aktif di HHG)', enabled: true },
+    ],
     'tabularis': [
       { name: 'run_query', desc: 'Eksekusi query SQL SELECT/SHOW/DESCRIBE langsung ke Database MariaDB SIMRS / SIMGOS2 (Vagrant/Production) via Tabularis Gateway', enabled: true },
       { name: 'describe_table', desc: 'Inspeksi fisik struktur field, nama kolom asli, tipe data, dan index tabel database SIMRS SIMGOS2', enabled: true },
@@ -506,6 +531,19 @@ export default function App() {
   const [testingMcpName, setTestingMcpName] = useState<string | null>(null);
 
   const [newMcpName, setNewMcpName] = useState('');
+  
+  // Remote SSH State
+  const [sshHosts, setSshHosts] = useState<SshHostConfig[]>([]);
+  const [showAddSshModal, setShowAddSshModal] = useState<boolean>(false);
+  const [sshAlias, setSshAlias] = useState<string>('');
+  const [sshHost, setSshHost] = useState<string>('');
+  const [sshPort, setSshPort] = useState<number>(22);
+  const [sshUser, setSshUser] = useState<string>('root');
+  const [sshPasswordTemp, setSshPasswordTemp] = useState<string>('');
+  const [sshTier, setSshTier] = useState<'production' | 'development'>('development');
+  const [sshAllowElevated, setSshAllowElevated] = useState<boolean>(false);
+  const [sshDesc, setSshDesc] = useState<string>('');
+  const [isProvisioningSsh, setIsProvisioningSsh] = useState<boolean>(false);
   const [newMcpCmd, setNewMcpCmd] = useState('');
   const [newMcpArgs, setNewMcpArgs] = useState('');
   const [newMcpDesc, setNewMcpDesc] = useState('');
@@ -543,11 +581,11 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.34');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.35');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.34';
+  const APP_VERSION = 'v0.8.35';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -633,11 +671,40 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.35',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.35 (Remote SSH Multi-Target MCP & Isolated Ed25519 Vault)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Fitur Unggulan Remote SSH Gateway: Mengontrol multi-target VM (Almalinux/Ubuntu/Debian) langsung dari IDE melalui 1 discrete server remote-ssh, dilengkapi automated SSH key provisioning, Zero-Password Persistence, dan toggle izin aman (ReadOnly vs Full Sudo).',
+      features: [
+        'Discrete Remote-SSH MCP: IDE Antigravity dan Zed Editor dapat mengontrol banyak server/VM sekaligus hanya dengan 1 baris server remote-ssh tanpa spam konfigurasi.',
+        'Isolated Ed25519 Key Vault: Kunci privat disimpan secara terisolasi di ~/.hermes-hub/vault/ssh_keys/ sehingga terminal lokal Windows tidak dapat sembarangan membuka SSH langsung.',
+        'Zero-Password Persistence: Password root/user hanya digunakan sekali saat pairing public key awal lalu langsung dihapus bersih dari memori.',
+        'Dynamic Permission Toggle: Kendali fleksibel Read-Only (Safe Audit) vs Full Sudo (Maintenance/Migrasi PHP) langsung dari antarmuka HHG.'
+      ],
+      fixes: [
+        'Mencegah risiko kebocoran SSH key antar programmer dengan isolasi identitas user per-laptop.',
+        'Menyediakan tool native ssh_list_hosts, ssh_run_command, ssh_read_file, dan ssh_write_file untuk seluruh agent IDE.'
+      ],
+      architecture: [
+        'Tabularis-pattern Multi-Target Remote Execution',
+        'Strict Subprocess Privilege Separation'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.8.35_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.83 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.35/Hermes.Hub.Gateway_0.8.35_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.8.35_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.24 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.35/Hermes.Hub.Gateway_0.8.35_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.8.35_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '82.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.35/Hermes.Hub.Gateway_0.8.35_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.8.35_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.35/Hermes.Hub.Gateway_0.8.35_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.8.35-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.35/Hermes.Hub.Gateway-0.8.35-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.34',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.34 (Toast Alert Sanitization & Catalog Tools Hydration)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Sanitasi Total Notifikasi Toast & Validasi Nilai Null: Mencegah munculnya pop-up toast error tidak valid saat backend offline/migrasi PHP, serta memulihkan penghitungan fungsi tools calling MCP dari katalog bawaan.',
       features: [
         'Strict Toast Sanitization: Seluruh notifikasi yang bernilai null, undefined, atau string kosong otomatis disupresi dan tidak akan memunculkan popup toast mengganggu.',
@@ -2560,6 +2627,7 @@ export default function App() {
       .then((res) => {
         if (res && res.workspaces) {
           setConfig(res);
+          loadSshHostsList();
           // Auto-fetch dynamic skills hierarchy from disk/git
           invoke<SkillHierarchyItem[]>('get_skills_hierarchy', { workspaceId: res.active_workspace_id })
             .then((skills) => {
@@ -3184,6 +3252,10 @@ export default function App() {
       const tools = mcpToolsDiscovery[server.name] || DEFAULT_MCP_CATALOG[server.name] || [];
       total += tools.length;
     });
+    // Tambahkan tool bawaan Remote SSH jika ada host terdaftar
+    if (sshHosts.length > 0) {
+      total += (DEFAULT_MCP_CATALOG['remote-ssh'] || []).length;
+    }
     return total;
   };
 
@@ -3265,6 +3337,71 @@ export default function App() {
     updated.mcp_servers[index].enabled = !updated.mcp_servers[index].enabled;
     setConfig(updated);
     await invoke('save_system_config', { cfg: updated });
+  };
+
+  const loadSshHostsList = async () => {
+    try {
+      const res = await invoke<SshHostConfig[]>('list_ssh_hosts');
+      if (res) setSshHosts(res);
+    } catch (e) {
+      console.warn("Gagal memuat ssh hosts:", e);
+    }
+  };
+
+  const handleProvisionSsh = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sshAlias.trim() || !sshHost.trim() || !sshUser.trim()) {
+      showToast('error', 'Validasi Gagal', 'Harap isi Alias, Host/IP, dan Username SSH.');
+      return;
+    }
+    setIsProvisioningSsh(true);
+    try {
+      const updated = await invoke<SshHostConfig[]>('provision_ssh_host', {
+        alias: sshAlias,
+        host: sshHost,
+        port: sshPort || 22,
+        user: sshUser,
+        passwordTemporary: sshPasswordTemp ? sshPasswordTemp : null,
+        tier: sshTier,
+        allowElevated: sshAllowElevated,
+        description: sshDesc ? sshDesc : null
+      });
+      setSshHosts(updated);
+      setShowAddSshModal(false);
+      setSshAlias('');
+      setSshHost('');
+      setSshPasswordTemp('');
+      setSshDesc('');
+      showToast('success', 'Remote SSH Terdaftar', `Host '${sshAlias}' (${sshHost}) berhasil dipasangkan dan didaftarkan ke MCP Gateway.`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Setup SSH', err?.toString() || 'Gagal pairing SSH key ke server.');
+    } finally {
+      setIsProvisioningSsh(false);
+    }
+  };
+
+  const handleRemoveSshHost = async (id: string, alias: string) => {
+    if (!confirm(`Hapus host remote SSH '${alias}' dari gateway HHG?`)) return;
+    try {
+      const updated = await invoke<SshHostConfig[]>('remove_ssh_host', { id });
+      setSshHosts(updated);
+      showToast('info', 'Host Dihapus', `Host '${alias}' telah dihapus dari daftar.`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Hapus Host', err?.toString() || 'Gagal menghapus host.');
+    }
+  };
+
+  const handleToggleSshElevation = async (id: string, currentVal: boolean) => {
+    try {
+      const updated = await invoke<SshHostConfig[]>('toggle_ssh_host_permission', {
+        id,
+        allowElevated: !currentVal
+      });
+      setSshHosts(updated);
+      showToast('info', 'Izin Diperbarui', `Mode izin diubah ke ${!currentVal ? 'FULL / ELEVATED (Sudo)' : 'READ-ONLY'}`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Ubah Izin', err?.toString() || 'Gagal mengubah izin.');
+    }
   };
 
   const handleCreateMcp = async (e: React.FormEvent) => {
@@ -4798,12 +4935,17 @@ export default function App() {
                         "mnemosyne": {
                           command: nodePath,
                           args: [runnerPath, "--server=mnemosyne"]
+                        },
+                        "remote-ssh": {
+                          command: nodePath,
+                          args: [runnerPath, "--server=remote-ssh"]
                         }
                       };
 
                       (config.mcp_servers || []).filter(s => s.enabled).forEach((s: any) => {
                         const sRaw = (s.name || s.id || "server").toLowerCase();
-                        if (sRaw === "mnemosyne" || sRaw.includes("mnemo")) return; // Mnemosyne dihandle otomatis sebagai first-class server
+                        if (sRaw === "mnemosyne" || sRaw.includes("mnemo")) return; // Mnemosyne dihandle otomatis
+                        if (sRaw === "remote-ssh" || sRaw === "ssh" || sRaw.includes("remote_ssh")) return; // Remote SSH dihandle otomatis
 
                         const sName = sRaw.replace(/[^a-z0-9_-]/g, "_");
                         serversObj[sName] = {
@@ -4875,6 +5017,13 @@ export default function App() {
                   {testingAllMcp ? 'Menguji Semua MCP...' : 'Test Semua Server MCP'}
                 </button>
                 <button 
+                  onClick={() => setShowAddSshModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                  title="Daftarkan host remote SSH baru dengan pasangan kunci terisolasi"
+                >
+                  <Terminal className="w-3.5 h-3.5" /> Pasang Remote SSH Host
+                </button>
+                <button 
                   onClick={() => {
                     setEditingMcpIndex(null);
                     setNewMcpName("");
@@ -4889,6 +5038,216 @@ export default function App() {
                 </button>
               </div>
             </div>
+
+            {/* Modal Tambah Remote SSH Host (Isolated Key & One-Time Password) */}
+            {showAddSshModal && (
+              <form onSubmit={handleProvisionSsh} className={`p-5 rounded-2xl space-y-4 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 border-indigo-500/40 shadow-2xl" : "bg-white border-slate-200 shadow-xl"}`}>
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-5 h-5 text-indigo-400" />
+                    <div>
+                      <h4 className={`text-sm font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-indigo-400" : "text-indigo-700"}`}>
+                        Pasang Remote SSH Host (Multi-Target MCP Gateway)
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        HHG membuat kunci Ed25519 terisolasi dan menempelkannya ke VM target. Password tidak disimpan!
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSshModal(false)}
+                    className="p-1 text-slate-400 hover:text-slate-200"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Host Alias / Tag *</label>
+                    <input
+                      type="text"
+                      placeholder="misal: simgos-prod / simgos-dev"
+                      value={sshAlias}
+                      onChange={(e) => setSshAlias(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs border font-mono ${effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">IP Address / Hostname *</label>
+                    <input
+                      type="text"
+                      placeholder="misal: 172.168.1.6"
+                      value={sshHost}
+                      onChange={(e) => setSshHost(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs border font-mono ${effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Port SSH</label>
+                    <input
+                      type="number"
+                      value={sshPort}
+                      onChange={(e) => setSshPort(parseInt(e.target.value) || 22)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs border font-mono ${effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Username Remote *</label>
+                    <input
+                      type="text"
+                      placeholder="misal: agus / devops"
+                      value={sshUser}
+                      onChange={(e) => setSshUser(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs border font-mono ${effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Password (One-Time Setup)</label>
+                    <input
+                      type="password"
+                      placeholder="Hanya untuk copy key awal..."
+                      value={sshPasswordTemp}
+                      onChange={(e) => setSshPasswordTemp(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs border font-mono ${effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Environment Tier</label>
+                    <select
+                      value={sshTier}
+                      onChange={(e: any) => setSshTier(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs border font-semibold ${effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
+                    >
+                      <option value="development">Development (Testing & Staging)</option>
+                      <option value="production">Production (Live Host)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">Deskripsi Host (Opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="misal: VM Almalinux Production SIMGOS2 Apps"
+                      value={sshDesc}
+                      onChange={(e) => setSshDesc(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg text-xs border ${effectiveTheme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 pt-4">
+                    <input
+                      type="checkbox"
+                      id="allowElevated"
+                      checked={sshAllowElevated}
+                      onChange={(e) => setSshAllowElevated(e.target.checked)}
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="allowElevated" className="text-xs text-slate-300 cursor-pointer">
+                      <span className="font-semibold text-amber-300">Izinkan Mode Elevated (Sudo/Write)</span>
+                      <p className="text-[10px] text-slate-500">Default: Non-aktif (Read-Only Mode untuk keamanan).</p>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSshModal(false)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isProvisioningSsh}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-md transition-all"
+                  >
+                    {isProvisioningSsh ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                    {isProvisioningSsh ? 'Sedang Memasangkan SSH Key...' : 'Simpan & Pasangkan Host'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Panel Remote SSH Managed Hosts */}
+            {sshHosts.length > 0 && (
+              <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-slate-900/60 border-indigo-500/30' : 'bg-indigo-50/50 border-indigo-200'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-indigo-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      Remote SSH Hosts Gateway ({sshHosts.length} VM Terhubung)
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    Akses via MCP: <code className="text-indigo-300 font-bold">remote-ssh</code> (Discrete Multi-Host)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {sshHosts.map((h) => (
+                    <div
+                      key={h.id}
+                      className={`p-3 rounded-xl border flex flex-col justify-between ${
+                        effectiveTheme === 'dark' ? 'bg-slate-950/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="font-mono text-xs font-bold text-slate-200 truncate flex items-center gap-1.5">
+                            {h.alias}
+                            <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                              h.tier === 'production' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                            }`}>
+                              {h.tier}
+                            </span>
+                          </span>
+                          <button
+                            onClick={() => handleRemoveSshHost(h.id, h.alias)}
+                            className="p-1 hover:text-rose-400 text-slate-500 transition-colors"
+                            title="Hapus Host SSH"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="text-[11px] font-mono text-slate-400 mb-1">
+                          {h.user}@{h.host}:{h.port}
+                        </div>
+                        {h.description && (
+                          <div className="text-[10px] text-slate-500 line-clamp-1 mb-2">
+                            {h.description}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400">Mode Akses Agent:</span>
+                        <button
+                          onClick={() => handleToggleSshElevation(h.id, h.allow_elevated)}
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all ${
+                            h.allow_elevated
+                              ? 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900'
+                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                          }`}
+                          title="Klik untuk mengubah izin Read-Only vs Full"
+                        >
+                          {h.allow_elevated ? '⚡ FULL (Sudo)' : '🔒 READ-ONLY'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Modal Edit / Add MCP Server (RAW JSON & IDE COMPLIANT) */}
             {showAddMcpModal && (
