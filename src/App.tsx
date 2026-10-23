@@ -627,11 +627,40 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.32',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.32 (Dedicated In-App Updater & Multi-Surface Release Controls)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Penyempurnaan Total Visibilitas Fitur Update: Penambahan Tombol Periksa Update di Top Header, Kartu Update Dedicated di tab Settings & System Configuration, serta integrasi tombol quick-check di sidebar footer.',
+      features: [
+        'Multi-Surface Update Triggers: Tombol periksa update kini dapat diakses langsung dari Header atas, kartu khusus di menu Settings, dan link versi di Sidebar.',
+        'One-Click In-App Updater: Mengunduh installer resmi (.exe / .AppImage / .deb) dan langsung meluncurkannya secara otomatis tanpa perlu membuka browser.',
+        'Automated Desktop Notification: Popup modal informatif dengan rilis catatan lengkap saat versi baru terdeteksi.',
+        'Clean Diagnostics: Menampilkan status versi terpasang vs versi terbaru secara transparan.'
+      ],
+      fixes: [
+        'Memastikan tombol dan kartu update selalu terlihat di berbagai tab menu utama.',
+        'Mencegah pengguna kebingungan mencari letak kontrol pembaruan aplikasi.'
+      ],
+      architecture: [
+        'Persistent App Version Constant Bridge',
+        'Tauri Desktop Update Orchestration Handler'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.82 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.32/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.23 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.32/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.32/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.32/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.32/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.31',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.31 (One-Click Auto Update & Desktop Notification)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Fitur Pembaruan Otomatis Terintegrasi: Auto-check rilis baru di background, popup modal notifikasi update dengan catatan rilis resmi, serta tombol eksekusi update 1-klik langsung dari aplikasi tanpa perlu download manual.',
       features: [
         'One-Click Auto Update: Tombol Update Sekarang otomatis mengunduh installer resmi (.exe / .AppImage / .deb) dan langsung meluncurkan proses pembaruan sistem.',
@@ -3478,12 +3507,12 @@ export default function App() {
             </div>
           )}
 
-          {/* Footer Nav Link: Changelogs */}
+          {/* Footer Nav Link: Changelogs & Update */}
           <div className={`pt-1 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between px-1'} text-[11px]`}>
             <button
               type="button"
               onClick={() => setActiveTab('releases')}
-              title={isSidebarCollapsed ? "Changelogs (v0.8.2)" : undefined}
+              title={isSidebarCollapsed ? `Changelogs (${APP_VERSION})` : undefined}
               className={`flex items-center gap-1.5 transition-colors font-medium ${
                 activeTab === 'releases'
                   ? 'text-cyan-400 font-bold'
@@ -3494,7 +3523,16 @@ export default function App() {
               {!isSidebarCollapsed && <span>Changelogs</span>}
             </button>
             {!isSidebarCollapsed && (
-              <span className="text-[10px] font-mono text-slate-400">v0.8.2</span>
+              <button
+                type="button"
+                onClick={() => handleCheckUpdate(true)}
+                disabled={isCheckingUpdate}
+                title="Klik untuk periksa update rilis resmi"
+                className="flex items-center gap-1 text-[10px] font-mono text-cyan-400 hover:text-cyan-300 hover:underline bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/40"
+              >
+                <RefreshCw className={`w-2.5 h-2.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                <span>{APP_VERSION}</span>
+              </button>
             )}
           </div>
         </div>
@@ -3555,7 +3593,7 @@ export default function App() {
                     ? 'Memeriksa...'
                     : updateInfo?.has_update
                       ? `Update Baru (${updateInfo.latest_version})`
-                      : `v0.8.30`}
+                      : `Periksa Update (${APP_VERSION})`}
                 </span>
                 {updateInfo?.has_update && (
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
@@ -6147,6 +6185,77 @@ export default function App() {
         {/* TAB 6: SETTINGS & SYSTEM CONFIGURATION */}
         {activeTab === 'settings' && (
           <div className="max-w-2xl space-y-5">
+            {/* KARTU STATUS VERSI & PEMBARUAN SISTEM (AUTO UPDATE) */}
+            <div className={`p-5 rounded-2xl border transition-all ${
+              updateInfo?.has_update
+                ? 'bg-gradient-to-br from-amber-950/30 to-slate-900 border-amber-500/40 shadow-lg'
+                : effectiveTheme === 'dark'
+                  ? 'bg-slate-900/80 border-slate-800'
+                  : 'bg-white border-slate-200 shadow-sm'
+            } space-y-4`}>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2.5 rounded-xl border ${
+                    updateInfo?.has_update
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                      : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                  }`}>
+                    <RefreshCw className={`w-5 h-5 ${isCheckingUpdate ? 'animate-spin text-cyan-400' : ''}`} />
+                  </div>
+                  <div>
+                    <h3 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'} flex items-center gap-2`}>
+                      Pembaruan & Siklus Rilis Aplikasi
+                    </h3>
+                    <p className={`text-[11px] ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Versi Terpasang: <strong className="font-mono text-cyan-400">{APP_VERSION}</strong>
+                      {updateInfo?.has_update && (
+                        <span> • Versi Terbaru: <strong className="font-mono text-amber-400">{updateInfo.latest_version}</strong></span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCheckUpdate(true)}
+                    disabled={isCheckingUpdate || isUpdating}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                    <span>{isCheckingUpdate ? 'Memeriksa...' : 'Periksa Update'}</span>
+                  </button>
+
+                  {updateInfo?.has_update && (
+                    <button
+                      type="button"
+                      onClick={handleExecuteUpdate}
+                      disabled={isUpdating}
+                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-md shadow-amber-500/20 transition-all"
+                    >
+                      {isUpdating ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Mengunduh...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Update Sekarang</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {updateStatusMsg && (
+                <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-xs font-mono text-cyan-300">
+                  {updateStatusMsg}
+                </div>
+              )}
+            </div>
+
             {/* ONE-KEY ORGANIZATION PROVISIONING / ID AKTIVASI INSTAN TIM RSUD */}
             <div className={`p-5 rounded-2xl border transition-all ${
               effectiveTheme === 'dark' 
