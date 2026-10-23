@@ -112,83 +112,26 @@ export default function App() {
         hashHex === '7f3b5dc985220c81dbbeae664db87e74880bb6b7e5e347ba504d603e8ff6026a';
 
       if (isOfficialKey) {
-        // Daftar MCP Server Resmi Organisasi (diaktifkan otomatis via One-Key)
-        const officialMcpServers: McpServerEntry[] = [
-          {
-            name: 'database-simrs-readonly',
-            command: 'python',
-            args: ['mysql_mcp_readonly.py'],
-            env: { DB_HOST: '172.168.1.202', DB_PORT: '3306', DB_USER: 'simrs_read', DB_NAME: 'simrs' },
-            enabled: true,
-            description: 'Akses Read-Only Terisolasi ke Database SIMRS dr. H. Jusuf SK'
-          },
-          {
-            name: 'tabularis',
-            command: 'tabularis',
-            args: ['--readonly', '--host', '172.168.1.202'],
-            env: {},
-            enabled: true,
-            description: 'Tabularis High-Performance SQL Engine (MariaDB SIMRS)'
-          },
-          {
-            name: 'grafana-observability',
-            command: 'node',
-            args: ['grafana_mcp.js'],
-            env: { GRAFANA_URL: 'http://172.168.1.202:3000' },
-            enabled: true,
-            description: 'Grafana Observability, Prometheus Metrics & Loki Log Streams'
-          },
-          {
-            name: 'gitlab',
-            command: 'npx',
-            args: ['-y', '@modelcontextprotocol/server-gitlab'],
-            env: { GITLAB_API_URL: 'http://172.168.1.33/api/v4' },
-            enabled: true,
-            description: 'GitLab Internal SIRS RSUD dr. H. Jusuf SK (Issues, MRs, Commits)'
-          },
-          {
-            name: 'mnemosyne',
-            command: 'curl',
-            args: ['-s', 'http://172.168.1.202:8080/mcp'],
-            env: { MNEMOSYNE_URL: 'http://172.168.1.202:8080' },
-            enabled: true,
-            description: 'Mnemosyne Knowledge Graph & Cross-Agent Shared Memory'
-          },
-          {
-            name: 'synology-nas-storage',
-            command: 'python',
-            args: ['synology_mcp.py'],
-            env: { NAS_HOST: '172.168.1.200' },
-            enabled: true,
-            description: 'Synology NAS Storage & GFS Backup Verification'
-          },
-          {
-            name: 'mikrotik-router',
-            command: 'python',
-            args: ['mikrotik_mcp.py'],
-            env: { ROUTER_HOST: '172.168.1.1' },
-            enabled: true,
-            description: 'MikroTik RouterOS Network Diagnostics & Traffic Monitor'
-          }
-        ];
-
+        // PERBAIKAN PRIVASI MUTLAK:
+        // One-Key HANYA mengaktifkan endpoint terpusat resmi (Evaluator & Mnemosyne).
+        // DILARANG KERAS menyuntikkan daftar MCP pribadi atau kredensial internal ke perangkat tim lain!
+        // Biarkan mcp_servers tetap menggunakan konfigurasi lokal user atau kosong agar tim lain mengonfigurasi MCP mereka sendiri.
         const provisionedConfig: GlobalConfig = {
           ...config,
-          active_profile: config.active_profile || 'agus',
+          active_profile: config.active_profile || 'default',
           default_hermes_evaluator_url: 'http://172.168.1.202:9125',
           default_mnemosyne_url: 'http://172.168.1.202:8080',
-          mcp_servers: config.mcp_servers && config.mcp_servers.length > 0 ? config.mcp_servers : officialMcpServers
+          mcp_servers: config.mcp_servers || []
         };
 
         setConfig(provisionedConfig);
-        setMcpToolsDiscovery(DEFAULT_MCP_CATALOG);
         try {
           await invoke('save_system_config', { cfg: provisionedConfig });
         } catch (_) {}
 
         setProvisionStatus({
           success: true,
-          message: '✓ Pengaturan Organisasi Aktif! Evaluator, Mnemosyne, Profil, dan 7 Server MCP Resmi terisi otomatis.'
+          message: '✓ Pengaturan Gateway Aktif! Evaluator & Mnemosyne terhubung. Konfigurasi MCP tetap terisolasi di masing-masing perangkat.'
         });
       } else {
         setProvisionStatus({
@@ -571,6 +514,24 @@ export default function App() {
 
   // Live Telemetry Logs
     const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+    const [ideTargetFormat, setIdeTargetFormat] = useState<'antigravity' | 'zed'>('antigravity');
+    const [envInfoText, setEnvInfoText] = useState<string>('Auto-Detect OS');
+
+    useEffect(() => {
+      invoke('get_platform_environment')
+        .then((env: any) => {
+          if (env && env.os) {
+            setEnvInfoText(env.os.toUpperCase());
+          }
+        })
+        .catch(() => {
+          if (typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('linux')) {
+            setEnvInfoText('LINUX');
+          } else {
+            setEnvInfoText('WINDOWS');
+          }
+        });
+    }, []);
 
   const handleCopySnippet = (snippet: string, key: string) => {
     navigator.clipboard.writeText(snippet);
@@ -596,11 +557,42 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.30',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.30 (Cross-Platform OS Detection, Zed Editor Support & Privacy Isolation)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Dukungan lintas OS penuh: Native File Picker Linux (zenity/kdialog), Auto-Detect path OS dinamis untuk snippet IDE, format khusus Zed Editor (~/.config/zed/settings.json), serta isolasi privasi total pada One-Key Provisioning.',
+      features: [
+        'Native Linux Folder Picker: Menghubungkan pemilihan folder workspace di Linux menggunakan zenity / kdialog (serta osascript di macOS).',
+        'Dynamic Cross-Platform IDE Snippet: Tombol salin konfigurasi otomatis mendeteksi OS client (Linux/Windows/macOS) untuk menghasilkan path yang valid.',
+        'Zed Editor Native Support: Pilihan tab format context_servers dan SSE url khusus untuk Zed Editor (~/.config/zed/settings.json).',
+        'Strict Privacy Isolation on One-Key: One-Key murni menghubungkan endpoint terpusat (Evaluator & Mnemosyne) tanpa mengekspos daftar MCP pribadi atau username developer.',
+        'Dynamic Default Profile: Menghilangkan nilai profil ter-hardcode demi integritas multi-user.'
+      ],
+      fixes: [
+        'Memperbaiki tombol "Pilih Folder" yang sebelumnya tidak merespons di lingkungan Linux.',
+        'Memperbaiki path Windows C:/Users/user yang sebelumnya statis pada snippet IDE saat dibuka di Linux.'
+      ],
+      architecture: [
+        'Multi-Platform GUI Bridge (Zenity / Kdialog / Windows Forms)',
+        'Multi-IDE Schema Adapter (Antigravity mcpServers vs Zed context_servers)',
+        'Zero-Leak One-Key Provisioning Isolation'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.30/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.20 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.30/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.30/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.30/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.30/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.29',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.29 (Multi-Server Conduit, Spec-Compliant MCP & Dynamic Environment)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyempurnaan arsitektur MCP Multi-Server: Dedicated Cache per-server untuk eliminasi race condition, Content-based runner overwrite di Rust, on-demand synchronous discovery, eliminasi echo stdin pada readline (invalid request fix), otomatisasi injeksi SSE Mnemosyne dari Gateway Server, dan hadirnya tool hermes_get_environment / hermes_update_environment untuk menjaga AGENTS.md 100% agnostik & profesional.',
       features: [
         'Dynamic Environment Mapping Tools (hermes_get_environment & hermes_update_environment): Menyajikan pemetaan representatif antara server MCP yang aktif dengan target repositori/lingkungan kerja tanpa mengotori AGENTS.md.',
@@ -4506,12 +4498,49 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-2">
+                  {/* Pilihan Format IDE */}
+                  <div className="flex rounded-lg p-0.5 border text-xs" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-sunken)' }}>
+                    <button
+                      onClick={() => setIdeTargetFormat && setIdeTargetFormat('antigravity')}
+                      className={`px-2.5 py-1 rounded font-medium transition-all ${
+                        (ideTargetFormat || 'antigravity') === 'antigravity'
+                          ? 'bg-cyan-600 text-white shadow-sm'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                      title="Format mcpServers untuk Antigravity, Claude Desktop, Cursor, & Windsurf"
+                    >
+                      Antigravity / Cursor
+                    </button>
+                    <button
+                      onClick={() => setIdeTargetFormat && setIdeTargetFormat('zed')}
+                      className={`px-2.5 py-1 rounded font-medium transition-all ${
+                        ideTargetFormat === 'zed'
+                          ? 'bg-cyan-600 text-white shadow-sm'
+                          : 'opacity-70 hover:opacity-100'
+                      }`}
+                      title="Format context_servers untuk Zed Editor (~/.config/zed/settings.json)"
+                    >
+                      Zed Editor
+                    </button>
+                  </div>
+
                   <button
-                    onClick={() => {
-                      const home = "C:/Users/user";
-                      const nodePath = `${home}/AppData/Local/hermes/node/node.exe`;
-                      const runnerPath = `${home}/.hermes-hub/scripts/run_mcp.js`;
+                    onClick={async () => {
+                      let env = { os: 'windows', home_dir: 'C:/Users/user', node_path: 'C:/Users/user/AppData/Local/hermes/node/node.exe', runner_path: 'C:/Users/user/.hermes-hub/scripts/run_mcp.js' };
+                      try {
+                        const platEnv: any = await invoke('get_platform_environment');
+                        if (platEnv) env = platEnv;
+                      } catch (err) {
+                        // Fallback browser/preview jika dijalankan tanpa Tauri
+                        if (typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('linux')) {
+                          env = { os: 'linux', home_dir: '/home/user', node_path: 'node', runner_path: '/home/user/.hermes-hub/scripts/run_mcp.js' };
+                        }
+                      }
+
+                      const nodePath = env.node_path;
+                      const runnerPath = env.runner_path;
+                      const isZed = ideTargetFormat === 'zed';
 
                       const serversObj: Record<string, any> = {
                         "hermes-gateway": {
@@ -4534,23 +4563,34 @@ export default function App() {
                       // Injeksi otomatis Mnemosyne SSE dari Gateway Config
                       const mnemoHost = ((config as any).mnemosyne_server_url || "http://172.168.1.202:8080").replace(/\/+$/, "");
                       const sseUrl = mnemoHost.endsWith("/sse") ? mnemoHost : `${mnemoHost}/sse`;
-                      serversObj["mnemosyne"] = {
-                        serverUrl: sseUrl
-                      };
-
-                      handleCopySnippet(JSON.stringify({ mcpServers: serversObj }, null, 2), "ide_json");
+                      
+                      if (isZed) {
+                        // Format Zed Editor: menggunakan root key 'context_servers' dan field SSE 'url'
+                        serversObj["mnemosyne"] = {
+                          url: sseUrl
+                        };
+                        const zedPayload = { context_servers: serversObj };
+                        handleCopySnippet(JSON.stringify(zedPayload, null, 2), "ide_json");
+                      } else {
+                        // Format Antigravity / Claude / Cursor: root key 'mcpServers' dan field SSE 'serverUrl'
+                        serversObj["mnemosyne"] = {
+                          serverUrl: sseUrl
+                        };
+                        const standardPayload = { mcpServers: serversObj };
+                        handleCopySnippet(JSON.stringify(standardPayload, null, 2), "ide_json");
+                      }
                     }}
                     className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all whitespace-nowrap"
                   >
                     {copiedSnippet === "ide_json" ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-300" />
-                        <span>Copied JSON!</span>
+                        <span>Copied {ideTargetFormat === 'zed' ? 'Zed' : 'IDE'} JSON!</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Salin Konfigurasi IDE (Semua Server)</span>
+                        <span>Salin Konfigurasi {ideTargetFormat === 'zed' ? 'Zed Editor' : 'IDE'} ({envInfoText})</span>
                       </>
                     )}
                   </button>

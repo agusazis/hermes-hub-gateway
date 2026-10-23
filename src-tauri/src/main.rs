@@ -39,7 +39,92 @@ async fn select_project_folder() -> Result<Option<String>, String> {
     }
     #[cfg(not(windows))]
     {
+        // 1. Coba zenity (GNOME / Universal Linux GUI)
+        if let Ok(out) = tokio::process::Command::new("zenity")
+            .args(&["--file-selection", "--directory", "--title=Pilih Folder Project Target"])
+            .output()
+            .await
+        {
+            if out.status.success() {
+                let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !res.is_empty() {
+                    return Ok(Some(res));
+                }
+            }
+        }
+
+        // 2. Coba kdialog (KDE Plasma)
+        if let Ok(out) = tokio::process::Command::new("kdialog")
+            .args(&["--getexistingdirectory", "--title", "Pilih Folder Project Target"])
+            .output()
+            .await
+        {
+            if out.status.success() {
+                let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !res.is_empty() {
+                    return Ok(Some(res));
+                }
+            }
+        }
+
+        // 3. Fallback macOS via osascript
+        #[cfg(target_os = "macos")]
+        {
+            if let Ok(out) = tokio::process::Command::new("osascript")
+                .args(&["-e", "POSIX path of (choose folder with prompt \"Pilih Folder Project Target\")"])
+                .output()
+                .await
+            {
+                if out.status.success() {
+                    let res = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                    if !res.is_empty() {
+                        return Ok(Some(res));
+                    }
+                }
+            }
+        }
+
         Ok(None)
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct PlatformEnvironment {
+    pub os: String,
+    pub home_dir: String,
+    pub node_path: String,
+    pub runner_path: String,
+}
+
+#[tauri::command]
+fn get_platform_environment() -> PlatformEnvironment {
+    let os = std::env::consts::OS.to_string();
+    let home = dirs::home_dir().unwrap_or_else(|| {
+        if os == "windows" {
+            std::path::PathBuf::from("C:\\Users\\Default")
+        } else {
+            std::path::PathBuf::from("/home/user")
+        }
+    });
+    let home_str = home.to_string_lossy().to_string().replace('\\', "/");
+
+    let (node_path, runner_path) = if os == "windows" {
+        (
+            format!("{}/AppData/Local/hermes/node/node.exe", home_str),
+            format!("{}/.hermes-hub/scripts/run_mcp.js", home_str),
+        )
+    } else {
+        (
+            "node".to_string(),
+            format!("{}/.hermes-hub/scripts/run_mcp.js", home_str),
+        )
+    };
+
+    PlatformEnvironment {
+        os,
+        home_dir: home_str,
+        node_path,
+        runner_path,
     }
 }
 
@@ -614,6 +699,7 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![
             get_system_config,
             select_project_folder,
+            get_platform_environment,
             save_system_config,
             reset_system_config,
             get_skill_detail,

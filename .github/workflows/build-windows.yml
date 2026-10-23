@@ -50,8 +50,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v0.8.29
-          releaseName: "Hermes Hub Gateway v0.8.29"
-          releaseBody: "Release v0.8.29: Dynamic Multi-Server Conduit, Dedicated Cache per Server, MCP Spec Compliance (ping/resources/prompts), and Auto-Sync Mnemosyne."
+          tagName: v0.8.30
+          releaseName: "Hermes Hub Gateway v0.8.30"
+          releaseBody: "Release v0.8.30: Native Linux Folder Picker (zenity/kdialog), Cross-Platform OS Auto-Detect IDE Snippet, Zed Editor (~/.config/zed/settings.json) Native Format, and Strict One-Key Privacy Isolation."
           releaseDraft: false
           prerelease: false
