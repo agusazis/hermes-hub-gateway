@@ -1,95 +1,90 @@
 # Hermes Hub Gateway (HHG)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Tauri v2](https://img.shields.io/badge/Tauri-v2-cyan.svg)](https://v2.tauri.app/)
 [![React 18](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Platform: Multi-OS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-emerald.svg)]()
 
-**Hermes Hub Gateway (HHG)** is a lightweight, cross-platform desktop application and cognitive control plane designed to bridge modern AI-assisted IDEs (Antigravity, Cursor, VS Code, Windsurf) with autonomous AI agent runbooks, distributed Model Context Protocol (MCP) servers, and continuous self-improvement evaluators.
+**Hermes Hub Gateway (HHG)** adalah aplikasi desktop *cross-platform* (Linux & Windows) dan *cognitive control plane* mandiri yang dirancang untuk menjembatani AI Coding IDE (seperti Antigravity, Cursor, Zed Editor, VS Code) dengan ekosistem Model Context Protocol (MCP), cognitive memory, dan remote server engineering tanpa konfigurasi rumit.
 
-Built with **Tauri v2 (Rust backend)** and **React 18 / Tailwind CSS (Frontend)**, HHG provides a unified developer cockpit to manage multi-workspace cognitive architectures, single named-pipe MCP bridges, and zero-copy filesystem linking.
-
----
-
-## 🌟 Key Architecture & Capabilities
-
-### 1. Unified Single MCP Pipe Bridge
-Instead of spawning and configuring dozens of independent MCP servers in individual IDE configuration files, HHG multiplexes them behind a single, high-performance local IPC channel:
-* **Windows:** Named Pipe `\\.\pipe\hhg-bridge`
-* **Linux / macOS:** Domain Socket `/tmp/hhg-bridge.sock`
-* **Multiplexed Dispatch:** Seamlessly routes JSON-RPC 2.0 tool requests to underlying MCP stacks (Databases, Git Platforms, Observability, Knowledge Graphs, Network appliances) while providing granular per-tool toggling and bulk health checks.
-
-### 2. Zero-Copy Workspace Linking (Filesystem Junctions)
-* Connects your project codebase (`<project_root>/.agents`) to a dedicated remote or local cognitive architecture repository via OS-native junctions (`mklink /J` on Windows, Symlinks on Unix).
-* **Isolation of Concerns:** The IDE assistant can inspect rules, load SOP skills, and update environment state directly on disk, while all upstream Git synchronization (push/pull/merge) is managed safely in the background by HHG.
-
-### 3. Progressive Disclosure Skill Runbooks
-* Adopts progressive disclosure standards for agent context windows: instead of flooding LLM prompts with monolithic instructions, skills are dynamically structured with frontmatter triggers and loaded on demand.
-
-### 4. Turn 1 Deterministic Handover Bootstrap
-* Integrates with stateful cognitive memory servers (e.g., Mnemosyne) to retrieve canonical handover checkpoints instantly upon starting a new chat turn, eliminating stale transcript parsing overhead.
-
-### 5. Automated Organization & Team Provisioning
-* Rapid onboarding for development teams via cryptographic **Organization Setup Keys**.
-* One-click provisioning automatically binds central evaluator endpoints, shared memory nodes, and broadcast telemetry channels without leaking personal Git access tokens or local MCP configurations.
+Dibangun dengan arsitektur **Tauri v2 (Rust Backend)** dan **React 18 / Tailwind CSS (Frontend)**, HHG memisahkan sepenuhnya antara ranah kontrol hak akses lokal pengembang dengan aktivitas eksekusi AI Agent.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🌟 Arsitektur Utama & Fitur Unggulan
 
-### Prerequisites
-* Windows 10/11, macOS, or modern Linux desktop.
-* Node.js 18+ & Rust stable toolchain (for building from source).
+### 1. Discrete Multi-Host MCP Runner (`run_mcp.js`)
+Alih-alih menambahkan puluhan server baru di file konfigurasi IDE setiap kali ada server/database baru, HHG menerapkan arsitektur **1 Discrete Server untuk Multi-Host Target** (pola *Tabularis*):
+* **Format IDE Bersih & Ringkas:** File konfigurasi IDE (`mcp_config.json` / `settings.json`) hanya membutuhkan satu baris server non-upstream (`remote-ssh`, `hermes-gateway`, `mnemosyne`).
+* **Multi-Target Dispatching:** Memetakan panggilan tool IDE ke host target melalui parameter `target` (contoh: `target: "simgos-prod"` atau `target: "172.168.1.6"`).
+* **Dual IDE Copas Support:** Menyediakan tombol salin konfigurasi satu klik untuk format **Antigravity / Cursor** (`mcpServers`) dan **Zed Editor** (`context_servers`).
 
-### Running from Source
+### 2. Isolated Remote SSH Gateway & Vault Kunci Ed25519
+Menghilangkan risiko keamanan ketika AI Agent membutuhkan akses remote ke VM/server Linux:
+* **Isolated Key Storage:** Pasangan kunci Ed25519 digenerate dan disimpan di vault privat terisolasi HHG (`~/.hermes-hub/vault/ssh_keys/`), **bukan** di direktori default `~/.ssh/`. Hal ini mencegah AI Agent di IDE mem-bypass HHG dengan langsung mengeksekusi SSH melalui terminal lokal OS.
+* **Zero-Password Persistence:** Password user/root remote hanya digunakan satu kali saat proses handshake public key awal, lalu langsung dibersihkan dari memori dan **tidak pernah disimpan di disk atau config**.
+* **Dynamic Permission Gate:** UI HHG menyediakan saklar izin **`🔒 READ-ONLY`** (Safe Mode: perintah berbahaya seperti `sudo`, `rm -rf`, `reboot` otomatis dicegat di gateway) vs **`⚡ FULL`** (Sudo & Write Mode untuk kebutuhan maintenance).
+* **Environment Tiering:** Setiap host diberi label metadata tier (`Production` vs `Development`) yang dapat diinspeksi oleh AI Agent via tool `ssh_list_hosts`.
+
+### 3. Filesystem Junction & Cognitive Workspace Linking
+* Menghubungkan direktori `.agents` proyek kerja ke repositori arsitektur kognitif melalui *OS-native junction* (`mklink /J` di Windows, symlink di Linux) tanpa duplikasi fisik berkas.
+* Menjaga file aturan `AGENTS.md` tetap bersifat **agnostik, profesional, dan universal**, tanpa membocorkan kredensial pribadi atau nama profile pengguna ke repositori tim.
+
+### 4. Background Silent Update dengan Seamless Auto-Relaunch
+* Pembaruan aplikasi berjalan senyap di background tanpa mengunci file binary (*file lock*).
+* Dilengkapi *wrapper launcher* otomatis yang langsung membuka kembali aplikasi HHG setelah proses instalasi paket rilis selesai.
+
+---
+
+## 🚀 Panduan Membangun dari Sumber (Build from Source)
+
+### Kebutuhan Sistem:
+* Node.js 18+ & Rust stable toolchain (`cargo`).
+* **Linux:** `libwebkit2gtk-4.1-dev`, `build-essential`, `libxdo-dev`, `libssl-dev`, `libayatana-appindicator3-dev`.
+* **Windows:** C++ Build Tools & WebView2 runtime.
+
+### Langkah Instalasi:
 ```bash
 # 1. Clone repository
 git clone https://github.com/agusazis/hermes-hub-gateway.git
 cd hermes-hub-gateway
 
-# 2. Install dependencies
+# 2. Install dependensi
 npm install
 
-# 3. Run verification gates
+# 3. Jalankan verification gates
 npm run verify
 
-# 4. Launch Desktop App in Development Mode
+# 4. Jalankan aplikasi dalam mode dev
 npm run tauri dev
 ```
 
-### Production Build
+### Build Binary Rilis Produksi:
 ```bash
 npm run tauri build
 ```
-The compiled native installer (`.msi` or `.exe` on Windows, `.dmg` on macOS, `.deb`/`.AppImage` on Linux) will be generated in `src-tauri/target/release/bundle/`.
+Paket rilis akan otomatis terbentuk di direktori `src-tauri/target/release/bundle/` (`.exe` / `.msi` untuk Windows, `.AppImage` / `.deb` / `.rpm` untuk Linux).
 
 ---
 
-## 🧭 Navigation & Workflow
+## 🔒 Privasi Kredensial & Batasan Keamanan
 
-1. **Profile & Gateway Hub (Primary Configuration):**
-   * Configure target Evaluator and Shared Memory endpoints.
-   * Apply team provisioning keys or configure broadcast alert webhooks.
-2. **Workspaces & Skills Manager:**
-   * Manage isolated coding projects.
-   * Link existing cognitive architecture repositories or scaffold new Antigravity/Hermes structures with built-in readiness auditing.
-3. **MCP Servers Hub:**
-   * Monitor registered MCP server processes.
-   * Enable/disable individual calling functions with one click and run batch handshake diagnostics.
-4. **System Dashboard:**
-   * High-level health telemetry, active bridges, and workspace statistics.
-5. **Evolution Logs:**
-   * Live streaming of structured JSON telemetry and agent evaluations.
+* **Pencegahan Kebocoran Kredensial Tim:** Token akses Git (PAT), password database, dan kunci SSH tersimpan eksklusif di mesin lokal masing-masing pengembang.
+* **Non-Invasive Architecture:** HHG tidak pernah memodifikasi binary atau runtime internal aplikasi IDE pihak ketiga.
+* **Zero Host Discovery Leakage:** Konfigurasi SSH remote tidak diekspos ke jaringan publik; seluruh komunikasi berjalan lewat IPC lokal mesin pengguna.
 
 ---
 
-## 🔒 Security & Credential Isolation
+## ⚖️ Legal Disclaimer & Trademarks
 
-* **Strict Credential Privacy:** Personal Git Access Tokens (PAT) and private MCP credentials stay strictly on the local machine and are never included in shared team provisioning digests.
-* **Non-Invasive Watcher Architecture:** Background telemetry monitors file modification events passively without intercepting or altering IDE runtime binaries.
+* **Hermes Hub Gateway (HHG)** adalah perangkat lunak *independent open-source utility* yang dikembangkan secara independen oleh kontributor komunitas dan **tidak berafiliasi secara resmi, tidak didukung secara langsung, maupun disponsori oleh Nous Research**.
+* Nama "Hermes" atau referensi teknologi terkait digunakan semata-mata sebagai referensi kompatibilitas interoperabilitas ekosistem agen AI.
+* Seluruh merek dagang, nama layanan, dan logo yang disebutkan dalam proyek ini adalah hak milik dari masing-masing pemilik resminya.
 
 ---
 
-## 📄 License
+## 📄 Lisensi (License)
 
-This project is licensed under the [MIT License](LICENSE).
+Proyek ini didistribusikan di bawah ketentuan lisensi **[Apache License 2.0](LICENSE)**.
+Ketentuan ini memberikan kebebasan penggunaan perangkat lunak dengan perlindungan hukum eksplisit terhadap tuntutan paten dan pembatasan penggunaan merek dagang.
