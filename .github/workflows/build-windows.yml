@@ -3,13 +3,6 @@ name: Build Hermes Hub Gateway (Multi-Platform)
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'docs/**'
-      - '*.md'
-      - '.gitignore'
-      - 'LICENSE'
   workflow_dispatch:
 
 jobs:
@@ -22,18 +15,10 @@ jobs:
         include:
           - platform: "windows-latest"
             target: "x86_64-pc-windows-msvc"
-          - platform: "ubuntu-22.04"
-            target: "x86_64-unknown-linux-gnu"
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Install Linux system dependencies
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
       - name: Setup Node.js with caching
         uses: actions/setup-node@v4
@@ -46,14 +31,8 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Cache Rust dependencies and build artifacts
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: "src-tauri -> target"
-          cache-on-failure: false
-
       - name: Install frontend dependencies
-        run: npm ci || npm install
+        run: npm install
 
       - name: Run Pre-Build Verification Test Gates
         run: npm run verify
@@ -62,7 +41,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SKIP_DEPS_CHECK: "true"
         with:
           tagName: v0.8.28
           releaseName: "Hermes Hub Gateway v0.8.28"
