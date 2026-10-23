@@ -3,13 +3,6 @@ name: Build Hermes Hub Gateway (Multi-Platform)
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'docs/**'
-      - '*.md'
-      - '.gitignore'
-      - 'LICENSE'
   workflow_dispatch:
 
 concurrency:
@@ -66,7 +59,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SKIP_DEPS_CHECK: "true"
         with:
           tagName: v0.8.27
           releaseName: "Hermes Hub Gateway v0.8.27"
