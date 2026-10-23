@@ -598,16 +598,17 @@ export default function App() {
     {
       version: 'v0.8.29',
       date: '23 Oktober 2026',
-      name: 'Hermes Hub Gateway v0.8.29 (Multi-Server Conduit, Isolated Cache & Spec-Compliant MCP)',
+      name: 'Hermes Hub Gateway v0.8.29 (Multi-Server Conduit, Spec-Compliant MCP & Dynamic Environment)',
       type: 'PATCH',
       status: 'LATEST',
-      highlights: 'Penyempurnaan arsitektur MCP Multi-Server: Dedicated Cache per-server untuk eliminasi race condition, Content-based runner overwrite di Rust, on-demand synchronous discovery, eliminasi echo stdin pada readline (invalid request fix), dan otomatisasi injeksi SSE Mnemosyne dari Gateway Server.',
+      highlights: 'Penyempurnaan arsitektur MCP Multi-Server: Dedicated Cache per-server untuk eliminasi race condition, Content-based runner overwrite di Rust, on-demand synchronous discovery, eliminasi echo stdin pada readline (invalid request fix), otomatisasi injeksi SSE Mnemosyne dari Gateway Server, dan hadirnya tool hermes_get_environment / hermes_update_environment untuk menjaga AGENTS.md 100% agnostik & profesional.',
       features: [
+        'Dynamic Environment Mapping Tools (hermes_get_environment & hermes_update_environment): Menyajikan pemetaan representatif antara server MCP yang aktif dengan target repositori/lingkungan kerja tanpa mengotori AGENTS.md.',
+        'Agnostic & Universal AGENTS.md Contract: Template AGENTS.md murni agnostik tanpa hardcoded instansi, mengunci protokol Turn-1 untuk memvalidasi pemetaan alat via hermes_get_environment sebelum memanggil tool eksternal.',
         'Dedicated Cache Per-Server (mcp_tools_cache_<server>.json) mengeliminasi race condition dan status 0 tools saat IDE refresh paralel.',
         'Dynamic Multi-Server Scoping (--server=<name>) dengan normalisasi nama server tanpa sensitivitas strip/underscore.',
         'Rust check_needs_update berbasis konten TARGET_SERVER memastikan file runner di laptop client otomatis tertimpa versi terbaru saat HHG start.',
-        'Injeksi otomatis SSE Mnemosyne dari Konfigurasi Gateway ke tombol "Salin Konfigurasi IDE" tanpa perlu registrasi manual di tabel MCP.',
-        'On-demand discovery fallback mencegah nilai tools kosong (0 tools) pada pemanggilan pertama dari IDE.'
+        'Injeksi otomatis SSE Mnemosyne dari Konfigurasi Gateway ke tombol "Salin Konfigurasi IDE" tanpa perlu registrasi manual di tabel MCP.'
       ],
       fixes: [
         'Memperbaiki drop koneksi IDE \"invalid request\": Menghapus output echo pada readline.createInterface agar input stdin tidak terpantul ke stdout.',

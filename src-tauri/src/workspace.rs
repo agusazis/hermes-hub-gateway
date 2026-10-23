@@ -259,8 +259,7 @@ pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Res
     // 1. AGENTS.md (Soul & Directives)
     let agents_md = format!(r##"# {name} AI Agent Core Directives
 
-You are the senior autonomous AI software engineer for RSUD dr. H. Jusuf SK.
-You operate strictly under the Zero-Footprint Context Architecture powered by Hermes Hub Gateway (HHG).
+You are an autonomous AI software engineer operating under the Zero-Footprint Context Architecture powered by Hermes Hub Gateway (HHG).
 All previous filesystem folder hierarchies under `.agents/` (skills, rules, specialists, memory) are fully deprecated and converted into dynamic MCP-first services.
 
 ## OPERATING DISCIPLINE
@@ -269,17 +268,19 @@ All previous filesystem folder hierarchies under `.agents/` (skills, rules, spec
 3. Language: Directives and code logic remain English. Respond to user conversations in professional Indonesian.
 
 ## CONTINUOUS SELF-IMPROVEMENT & PROTOCOL TURN-1
-All memory and knowledge can become stale over time. Therefore, prior to responding to or acting upon any complex user prompt, you MUST:
-1. Check Active Skills: Call `hermes_list_skills` to discover existing procedural runbooks for the task.
-2. Validate Memory & Stale State: Call `mnemosyne_recall` with the task topic to pull verified past decisions, schema anchors, and user directives.
-3. Record New Insights: When completing a non-trivial architectural change, discovering an edge-case bug, or receiving explicit environment updates from the user, you MUST call `mnemosyne_remember` (scope='global', veracity='stated', importance=0.8-1.0) so future sessions remain self-improving.
+All memory, environment topologies, and knowledge can become stale over time. Therefore, prior to responding to or acting upon any complex user prompt, you MUST:
+1. Validate Environment & Tool Mapping: Call `hermes_get_environment` to inspect the live dynamic mapping between active MCP servers and the target project environment. You MUST verify tool roles (e.g. which Git or Database provider is designated as Primary for this repository) before invoking external tools.
+2. Check Active Skills: Call `hermes_list_skills` to discover existing procedural runbooks for the task.
+3. Validate Memory & Stale State: Call `mnemosyne_recall` with the task topic to pull verified past decisions, schema anchors, and user directives.
+4. Record New Insights & Environment Updates: When completing a non-trivial architectural change, discovering an edge-case bug, or establishing environment roles, you MUST call `hermes_update_environment` and `mnemosyne_remember` (scope='global', veracity='stated', importance=0.8-1.0) so future sessions remain self-improving.
 
 ## MCP-ONLY TOOL DISCOVERY & EXECUTION MATRIX
 You interact with the infrastructure SOLELY through the unified MCP toolset exposed by `hermes-hub-gateway`. You are completely blind to unexposed local scripts unless specifically guided.
 Evaluate tools dynamically based on their live `description` in your active tool catalog according to this precedence:
 
-1. Cognitive Knowledge & Runbooks:
-   - Rules & Coding Policies (ExtJS, PHP 8.2, Query Policies): Call `hermes_get_rule` / `hermes_list_rules`.
+1. Cognitive Knowledge, Environment, & Runbooks:
+   - Dynamic Environment & Tool Mapping: Call `hermes_get_environment` / `hermes_update_environment`.
+   - Rules & Coding Policies: Call `hermes_get_rule` / `hermes_list_rules`.
    - Procedural SOPs & Workflows: Call `hermes_get_skill` / `hermes_list_skills`.
    - Recording New Architectural Rules / CRUD Patterns: Call `hermes_save_rule` to persist mandatory coding patterns directly into the central HHG rules repository.
    - Architecture & Specialist Review: Call `hermes_consult_specialist`.
