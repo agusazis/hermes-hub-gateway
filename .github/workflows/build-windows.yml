@@ -62,6 +62,6 @@ jobs:
         with:
           tagName: v0.8.27
           releaseName: "Hermes Hub Gateway v0.8.27"
-          releaseBody: "Release v0.8.27: True Single-File Workspace, Floppy Disk Skills Icon, and Multi-Platform Binaries."
+          releaseBody: "Release v0.8.27: Dynamic Multi-Server Conduit, True Single-File Workspace, and Floppy Disk Skills Icon."
           releaseDraft: false
           prerelease: false
