@@ -50,8 +50,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v0.8.28
-          releaseName: "Hermes Hub Gateway v0.8.28"
-          releaseBody: "Release v0.8.28: Dynamic Multi-Server Conduit, True Single-File Workspace, and Floppy Disk Skills Icon."
+          tagName: v0.8.29
+          releaseName: "Hermes Hub Gateway v0.8.29"
+          releaseBody: "Release v0.8.29: Dynamic Multi-Server Conduit, Dedicated Cache per Server, MCP Spec Compliance (ping/resources/prompts), and Auto-Sync Mnemosyne."
           releaseDraft: false
           prerelease: false

@@ -596,11 +596,43 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.29',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.29 (Multi-Server Conduit, Isolated Cache & Spec-Compliant MCP)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penyempurnaan arsitektur MCP Multi-Server: Dedicated Cache per-server untuk eliminasi race condition, Content-based runner overwrite di Rust, on-demand synchronous discovery, eliminasi echo stdin pada readline (invalid request fix), dan otomatisasi injeksi SSE Mnemosyne dari Gateway Server.',
+      features: [
+        'Dedicated Cache Per-Server (mcp_tools_cache_<server>.json) mengeliminasi race condition dan status 0 tools saat IDE refresh paralel.',
+        'Dynamic Multi-Server Scoping (--server=<name>) dengan normalisasi nama server tanpa sensitivitas strip/underscore.',
+        'Rust check_needs_update berbasis konten TARGET_SERVER memastikan file runner di laptop client otomatis tertimpa versi terbaru saat HHG start.',
+        'Injeksi otomatis SSE Mnemosyne dari Konfigurasi Gateway ke tombol "Salin Konfigurasi IDE" tanpa perlu registrasi manual di tabel MCP.',
+        'On-demand discovery fallback mencegah nilai tools kosong (0 tools) pada pemanggilan pertama dari IDE.'
+      ],
+      fixes: [
+        'Memperbaiki drop koneksi IDE \"invalid request\": Menghapus output echo pada readline.createInterface agar input stdin tidak terpantul ke stdout.',
+        'Menambahkan dukungan method ping, resources/list, prompts/list, dan logging/setLevel pada protokol JSON-RPC runner.',
+        'Memperbaiki race condition penulisan file cache mcp_tools_cache.json saat banyak proses server dipanggil bersamaan oleh IDE.'
+      ],
+      architecture: [
+        'Dedicated Process Isolation Per-Server Conduit',
+        'Isolated Per-Server Cache Routing Pattern',
+        'Zero-Echo MCP Stdio Handshake Pipeline'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.80 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.29/Hermes.Hub.Gateway_0.1.0_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.20 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.29/Hermes.Hub.Gateway_0.1.0_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '81.9 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.29/Hermes.Hub.Gateway_0.1.0_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.1.0_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.29/Hermes.Hub.Gateway_0.1.0_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.29/Hermes.Hub.Gateway-0.1.0-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.28',
       name: 'Hermes Hub Gateway v0.8.28 (Dynamic Multi-Server Conduit & True Single-File Workspace)',
       date: '23 Oktober 2026',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Menyajikan generator konfigurasi MCP IDE dinamis multi-server terisolasi (<30 tools per proses) untuk mencegah drop schema IDE, menghapus total mcp_config.json dari root project, menyematkan ikon disket 💾 untuk skill Hermes, dan persisten unread counter berbasis timestamp.',
       features: [
         'Dynamic Multi-Server IDE Conduit: Tombol "Salin Konfigurasi IDE" kini mem-parsing seluruh server MCP aktif menjadi entri mandiri terisolasi (--server=<name>) sehingga muatan schema terbagi rata dan lolos batas validator IDE.',
@@ -3233,7 +3265,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.28</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.29</span>
                 </div>
               )}
             </div>
@@ -4487,20 +4519,23 @@ export default function App() {
                         }
                       };
 
-                      (config.mcp_servers || []).filter(s => s.enabled).forEach(s => {
-                        const sName = (s.name || "server").toLowerCase().replace(/[^a-z0-9_-]/g, "_");
-                        if (sName === "mnemosyne" && s.args && s.args.some((a: string) => a.includes("http"))) {
-                          const urlArg = s.args.find((a: string) => a.startsWith("http")) || "http://172.168.1.202:8080/sse";
-                          serversObj["mnemosyne"] = {
-                            serverUrl: urlArg.replace(/\/mcp$/, "/sse")
-                          };
-                        } else {
-                          serversObj[sName] = {
-                            command: nodePath,
-                            args: [runnerPath, `--server=${sName}`]
-                          };
-                        }
+                      (config.mcp_servers || []).filter(s => s.enabled).forEach((s: any) => {
+                        const sRaw = (s.name || s.id || "server").toLowerCase();
+                        if (sRaw === "mnemosyne") return; // Mnemosyne dihandle otomatis via Gateway Server URL
+
+                        const sName = sRaw.replace(/[^a-z0-9_-]/g, "_");
+                        serversObj[sName] = {
+                          command: nodePath,
+                          args: [runnerPath, `--server=${sName}`]
+                        };
                       });
+
+                      // Injeksi otomatis Mnemosyne SSE dari Gateway Config
+                      const mnemoHost = ((config as any).mnemosyne_server_url || "http://172.168.1.202:8080").replace(/\/+$/, "");
+                      const sseUrl = mnemoHost.endsWith("/sse") ? mnemoHost : `${mnemoHost}/sse`;
+                      serversObj["mnemosyne"] = {
+                        serverUrl: sseUrl
+                      };
 
                       handleCopySnippet(JSON.stringify({ mcpServers: serversObj }, null, 2), "ide_json");
                     }}
