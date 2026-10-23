@@ -333,7 +333,13 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
     });
 
     // Check 2: Central Gateway MCP Runner (run_mcp.js) active & ready
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
+    let home = dirs::home_dir().unwrap_or_else(|| {
+        if cfg!(windows) {
+            PathBuf::from("C:\\Users\\Default")
+        } else {
+            PathBuf::from("/home/user")
+        }
+    });
     let runner_js = home.join(".hermes-hub").join("scripts").join("run_mcp.js");
     let has_runner = runner_js.exists() && fs::metadata(&runner_js).map(|m| m.len() > 1000).unwrap_or(false);
     checks.push(ReadinessCheckItem {

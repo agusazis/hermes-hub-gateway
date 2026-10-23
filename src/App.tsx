@@ -2546,6 +2546,7 @@ export default function App() {
     setNewWsGitBranch(ws.git_target?.target_branch || 'main');
     setNewWsGitToken(ws.git_target?.auth_token || '');
     setEditingWorkspaceIndex(index);
+    setIsSubmittingWorkspace(false);
     setShowAddWsModal(true);
   };
 
@@ -2611,11 +2612,13 @@ export default function App() {
 
         // Pasang ulang NTFS Junction jika path target atau git berubah saat edit
         try {
-          const agentsSource = wsToEdit.internal_skills_path || `C:\\Users\\Default\\.hermes-hub\\workspaces\\${wsToEdit.id}\\skills`;
-          await invoke('link_workspace_junction', {
-            projectPath: newWsPath,
-            agentsSourcePath: agentsSource
-          });
+          const agentsSource = wsToEdit.internal_skills_path || ``;
+          if (agentsSource) {
+            await invoke('link_workspace_junction', {
+              projectPath: newWsPath,
+              agentsSourcePath: agentsSource
+            });
+          }
         } catch (_) {}
 
         setShowAddWsModal(false);
@@ -3737,6 +3740,7 @@ export default function App() {
               </div>
               <button 
                 onClick={() => {
+                  setIsSubmittingWorkspace(false);
                   setEditingWorkspaceIndex(null);
                   setNewWsName('');
                   setNewWsPath('');
@@ -4053,7 +4057,7 @@ export default function App() {
                       <div className="flex items-center gap-2">
                         <input 
                           type="text" 
-                          placeholder="Contoh: D:\7. Project\SIMGOSv2\New - php82\simgos2"
+                          placeholder="Contoh: /home/user/projects/simgos2 atau D:\Project\simgos2"
                           value={newWsPath}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -4119,17 +4123,19 @@ export default function App() {
                   </button>
                   <button 
                     type="submit"
-                    disabled={isSubmittingWorkspace}
+                    disabled={isSubmittingWorkspace || !newWsName.trim() || !newWsPath.trim()}
                     className={`px-5 py-2 rounded-lg text-xs font-bold shadow-md flex items-center gap-2 transition-all ${
                       isSubmittingWorkspace 
                         ? 'bg-cyan-800 text-cyan-200 cursor-not-allowed' 
-                        : 'bg-cyan-600 hover:bg-cyan-500 text-white cursor-pointer'
+                        : (!newWsName.trim() || !newWsPath.trim())
+                          ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/50'
+                          : 'bg-cyan-600 hover:bg-cyan-500 text-white cursor-pointer'
                     }`}
                   >
                     {isSubmittingWorkspace ? (
                       <RefreshCw className="w-4 h-4 text-cyan-300 animate-spin" />
                     ) : (
-                      <CheckCircle className="w-4 h-4 text-white" />
+                      <CheckCircle className={`w-4 h-4 ${(!newWsName.trim() || !newWsPath.trim()) ? 'text-slate-500' : 'text-white'}`} />
                     )}
                     <span>
                       {isSubmittingWorkspace 

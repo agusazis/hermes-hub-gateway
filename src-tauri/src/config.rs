@@ -57,7 +57,13 @@ impl Default for GlobalConfig {
 }
 
 pub fn get_app_data_dir() -> PathBuf {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("C:\\Users\\Default"));
+    let home = dirs::home_dir().unwrap_or_else(|| {
+        if cfg!(windows) {
+            PathBuf::from("C:\\Users\\Default")
+        } else {
+            PathBuf::from("/home/user")
+        }
+    });
     let dir = home.join(".hermes-hub");
     let _ = fs::create_dir_all(&dir);
 
