@@ -21,11 +21,13 @@
 
 ### A. Workspace Engine (`src-tauri/src/workspace.rs` & `src-tauri/src/main.rs`)
 * **Role:** Connects codebases to the gateway without directory clutter or OS-level junction symlinks.
-* **Scaffold Invariants (Pure 2 Artifacts):**
-  1. `AGENTS.md`: High-compliance system prompt adhering to RFC 2119 English directives, Turn-1 memory staleness checks, bidirectional rule authoring, Zero-Root Clutter discipline, and Direct MCP Invocation (agnostic to individual MCP tool counts).
-  2. `mcp_config.json`: Standard client config mapping `hermes-hub-gateway` to `run_mcp.js` and `mnemosyne` to the SSE endpoint.
+* **Scaffold Invariants (Pure 1 Artifact - The True Single File):**
+  1. `AGENTS.md`: High-compliance system prompt adhering to RFC 2119 English directives, Turn-1 memory staleness checks, bidirectional rule authoring, Zero-Root Clutter discipline, and Direct MCP Invocation.
+* **IDE MCP Connection Pattern:**
+  - IDE configuration is managed globally per IDE (via "Salin Konfigurasi IDE" in the HHG UI).
+  - Writing `mcp_config.json` into the project repository root is strictly prohibited to keep git status clean.
 * **Idempotent Reset on Sync:** Whenever "Sync Rules Now" is triggered, HHG automatically pulls the latest rules and re-scaffolds `AGENTS.md` in the target workspace, allowing developers to restore default directives with one click.
-* **Zero Local Folder:** No `.agents/` folder or subdirectories are created inside the project repository.
+* **Zero Local Folder:** No `.agents/` folder, no `USER.md`, and no `mcp_config.json` are created inside the project repository.
 * **Prohibited Behavior:**
   - `mklink /J` or `std::os::windows::fs::symlink_dir` MUST NOT be invoked.
   - Generating `USER.md` in root target directory is strictly prohibited.
