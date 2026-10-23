@@ -70,6 +70,6 @@ jobs:
         with:
           tagName: v0.8.27
           releaseName: "Hermes Hub Gateway v0.8.27"
-          releaseBody: "Release v0.8.27: True Single-File Workspace (AGENTS.md only, zero mcp_config.json clutter) and Multi-Platform Binaries."
+          releaseBody: "Release v0.8.27: True Single-File Workspace, Floppy Disk Skills Icon, and Multi-Platform Binaries."
           releaseDraft: false
           prerelease: false
