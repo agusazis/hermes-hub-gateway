@@ -584,11 +584,11 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.38');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.39');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.38';
+  const APP_VERSION = 'v0.8.39';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -676,11 +676,40 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
-      version: 'v0.8.38',
+      version: 'v0.8.39',
       date: '23 Oktober 2026',
-      name: 'Hermes Hub Gateway v0.8.38 (MCP Sub-Section Separation & Refined UI Ergonomics)',
+      name: 'Hermes Hub Gateway v0.8.39 (Refined Sub-Sections & One-Liner Compact Tool Output)',
       type: 'FEATURE',
       status: 'LATEST',
+      highlights: 'Pemisahan Tegas Sub-Section MCP Lokal vs Remote SSH Hosts Gateway, perbaikan letak tombol aksi agar berdampingan dengan daftar item, dan optimasi output ssh_list_hosts menjadi one-liner ringkas yang memangkas hingga 75% konsumsi token di IDE.',
+      features: [
+        'Dedicated Sub-Section Navigation: Tab navigasi independen untuk "Server MCP Lokal" dan "Remote SSH Hosts Gateway".',
+        'Ergonomic Action Bar: Tombol aksi "Test Semua Server MCP" dan "Daftarkan Server MCP Baru" selalu berdampingan tepat di atas list server MCP.',
+        'Token-Optimized Remote SSH Output: Respons ssh_list_hosts diringkas menjadi compact 1-line format, menghemat token LLM hingga 75% per turn.',
+        'Refined Labeling: Tombol "Pasang Remote SSH" disempurnakan menjadi "Tambah Remote SSH Host".'
+      ],
+      fixes: [
+        'Mengeliminasi jarak vertikal yang jauh saat daftar remote host SSH bertambah banyak.',
+        'Memperbaiki tata letak form dan kartu grid remote SSH.'
+      ],
+      architecture: [
+        'Context-Aware Sub-Section Layout',
+        'Focused Workspace State Routing'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.8.39_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.85 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.39/Hermes.Hub.Gateway_0.8.39_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.8.39_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.26 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.39/Hermes.Hub.Gateway_0.8.39_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.8.39_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '82.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.39/Hermes.Hub.Gateway_0.8.39_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.8.39_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.39/Hermes.Hub.Gateway_0.8.39_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.8.39-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.39/Hermes.Hub.Gateway-0.8.39-1.x86_64.rpm' }
+      ]
+    },
+    {
+      version: 'v0.8.38',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.38',
+      type: 'FEATURE',
+      status: 'STABLE',
       highlights: 'Pemisahan Tegas Antarmuka & Token Optimization: Memisahkan tampilan Server MCP Lokal dengan Remote SSH Hosts Gateway, menyempurnakan layout tombol aksi, serta mengoptimalkan output tool ssh_list_hosts menjadi compact one-liner yang memangkas hingga 75% konsumsi token di IDE.',
       features: [
         'Dedicated Sub-Section Navigation: Tab pemisah tegas antara "Server MCP Lokal" dan "Remote SSH Hosts Gateway" di tab MCP Hub.',
