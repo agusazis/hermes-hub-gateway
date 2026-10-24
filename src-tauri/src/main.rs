@@ -99,6 +99,7 @@ pub struct PlatformEnvironment {
 
 #[tauri::command]
 fn get_platform_environment() -> PlatformEnvironment {
+    let _ = config::get_app_data_dir(); // Trigger sinkronisasi script runner jika ada pembaruan versi
     let os = std::env::consts::OS.to_string();
     let home = dirs::home_dir().unwrap_or_else(|| {
         if os == "windows" {

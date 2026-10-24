@@ -584,11 +584,11 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.39');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.40');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.39';
+  const APP_VERSION = 'v0.8.40';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -676,11 +676,39 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
-      version: 'v0.8.39',
+      version: 'v0.8.40',
       date: '23 Oktober 2026',
-      name: 'Hermes Hub Gateway v0.8.39 (Refined Sub-Sections & One-Liner Compact Tool Output)',
+      name: 'Hermes Hub Gateway v0.8.40 (Deterministic In-Place Runner Hot-Reload & One-Liner Output)',
       type: 'FEATURE',
       status: 'LATEST',
+      highlights: 'Sinkronisasi Runner Deterministik: Memastikan script run_mcp.js dan mcp_server.js di ~/.hermes-hub/scripts/ selalu ter-overwrite secara instan ke versi token-efficient terbaru saat aplikasi HHG diluncurkan atau diperiksa konfigurasinya.',
+      features: [
+        'Deterministic Hot-Reload Runner: Pengecekan isi skrip run_mcp.js mendeteksi tag HOSTS (remote-ssh) sehingga runner lokal langsung terbarui tanpa perlu penghapusan manual.',
+        'One-Liner ssh_list_hosts Output: Respons daftar host dipangkas menjadi format compact baris tunggal, menghemat 75% token per giliran turn.',
+        'Dedicated Sub-Section Navigation: Pemisahan bersih tab Server MCP Lokal vs Remote SSH Hosts Gateway.'
+      ],
+      fixes: [
+        'Memperbaiki kondisi race dimana run_mcp.js lama tidak tertimpa otomatis jika panjang karakternya kebetulan serupa.',
+        'Mempercepat bootstrapping koneksi tool discovery IDE.'
+      ],
+      architecture: [
+        'Deterministic Script Synchronization Loop',
+        'Payload Compression & Token Conservation Strategy'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.8.40_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.85 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.40/Hermes.Hub.Gateway_0.8.40_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.8.40_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.26 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.40/Hermes.Hub.Gateway_0.8.40_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.8.40_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '82.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.40/Hermes.Hub.Gateway_0.8.40_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.8.40_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.40/Hermes.Hub.Gateway_0.8.40_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.8.40-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.40/Hermes.Hub.Gateway-0.8.40-1.x86_64.rpm' }
+      ]
+    },
+    {
+      version: 'v0.8.39',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.39',
+      type: 'FEATURE',
+      status: 'STABLE',
       highlights: 'Pemisahan Tegas Sub-Section MCP Lokal vs Remote SSH Hosts Gateway, perbaikan letak tombol aksi agar berdampingan dengan daftar item, dan optimasi output ssh_list_hosts menjadi one-liner ringkas yang memangkas hingga 75% konsumsi token di IDE.',
       features: [
         'Dedicated Sub-Section Navigation: Tab navigasi independen untuk "Server MCP Lokal" dan "Remote SSH Hosts Gateway".',

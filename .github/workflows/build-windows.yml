@@ -62,8 +62,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.39
-          releaseName: "Hermes Hub Gateway v0.8.39"
-          releaseBody: "Release v0.8.39: MCP Sub-Section Separation, Compact One-Liner ssh_list_hosts Output (Token Optimization), & Refined UI Ergonomics."
+          tagName: v0.8.40
+          releaseName: "Hermes Hub Gateway v0.8.40"
+          releaseBody: "Release v0.8.40: Deterministic In-Place Runner Hot-Reload & Token-Efficient One-Liner Output."
           releaseDraft: false
           prerelease: false
