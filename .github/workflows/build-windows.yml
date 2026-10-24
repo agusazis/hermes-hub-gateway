@@ -62,8 +62,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.36
-          releaseName: "Hermes Hub Gateway v0.8.36"
-          releaseBody: "Release v0.8.36: Native SSH2 Zero-Intervention Auto-Pairing, Edit Remote Host Metadata, and Dynamic Active/Inactive Toggle."
+          tagName: v0.8.37
+          releaseName: "Hermes Hub Gateway v0.8.37"
+          releaseBody: "Release v0.8.37: Quick Per-MCP Enable/Disable Toggle on Sidebar & Dynamic Zero-Token Tool Schema Filtering."
           releaseDraft: false
           prerelease: false
