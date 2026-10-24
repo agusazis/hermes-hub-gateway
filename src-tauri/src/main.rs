@@ -967,7 +967,8 @@ async fn main() {
             ssh_vault::list_ssh_hosts,
             ssh_vault::provision_ssh_host,
             ssh_vault::remove_ssh_host,
-            ssh_vault::toggle_ssh_host_permission
+            ssh_vault::toggle_ssh_host_permission,
+            ssh_vault::toggle_ssh_host_enabled
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");

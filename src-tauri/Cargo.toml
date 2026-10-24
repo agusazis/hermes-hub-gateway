@@ -1,6 +1,6 @@
 [package]
 name = "hermes-hub-gateway"
-version = "0.8.35"
+version = "0.8.36"
 description = "Hermes Hub Gateway (HHG) - Desktop MCP Hub & Watcher for SIMGOSv2 AI Agents"
 authors = ["Agus Azis"]
 edition = "2021"
@@ -21,6 +21,7 @@ chrono = "0.4"
 dirs = "5.0"
 anyhow = "1.0"
 image = { version = "0.25", default-features = false, features = ["png"] }
+ssh2 = "0.9"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [

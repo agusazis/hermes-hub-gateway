@@ -43,6 +43,7 @@ interface SshHostConfig {
   tier: 'production' | 'development' | string;
   key_path: string;
   allow_elevated: boolean;
+  enabled?: boolean;
   description?: string;
   created_at: string;
 }
@@ -535,6 +536,7 @@ export default function App() {
   // Remote SSH State
   const [sshHosts, setSshHosts] = useState<SshHostConfig[]>([]);
   const [showAddSshModal, setShowAddSshModal] = useState<boolean>(false);
+  const [editingSshHost, setEditingSshHost] = useState<SshHostConfig | null>(null);
   const [sshAlias, setSshAlias] = useState<string>('');
   const [sshHost, setSshHost] = useState<string>('');
   const [sshPort, setSshPort] = useState<number>(22);
@@ -581,11 +583,11 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.35');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.36');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.35';
+  const APP_VERSION = 'v0.8.36';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -671,11 +673,39 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.36',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.36 (Native SSH2 Auto-Pairing, Edit Host & Active/Inactive Toggle)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Zero-Intervention Key Pairing: Mengintegrasikan library native ssh2 di backend Rust untuk menyalin public key secara otomatis via password sementara di Windows/Linux tanpa perlu copas manual, tombol Edit Host, serta toggle Aktif/Non-Aktif host tanpa menghapus data.',
+      features: [
+        'Native Embedded SSH2 Auto-Provisioning: Deploy public key ke authorized_keys remote server berjalan langsung dari engine Rust HHG, menghapus kebutuhan sshpass eksternal atau intervensi manual.',
+        'Tombol Edit Remote Host: Pengguna dapat memperbarui alias, IP, port, user, tier, deskripsi, atau memasang ulang kunci dengan mudah.',
+        'Dynamic Enable/Disable Toggle: Host yang terdaftar dapat dinonaktifkan sementara dari akses AI Agent IDE dengan satu klik tanpa perlu dihapus.'
+      ],
+      fixes: [
+        'Menyelesaikan issue Permission Denied pada server SSH tujuan dengan memastikan kunci tertempel secara otomatis saat form disimpan.',
+        'Menyediakan filtrasi host aktif di runner run_mcp.js sehingga host non-aktif tidak akan diakses oleh IDE.'
+      ],
+      architecture: [
+        'Pure Rust SSH2 Protocol Client',
+        'Zero-Intervention Key Handshake'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.8.36_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.84 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.36/Hermes.Hub.Gateway_0.8.36_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.8.36_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.36/Hermes.Hub.Gateway_0.8.36_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.8.36_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '82.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.36/Hermes.Hub.Gateway_0.8.36_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.8.36_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.36/Hermes.Hub.Gateway_0.8.36_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.8.36-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.36/Hermes.Hub.Gateway-0.8.36-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.35',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.35 (Remote SSH Multi-Target MCP & Isolated Ed25519 Vault)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Fitur Unggulan Remote SSH Gateway & Seamless Auto-Relaunch: Mengontrol multi-target VM (Almalinux/Ubuntu/Debian) langsung dari IDE melalui 1 discrete server remote-ssh, isolasi Ed25519 key, serta perbaikan updater otomatis agar aplikasi langsung terbuka kembali setelah instalasi selesai.',
       features: [
         'Discrete Remote-SSH MCP: IDE Antigravity dan Zed Editor dapat mengontrol banyak server/VM sekaligus hanya dengan 1 baris server remote-ssh tanpa spam konfigurasi.',
@@ -3350,6 +3380,32 @@ export default function App() {
     }
   };
 
+  const handleOpenEditSsh = (host: SshHostConfig) => {
+    setEditingSshHost(host);
+    setSshAlias(host.alias);
+    setSshHost(host.host);
+    setSshPort(host.port || 22);
+    setSshUser(host.user || 'root');
+    setSshPasswordTemp('');
+    setSshTier((host.tier as any) || 'development');
+    setSshAllowElevated(host.allow_elevated || false);
+    setSshDesc(host.description || '');
+    setShowAddSshModal(true);
+  };
+
+  const handleOpenNewSsh = () => {
+    setEditingSshHost(null);
+    setSshAlias('');
+    setSshHost('');
+    setSshPort(22);
+    setSshUser('root');
+    setSshPasswordTemp('');
+    setSshTier('development');
+    setSshAllowElevated(false);
+    setSshDesc('');
+    setShowAddSshModal(true);
+  };
+
   const handleProvisionSsh = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sshAlias.trim() || !sshHost.trim() || !sshUser.trim()) {
@@ -3370,11 +3426,12 @@ export default function App() {
       });
       setSshHosts(updated);
       setShowAddSshModal(false);
+      setEditingSshHost(null);
       setSshAlias('');
       setSshHost('');
       setSshPasswordTemp('');
       setSshDesc('');
-      showToast('success', 'Remote SSH Terdaftar', `Host '${sshAlias}' (${sshHost}) berhasil dipasangkan dan didaftarkan ke MCP Gateway.`);
+      showToast('success', editingSshHost ? 'Host Diperbarui' : 'Remote SSH Terdaftar', `Host '${sshAlias}' (${sshHost}) berhasil ${editingSshHost ? 'diperbarui' : 'dipasangkan'} ke MCP Gateway.`);
     } catch (err: any) {
       showToast('error', 'Gagal Setup SSH', err?.toString() || 'Gagal pairing SSH key ke server.');
     } finally {
@@ -3403,6 +3460,19 @@ export default function App() {
       showToast('info', 'Izin Diperbarui', `Mode izin diubah ke ${!currentVal ? 'FULL / ELEVATED (Sudo)' : 'READ-ONLY'}`);
     } catch (err: any) {
       showToast('error', 'Gagal Ubah Izin', err?.toString() || 'Gagal mengubah izin.');
+    }
+  };
+
+  const handleToggleSshEnabled = async (id: string, currentVal: boolean) => {
+    try {
+      const updated = await invoke<SshHostConfig[]>('toggle_ssh_host_enabled', {
+        id,
+        enabled: !currentVal
+      });
+      setSshHosts(updated);
+      showToast('info', 'Status Host', `Host remote SSH ${!currentVal ? 'DIAKTIFKAN' : 'DINONAKTIFKAN'}`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Ubah Status', err?.toString() || 'Gagal mengubah status aktif.');
     }
   };
 
@@ -5019,7 +5089,7 @@ export default function App() {
                   {testingAllMcp ? 'Menguji Semua MCP...' : 'Test Semua Server MCP'}
                 </button>
                 <button 
-                  onClick={() => setShowAddSshModal(true)}
+                  onClick={handleOpenNewSsh}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                   title="Daftarkan host remote SSH baru dengan pasangan kunci terisolasi"
                 >
@@ -5049,10 +5119,10 @@ export default function App() {
                     <Terminal className="w-5 h-5 text-indigo-400" />
                     <div>
                       <h4 className={`text-sm font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-indigo-400" : "text-indigo-700"}`}>
-                        Pasang Remote SSH Host (Multi-Target MCP Gateway)
+                        {editingSshHost ? `Edit Remote SSH Host: ${editingSshHost.alias}` : 'Pasang Remote SSH Host (Multi-Target MCP Gateway)'}
                       </h4>
                       <p className="text-[11px] text-slate-500">
-                        HHG membuat kunci Ed25519 terisolasi dan menempelkannya ke VM target. Password tidak disimpan!
+                        {editingSshHost ? 'Perbarui metadata host atau masukkan password jika ingin memasang ulang SSH key.' : 'HHG membuat kunci Ed25519 terisolasi dan menempelkannya ke VM target. Password tidak disimpan!'}
                       </p>
                     </div>
                   </div>
@@ -5174,7 +5244,7 @@ export default function App() {
                     className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-md transition-all"
                   >
                     {isProvisioningSsh ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                    {isProvisioningSsh ? 'Sedang Memasangkan SSH Key...' : 'Simpan & Pasangkan Host'}
+                    {isProvisioningSsh ? 'Sedang Memasangkan SSH Key...' : (editingSshHost ? 'Perbarui Host & Kunci' : 'Simpan & Pasangkan Host')}
                   </button>
                 </div>
               </form>
@@ -5213,6 +5283,14 @@ export default function App() {
                               {h.tier}
                             </span>
                           </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleOpenEditSsh(h)}
+                            className="p-1 hover:text-indigo-400 text-slate-500 transition-colors"
+                            title="Edit / Perbarui Host SSH"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
                           <button
                             onClick={() => handleRemoveSshHost(h.id, h.alias)}
                             className="p-1 hover:text-rose-400 text-slate-500 transition-colors"
@@ -5220,6 +5298,7 @@ export default function App() {
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
+                        </div>
                         </div>
                         <div className="text-[11px] font-mono text-slate-400 mb-1">
                           {h.user}@{h.host}:{h.port}
@@ -5231,11 +5310,25 @@ export default function App() {
                         )}
                       </div>
 
-                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                        <span className="text-[10px] text-slate-400">Mode Akses Agent:</span>
+                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleToggleSshEnabled(h.id, h.enabled !== false)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 ${
+                              h.enabled !== false
+                                ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
+                                : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
+                            }`}
+                            title="Klik untuk mengaktifkan / menonaktifkan host ini"
+                          >
+                            <Power className="w-2.5 h-2.5" />
+                            {h.enabled !== false ? 'AKTIF' : 'NON-AKTIF'}
+                          </button>
+                        </div>
                         <button
                           onClick={() => handleToggleSshElevation(h.id, h.allow_elevated)}
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all ${
+                          disabled={h.enabled === false}
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-40 ${
                             h.allow_elevated
                               ? 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900'
                               : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'

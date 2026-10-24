@@ -13,8 +13,14 @@ pub struct SshHostConfig {
     pub tier: String, // "production" | "development"
     pub key_path: String,
     pub allow_elevated: bool,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
     pub description: Option<String>,
     pub created_at: String,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 pub fn get_ssh_vault_dir() -> PathBuf {
@@ -70,6 +76,16 @@ pub fn toggle_ssh_host_permission(id: String, allow_elevated: bool) -> Result<Ve
     let mut hosts = load_ssh_hosts();
     if let Some(h) = hosts.iter_mut().find(|h| h.id == id || h.alias == id) {
         h.allow_elevated = allow_elevated;
+        save_ssh_hosts(&hosts)?;
+    }
+    Ok(hosts)
+}
+
+#[tauri::command]
+pub fn toggle_ssh_host_enabled(id: String, enabled: bool) -> Result<Vec<SshHostConfig>, String> {
+    let mut hosts = load_ssh_hosts();
+    if let Some(h) = hosts.iter_mut().find(|h| h.id == id || h.alias == id) {
+        h.enabled = enabled;
         save_ssh_hosts(&hosts)?;
     }
     Ok(hosts)
@@ -149,31 +165,37 @@ pub async fn provision_ssh_host(
                 pub = pub_key_content
             );
 
-            // Coba deploy menggunakan sshpass jika tersedia, atau python fallback
-            #[cfg(unix)]
-            {
-                let check_sshpass = Command::new("which").arg("sshpass").output();
-                if let Ok(sp) = check_sshpass {
-                    if sp.status.success() {
-                        let deploy = Command::new("sshpass")
-                            .args([
-                                "-p", trimmed_pass,
-                                "ssh",
-                                "-o", "StrictHostKeyChecking=no",
-                                "-o", "UserKnownHostsFile=/dev/null",
-                                "-p", &ssh_port.to_string(),
-                                &format!("{}@{}", user_str, host_str),
-                                &install_cmd,
-                            ])
-                            .output();
-                        if let Ok(d) = deploy {
-                            if !d.status.success() {
-                                let err = String::from_utf8_lossy(&d.stderr);
-                                eprintln!("[SSH-PROVISION] sshpass output: {}", err);
-                            }
-                        }
-                    }
-                }
+            // Gunakan library native ssh2 (Pure Rust / C libssh2) - 100% jalan di Windows & Linux tanpa butuh sshpass eksternal!
+            use std::net::TcpStream;
+            let target_addr = format!("{}:{}", host_str, ssh_port);
+            let tcp = TcpStream::connect(&target_addr)
+                .map_err(|e| format!("Gagal menghubungi host {}: {}", target_addr, e))?;
+            
+            let mut sess = ssh2::Session::new()
+                .map_err(|e| format!("Gagal inisialisasi SSH session: {}", e))?;
+            sess.set_tcp_stream(tcp);
+            sess.handshake()
+                .map_err(|e| format!("Gagal handshake SSH ke {}: {}", target_addr, e))?;
+
+            sess.userauth_password(&user_str, trimmed_pass)
+                .map_err(|e| format!("Autentikasi password SSH ditolak untuk user '{}': {}", user_str, e))?;
+
+            if !sess.authenticated() {
+                return Err(format!("Autentikasi gagal untuk user '{}'@{}", user_str, host_str));
+            }
+
+            let mut channel = sess.channel_session()
+                .map_err(|e| format!("Gagal membuka SSH channel session: {}", e))?;
+            channel.exec(&install_cmd)
+                .map_err(|e| format!("Gagal eksekusi deploy authorized_keys: {}", e))?;
+            
+            use std::io::Read;
+            let mut output = String::new();
+            let _ = channel.read_to_string(&mut output);
+            let _ = channel.wait_close();
+            let exit_status = channel.exit_status().unwrap_or(0);
+            if exit_status != 0 {
+                return Err(format!("Deploy authorized_keys gagal (exit code {})", exit_status));
             }
         }
     }
@@ -195,6 +217,7 @@ pub async fn provision_ssh_host(
         tier: host_tier,
         key_path: priv_key_file.to_string_lossy().replace('\\', "/"),
         allow_elevated: is_elevated,
+        enabled: true,
         description,
         created_at: now_str,
     });
