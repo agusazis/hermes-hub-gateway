@@ -64,6 +64,6 @@ jobs:
         with:
           tagName: v0.8.38
           releaseName: "Hermes Hub Gateway v0.8.38"
-          releaseBody: "Release v0.8.38: MCP Sub-Section Separation (Local MCP vs Remote SSH) & Refined UI Ergonomics."
+          releaseBody: "Release v0.8.38: MCP Sub-Section Separation, Compact One-Liner ssh_list_hosts Output (Token Optimization), & Refined UI Ergonomics."
           releaseDraft: false
           prerelease: false

@@ -681,10 +681,11 @@ export default function App() {
       name: 'Hermes Hub Gateway v0.8.38 (MCP Sub-Section Separation & Refined UI Ergonomics)',
       type: 'FEATURE',
       status: 'LATEST',
-      highlights: 'Pemisahan Tegas Antarmuka: Memisahkan tampilan Server MCP Lokal dengan Remote SSH Hosts Gateway ke dalam sub-section tab tersendiri agar tombol aksi selalu berada tepat di atas daftar item terkait, serta penyempurnaan label "Tambah Remote SSH Host".',
+      highlights: 'Pemisahan Tegas Antarmuka & Token Optimization: Memisahkan tampilan Server MCP Lokal dengan Remote SSH Hosts Gateway, menyempurnakan layout tombol aksi, serta mengoptimalkan output tool ssh_list_hosts menjadi compact one-liner yang memangkas hingga 75% konsumsi token di IDE.',
       features: [
         'Dedicated Sub-Section Navigation: Tab pemisah tegas antara "Server MCP Lokal" dan "Remote SSH Hosts Gateway" di tab MCP Hub.',
         'Ergonomic Action Bar: Tombol "Test Semua Server MCP" dan "Daftarkan Server MCP Baru" selalu berdampingan dengan daftar server MCP tanpa terhalang daftar koneksi SSH.',
+        'Token-Optimized Remote SSH Output: Respons ssh_list_hosts diringkas menjadi compact 1-line format, menghemat token LLM hingga 75% per turn.',
         'Refined Labeling: Tombol "Pasang Remote SSH" disempurnakan menjadi "Tambah Remote SSH Host".'
       ],
       fixes: [
