@@ -277,6 +277,7 @@ export default function App() {
   
   // MCP Testing & Tool Calling Discovery state
   const [selectedMcpName, setSelectedMcpName] = useState<string>('');
+  const [mcpHubSection, setMcpHubSection] = useState<'servers' | 'ssh'>('servers');
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [logFilterWorkspace, setLogFilterWorkspace] = useState<string>('all');
@@ -583,11 +584,11 @@ export default function App() {
     setTimeout(() => setCopiedSnippet(null), 2500);
   };
     // Version Logs / Releases Changelog State
-  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.37');
+  const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>('v0.8.38');
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.37';
+  const APP_VERSION = 'v0.8.38';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -675,11 +676,39 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.38',
+      date: '23 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.38 (MCP Sub-Section Separation & Refined UI Ergonomics)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Pemisahan Tegas Antarmuka: Memisahkan tampilan Server MCP Lokal dengan Remote SSH Hosts Gateway ke dalam sub-section tab tersendiri agar tombol aksi selalu berada tepat di atas daftar item terkait, serta penyempurnaan label "Tambah Remote SSH Host".',
+      features: [
+        'Dedicated Sub-Section Navigation: Tab pemisah tegas antara "Server MCP Lokal" dan "Remote SSH Hosts Gateway" di tab MCP Hub.',
+        'Ergonomic Action Bar: Tombol "Test Semua Server MCP" dan "Daftarkan Server MCP Baru" selalu berdampingan dengan daftar server MCP tanpa terhalang daftar koneksi SSH.',
+        'Refined Labeling: Tombol "Pasang Remote SSH" disempurnakan menjadi "Tambah Remote SSH Host".'
+      ],
+      fixes: [
+        'Menyelesaikan issue jarak vertikal tombol aksi yang terlalu jauh saat jumlah koneksi SSH bertambah banyak.',
+        'Menjaga kerapian layout split-pane server MCP dan grid cards SSH.'
+      ],
+      architecture: [
+        'Context-Aware Sub-Section Layout',
+        'Focused Workspace State Routing'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.8.38_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.85 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.38/Hermes.Hub.Gateway_0.8.38_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.8.38_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.26 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.38/Hermes.Hub.Gateway_0.8.38_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.8.38_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '82.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.38/Hermes.Hub.Gateway_0.8.38_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.8.38_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.38/Hermes.Hub.Gateway_0.8.38_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.8.38-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.38/Hermes.Hub.Gateway-0.8.38-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.37',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.37 (Per-MCP Dynamic Enable/Disable & Token Optimization)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Optimalisasi Efisiensi Token LLM: Menambahkan tombol switch toggle Aktif/Non-Aktif langsung di sidebar daftar Server MCP, serta integrasi dinamis di runner run_mcp.js yang langsung menyaring skema tools MCP yang dinonaktifkan tanpa perlu repot salin ulang konfigurasi JSON ke IDE.',
       features: [
         'Quick Toggle MCP di Sidebar: Pengguna dapat langsung menyalakan/mematikan server MCP (seperti Grafana, GitLab, Tabularis) dengan satu klik di daftar utama.',
@@ -5069,47 +5098,72 @@ export default function App() {
               </div>
             </div>
 
-            {/* Top Toolbar */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="text-xs text-white font-semibold flex items-center gap-1.5">
-                  <Layers className="w-4 h-4 text-cyan-400" /> Manage MCP Servers & Tool Capabilities
-                </span>
-                <p className="text-[11px] text-slate-400">
-                  Total <b>{getTotalToolsCount()} tools</b> terdeteksi dari {config.mcp_servers.length} server MCP terdaftar.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
+            {/* Navigasi Pemisah Tegas: Tab Sub-Section MCP Servers vs Remote SSH Hosts */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-900/80 border border-slate-800">
                 <button
                   type="button"
-                  onClick={handleTestAllMcp}
-                  disabled={testingAllMcp}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-                  title="Jalankan handshake JSON-RPC ke seluruh server MCP sekaligus"
+                  onClick={() => setMcpHubSection('servers')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    mcpHubSection === 'servers'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${testingAllMcp ? 'animate-spin' : ''}`} />
-                  {testingAllMcp ? 'Menguji Semua MCP...' : 'Test Semua Server MCP'}
+                  <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Server MCP Lokal ({config.mcp_servers.length})</span>
                 </button>
-                <button 
-                  onClick={handleOpenNewSsh}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-                  title="Daftarkan host remote SSH baru dengan pasangan kunci terisolasi"
+                <button
+                  type="button"
+                  onClick={() => setMcpHubSection('ssh')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    mcpHubSection === 'ssh'
+                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
                 >
-                  <Terminal className="w-3.5 h-3.5" /> Pasang Remote SSH Host
+                  <Terminal className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Remote SSH Hosts Gateway ({sshHosts.length})</span>
                 </button>
-                <button 
-                  onClick={() => {
-                    setEditingMcpIndex(null);
-                    setNewMcpName("");
-                    setNewMcpCmd("");
-                    setNewMcpArgs("");
-                    setNewMcpDesc("");
-                    setShowAddMcpModal(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Daftarkan Server MCP Baru
-                </button>
+              </div>
+
+              {/* Action Buttons Dinamis Sesuai Tab Sub-Section */}
+              <div className="flex items-center gap-2">
+                {mcpHubSection === 'servers' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleTestAllMcp}
+                      disabled={testingAllMcp}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                      title="Jalankan handshake JSON-RPC ke seluruh server MCP sekaligus"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${testingAllMcp ? 'animate-spin' : ''}`} />
+                      {testingAllMcp ? 'Menguji Semua MCP...' : 'Test Semua Server MCP'}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setEditingMcpIndex(null);
+                        setNewMcpName("");
+                        setNewMcpCmd("");
+                        setNewMcpArgs("");
+                        setNewMcpDesc("");
+                        setShowAddMcpModal(true);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Daftarkan Server MCP Baru
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={handleOpenNewSsh}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                    title="Daftarkan host remote SSH baru dengan pasangan kunci terisolasi"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Tambah Remote SSH Host
+                  </button>
+                )}
               </div>
             </div>
 
@@ -5121,7 +5175,7 @@ export default function App() {
                     <Terminal className="w-5 h-5 text-indigo-400" />
                     <div>
                       <h4 className={`text-sm font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-indigo-400" : "text-indigo-700"}`}>
-                        {editingSshHost ? `Edit Remote SSH Host: ${editingSshHost.alias}` : 'Pasang Remote SSH Host (Multi-Target MCP Gateway)'}
+                        {editingSshHost ? `Edit Remote SSH Host: ${editingSshHost.alias}` : 'Tambah Remote SSH Host (Multi-Target MCP Gateway)'}
                       </h4>
                       <p className="text-[11px] text-slate-500">
                         {editingSshHost ? 'Perbarui metadata host atau masukkan password jika ingin memasang ulang SSH key.' : 'HHG membuat kunci Ed25519 terisolasi dan menempelkannya ke VM target. Password tidak disimpan!'}
@@ -5252,99 +5306,119 @@ export default function App() {
               </form>
             )}
 
-            {/* Panel Remote SSH Managed Hosts */}
-            {sshHosts.length > 0 && (
-              <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-slate-900/60 border-indigo-500/30' : 'bg-indigo-50/50 border-indigo-200'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-indigo-400" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
-                      Remote SSH Hosts Gateway ({sshHosts.length} VM Terhubung)
+            {/* KONTEN SUB-SECTION: REMOTE SSH MANAGER */}
+            {mcpHubSection === 'ssh' && (
+              <div className="space-y-4">
+                {/* Panel Remote SSH Managed Hosts */}
+                <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-slate-900/60 border-indigo-500/30' : 'bg-indigo-50/50 border-indigo-200'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Terminal className="w-4 h-4 text-indigo-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                        Remote SSH Hosts Gateway ({sshHosts.length} VM Terhubung)
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-400">
+                      Akses via MCP: <code className="text-indigo-300 font-bold">remote-ssh</code> (Discrete Multi-Host)
                     </span>
                   </div>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    Akses via MCP: <code className="text-indigo-300 font-bold">remote-ssh</code> (Discrete Multi-Host)
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {sshHosts.map((h) => (
-                    <div
-                      key={h.id}
-                      className={`p-3 rounded-xl border flex flex-col justify-between ${
-                        effectiveTheme === 'dark' ? 'bg-slate-950/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-mono text-xs font-bold text-slate-200 truncate flex items-center gap-1.5">
-                            {h.alias}
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                              h.tier === 'production' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                            }`}>
-                              {h.tier}
-                            </span>
-                          </span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleOpenEditSsh(h)}
-                            className="p-1 hover:text-indigo-400 text-slate-500 transition-colors"
-                            title="Edit / Perbarui Host SSH"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveSshHost(h.id, h.alias)}
-                            className="p-1 hover:text-rose-400 text-slate-500 transition-colors"
-                            title="Hapus Host SSH"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-400 mb-1">
-                          {h.user}@{h.host}:{h.port}
-                        </div>
-                        {h.description && (
-                          <div className="text-[10px] text-slate-500 line-clamp-1 mb-2">
-                            {h.description}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleToggleSshEnabled(h.id, h.enabled !== false)}
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 ${
-                              h.enabled !== false
-                                ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
-                                : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
-                            }`}
-                            title="Klik untuk mengaktifkan / menonaktifkan host ini"
-                          >
-                            <Power className="w-2.5 h-2.5" />
-                            {h.enabled !== false ? 'AKTIF' : 'NON-AKTIF'}
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => handleToggleSshElevation(h.id, h.allow_elevated)}
-                          disabled={h.enabled === false}
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-40 ${
-                            h.allow_elevated
-                              ? 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900'
-                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
-                          }`}
-                          title="Klik untuk mengubah izin Read-Only vs Full"
-                        >
-                          {h.allow_elevated ? '⚡ FULL (Sudo)' : '🔒 READ-ONLY'}
-                        </button>
-                      </div>
+                  {sshHosts.length === 0 ? (
+                    <div className="p-8 text-center border border-dashed border-indigo-500/30 rounded-xl space-y-3">
+                      <Terminal className="w-8 h-8 text-indigo-400 mx-auto opacity-60" />
+                      <p className="text-xs text-slate-400">Belum ada remote server Linux yang didaftarkan.</p>
+                      <button
+                        onClick={handleOpenNewSsh}
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm"
+                      >
+                        + Tambah Remote SSH Host Sekarang
+                      </button>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {sshHosts.map((h) => (
+                        <div
+                          key={h.id}
+                          className={`p-3 rounded-xl border flex flex-col justify-between ${
+                            effectiveTheme === 'dark' ? 'bg-slate-950/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-mono text-xs font-bold text-slate-200 truncate flex items-center gap-1.5">
+                                {h.alias}
+                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                                  h.tier === 'production' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                                }`}>
+                                  {h.tier}
+                                </span>
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleOpenEditSsh(h)}
+                                  className="p-1 hover:text-indigo-400 text-slate-500 transition-colors"
+                                  title="Edit / Perbarui Host SSH"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleRemoveSshHost(h.id, h.alias)}
+                                  className="p-1 hover:text-rose-400 text-slate-500 transition-colors"
+                                  title="Hapus Host SSH"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-400 mb-1">
+                              {h.user}@{h.host}:{h.port}
+                            </div>
+                            {h.description && (
+                              <div className="text-[10px] text-slate-500 line-clamp-1 mb-2">
+                                {h.description}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleToggleSshEnabled(h.id, h.enabled !== false)}
+                                className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 ${
+                                  h.enabled !== false
+                                    ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
+                                    : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
+                                }`}
+                                title="Klik untuk mengaktifkan / menonaktifkan host ini"
+                              >
+                                <Power className="w-2.5 h-2.5" />
+                                {h.enabled !== false ? 'AKTIF' : 'NON-AKTIF'}
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => handleToggleSshElevation(h.id, h.allow_elevated)}
+                              disabled={h.enabled === false}
+                              className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-40 ${
+                                h.allow_elevated
+                                  ? 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                              }`}
+                              title="Klik untuk mengubah izin Read-Only vs Full"
+                            >
+                              {h.allow_elevated ? '⚡ FULL (Sudo)' : '🔒 READ-ONLY'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+
+            {/* KONTEN SUB-SECTION: MCP SERVERS (LOCAL / STANDARD) */}
+            {mcpHubSection === 'servers' && (
+              <div className="space-y-4">
 
             {/* Modal Edit / Add MCP Server (RAW JSON & IDE COMPLIANT) */}
             {showAddMcpModal && (
@@ -5814,6 +5888,8 @@ export default function App() {
             </div>
           </div>
         )}
+      </div>
+    )}
 
         {/* TAB 4: SKILLS HIERARCHY & READER (IDE-STYLE MASTER-DETAIL EXPLORER) */}
         {false && (

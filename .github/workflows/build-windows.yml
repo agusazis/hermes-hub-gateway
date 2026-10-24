@@ -62,8 +62,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.37
-          releaseName: "Hermes Hub Gateway v0.8.37"
-          releaseBody: "Release v0.8.37: Quick Per-MCP Enable/Disable Toggle on Sidebar & Dynamic Zero-Token Tool Schema Filtering."
+          tagName: v0.8.38
+          releaseName: "Hermes Hub Gateway v0.8.38"
+          releaseBody: "Release v0.8.38: MCP Sub-Section Separation (Local MCP vs Remote SSH) & Refined UI Ergonomics."
           releaseDraft: false
           prerelease: false
