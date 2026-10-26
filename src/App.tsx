@@ -633,7 +633,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.49';
+  const APP_VERSION = 'v0.8.50';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -721,11 +721,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.50',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.50 (Pure Vault Key-Based SSH Card Ping & Dual-Mode Probe)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Uji Koneksi SSH Berbasis Kunci Vault Murni: Memisahkan secara tegas metode probe SSH. Tombol TEST PING pada kartu host kini 100% menggunakan Private Key dari Vault HHG (identik dengan runner MCP agent di IDE) tanpa bergantung pada password sama sekali.',
+      features: [
+        'Pure Key-Based Card Health Check: Eksekusi tombol ping pada kartu host menggunakan OpenSSH native client dengan flag -i key_path, -o BatchMode=yes persis seperti yang digunakan agen IDE.',
+        'Dual-Mode Modal Test: Modal input mendukung pengujian via password sementara (one-time setup) maupun via private key yang sudah terdaftar.'
+      ],
+      fixes: [
+        'Memperbaiki status GAGAL pada tombol ping kartu host yang sebelumnya salah mencoba autentikasi libssh2 tanpa kunci vault.'
+      ],
+      architecture: [
+        'Zero-Password Persistent SSH Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.50/Hermes.Hub.Gateway_0.8.50_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.50/Hermes.Hub.Gateway_0.8.50_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.50/Hermes.Hub.Gateway_0.8.50_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.50/Hermes.Hub.Gateway_0.8.49_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.50/Hermes.Hub.Gateway-0.8.50-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.49',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.49 (Live Remote SSH Connection Probe & Pre-Flight Verifier)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Uji Koneksi & Vitalitas SSH Instan: Menambahkan tombol "Uji Koneksi SSH" di dalam modal konfigurasi dan tombol "TEST PING" pada setiap kartu host remote SSH untuk memverifikasi handshake, kredensial, dan latensi secara real-time sebelum data disimpan.',
       features: [
         'Pre-Flight Modal Probe: Memvalidasi kredensial pengguna atau kunci SSH terhadap server target secara langsung tanpa merusak atau mengubah konfigurasi server.',

@@ -301,82 +301,156 @@ pub async fn test_ssh_connection(
 ) -> Result<SshTestResult, String> {
     let start_time = std::time::Instant::now();
     let ssh_port = port.unwrap_or(22);
-    let target_addr = format!("{}:{}", host.trim(), ssh_port);
-
-    use std::net::{TcpStream, ToSocketAddrs};
-    use std::time::Duration;
-
-    let addrs: Vec<_> = target_addr
-        .to_socket_addrs()
-        .map_err(|e| format!("Gagal me-resolve alamat {}: {}", target_addr, e))?
-        .collect();
-
-    if addrs.is_empty() {
-        return Err(format!("Tidak dapat menemukan IP untuk {}", target_addr));
-    }
-
-    let tcp = TcpStream::connect_timeout(&addrs[0], Duration::from_secs(5))
-        .map_err(|e| format!("Koneksi TCP timeout/gagal ke {}: {}", target_addr, e))?;
-    
-    let _ = tcp.set_read_timeout(Some(Duration::from_secs(8)));
-    let _ = tcp.set_write_timeout(Some(Duration::from_secs(8)));
-
-    let mut sess = ssh2::Session::new()
-        .map_err(|e| format!("Gagal inisialisasi sesi SSH: {}", e))?;
-    sess.set_tcp_stream(tcp);
-    sess.handshake()
-        .map_err(|e| format!("Handshake SSH gagal ke {}: {}", target_addr, e))?;
-
+    let target_host = host.trim();
     let user_str = user.trim();
-    let mut authenticated = false;
 
-    // 1. Coba autentikasi via password sementara jika diberikan
+    // 1. Cari path private key dari database vault berdasarkan alias atau host
+    let hosts = load_ssh_hosts();
+    let key_path_from_vault = if let Some(ref a) = alias {
+        hosts.iter().find(|h| h.alias == *a || h.id == *a).map(|h| h.key_path.clone())
+    } else {
+        hosts.iter().find(|h| h.host == target_host).map(|h| h.key_path.clone())
+    };
+
+    let priv_key_file = if let Some(kp) = key_path_from_vault {
+        std::path::PathBuf::from(kp)
+    } else if let Some(ref a) = alias {
+        let clean_alias = a.trim().replace(|c: char| !c.is_alphanumeric() && c != '_' && c != '-', "_");
+        get_ssh_vault_dir().join("ssh_keys").join(format!("{}.key", clean_alias))
+    } else {
+        std::path::PathBuf::new()
+    };
+
+    // 2. Jika ada password sementara (di form input), gunakan native libssh2 auth password
     if let Some(pass) = password_temporary {
         let trimmed_pass = pass.trim();
         if !trimmed_pass.is_empty() {
+            let target_addr = format!("{}:{}", target_host, ssh_port);
+            use std::net::{TcpStream, ToSocketAddrs};
+            use std::time::Duration;
+
+            let addrs: Vec<_> = target_addr
+                .to_socket_addrs()
+                .map_err(|e| format!("Gagal me-resolve alamat {}: {}", target_addr, e))?
+                .collect();
+
+            if addrs.is_empty() {
+                return Err(format!("Tidak dapat menemukan IP untuk {}", target_addr));
+            }
+
+            let tcp = TcpStream::connect_timeout(&addrs[0], Duration::from_secs(5))
+                .map_err(|e| format!("Koneksi TCP timeout/gagal ke {}: {}", target_addr, e))?;
+            
+            let mut sess = ssh2::Session::new()
+                .map_err(|e| format!("Gagal inisialisasi sesi SSH: {}", e))?;
+            sess.set_tcp_stream(tcp);
+            sess.handshake()
+                .map_err(|e| format!("Handshake SSH gagal ke {}: {}", target_addr, e))?;
+
             if sess.userauth_password(user_str, trimmed_pass).is_ok() && sess.authenticated() {
-                authenticated = true;
-            }
-        }
-    }
-
-    // 2. Jika belum, coba autentikasi dengan private key yang tersimpan di vault (jika alias ada)
-    if !authenticated {
-        if let Some(a) = alias {
-            let clean_alias = a.trim().replace(|c: char| !c.is_alphanumeric() && c != '_' && c != '-', "_");
-            let priv_key_file = get_ssh_vault_dir().join("ssh_keys").join(format!("{}.key", clean_alias));
-            if priv_key_file.exists() {
-                if sess.userauth_pubkey_file(user_str, None, &priv_key_file, None).is_ok() && sess.authenticated() {
-                    authenticated = true;
+                use std::io::Read;
+                let mut uname_str = String::new();
+                if let Ok(mut channel) = sess.channel_session() {
+                    let _ = channel.exec("uname -srm 2>/dev/null || hostname");
+                    let _ = channel.read_to_string(&mut uname_str);
+                    let _ = channel.wait_close();
                 }
+                let latency = start_time.elapsed().as_millis() as u64;
+                return Ok(SshTestResult {
+                    success: true,
+                    message: format!("Terhubung sukses via Password ({})", target_addr),
+                    latency_ms: latency,
+                    uname: Some(uname_str.trim().to_string()),
+                });
+            } else {
+                let latency = start_time.elapsed().as_millis() as u64;
+                return Ok(SshTestResult {
+                    success: false,
+                    message: format!("Autentikasi password ditolak untuk user '{}'@{}", user_str, target_addr),
+                    latency_ms: latency,
+                    uname: None,
+                });
             }
         }
     }
 
-    if !authenticated {
+    // 3. Mode Standar / Panel Card: Gunakan OS Native OpenSSH CLI dengan Key Vault terdaftar
+    // Ini 100% IDENTIK dengan eksekusi runner agent (`ssh -i key_path -o BatchMode=yes ...`)
+    if !priv_key_file.exists() {
         let latency = start_time.elapsed().as_millis() as u64;
         return Ok(SshTestResult {
             success: false,
-            message: format!("Autentikasi ditolak/gagal untuk user '{}'@{}", user_str, target_addr),
+            message: format!("Private key tidak ditemukan di path: {}", priv_key_file.display()),
             latency_ms: latency,
             uname: None,
         });
     }
 
-    // 3. Jalankan probe perintah ringan: uname -srmo || hostname
-    use std::io::Read;
-    let mut uname_str = String::new();
-    if let Ok(mut channel) = sess.channel_session() {
-        let _ = channel.exec("uname -srm 2>/dev/null || hostname");
-        let _ = channel.read_to_string(&mut uname_str);
-        let _ = channel.wait_close();
-    }
+    let ssh_binary = if cfg!(windows) {
+        let win_path = "C:\\Windows\\System32\\OpenSSH\\ssh.exe";
+        if std::path::Path::new(win_path).exists() {
+            win_path.to_string()
+        } else {
+            "ssh".to_string()
+        }
+    } else {
+        "ssh".to_string()
+    };
+
+    let target_dest = format!("{}@{}", user_str, target_host);
+    let key_str = priv_key_file.to_string_lossy().to_string();
+
+    let output = Command::new(&ssh_binary)
+        .arg("-i")
+        .arg(&key_str)
+        .arg("-p")
+        .arg(ssh_port.to_string())
+        .arg("-o")
+        .arg("StrictHostKeyChecking=no")
+        .arg("-o")
+        .arg("UserKnownHostsFile=/dev/null")
+        .arg("-o")
+        .arg("BatchMode=yes")
+        .arg("-o")
+        .arg("ConnectTimeout=5")
+        .arg(&target_dest)
+        .arg("uname -srm 2>/dev/null || hostname")
+        .output();
 
     let latency = start_time.elapsed().as_millis() as u64;
-    Ok(SshTestResult {
-        success: true,
-        message: format!("Terhubung sukses via SSH ({})", target_addr),
-        latency_ms: latency,
-        uname: Some(uname_str.trim().to_string()),
-    })
+
+    match output {
+        Ok(out) => {
+            if out.status.success() {
+                let stdout_text = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                Ok(SshTestResult {
+                    success: true,
+                    message: format!("Terhubung sukses via SSH Key ({}:{})", target_host, ssh_port),
+                    latency_ms: latency,
+                    uname: Some(stdout_text),
+                })
+            } else {
+                let stderr_text = String::from_utf8_lossy(&out.stderr).trim().to_string();
+                let err_msg = if stderr_text.is_empty() {
+                    format!("Autentikasi SSH Key ditolak/gagal untuk {}", target_dest)
+                } else {
+                    stderr_text
+                };
+                Ok(SshTestResult {
+                    success: false,
+                    message: err_msg,
+                    latency_ms: latency,
+                    uname: None,
+                })
+            }
+        }
+        Err(e) => {
+            Ok(SshTestResult {
+                success: false,
+                message: format!("Gagal memanggil biner ssh '{}': {}", ssh_binary, e),
+                latency_ms: latency,
+                uname: None,
+            })
+        }
+    }
 }
