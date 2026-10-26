@@ -392,7 +392,15 @@ export default function App() {
   // Helper format jam 24 jam (HH:mm:ss)
   const formatTime24 = (dateInput?: string | number | Date) => {
     const d = dateInput ? new Date(dateInput) : new Date();
-    return d.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return d.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+  };
+
+  // Helper format lengkap tanggal & jam audit forensik
+  const formatAuditDateTime = (dateInput?: string | number | Date) => {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    const timeStr = d.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+    const dateStr = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    return { timeStr, dateStr };
   };
   const [evolutionFeed, setEvolutionFeed] = useState<Array<{
     id: string;
@@ -621,7 +629,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.43';
+  const APP_VERSION = 'v0.8.44';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -709,11 +717,38 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.44',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.44 (Precision WITA Two-Line Audit Timestamp)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penyempurnaan Kolom Waktu Forensik Audit: Format waktu kini disajikan dalam dua baris presisi (Jam WITA font mono dengan pemisah standar titik dua + Tanggal lengkap hari/bulan/tahun). Memperbaiki keterbacaan riwayat audit antar-hari.',
+      features: [
+        'Two-Line Precision Timestamp: Baris atas menampilkan jam:menit:detik WITA (format 24 jam) dan baris bawah menampilkan tanggal (misal: 26 Okt 2026).',
+        'Standardized Colon Separator: Mengganti pemisah titik (.) bawaan lokal menjadi titik dua (:) standar IT.',
+        'Modal Forensic Date & Time: Waktu eksekusi di modal inspeksi forensik kini menampilkan tanggal dan jam lengkap.'
+      ],
+      fixes: [
+        'Keterbacaan log antar hari di tabel riwayat audit SSH.',
+        'Konsistensi zona waktu WITA di seluruh komponen audit.'
+      ],
+      architecture: [
+        'Forensic Timestamp Precision Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.44/Hermes.Hub.Gateway_0.8.44_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.44/Hermes.Hub.Gateway_0.8.44_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.44/Hermes.Hub.Gateway_0.8.44_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.44/Hermes.Hub.Gateway_0.8.44_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.44/Hermes.Hub.Gateway-0.8.44-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.43',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.43 (Deep Forensics SSH Audit & JSON Export)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Peningkatan Forensik Audit SSH Mendalam: Gateway kini merekam output preview perintah remote dan exit code server ke berkas audit. Menambahkan modal inspeksi forensik detail interaktif pada baris log serta tombol ekspor rekaman audit ke format JSON.',
       features: [
         'Deep Forensics Output & Exit Code Capture: Menangkap hingga 200 karakter respon eksekusi server remote dan status exit code secara non-intrusif.',
@@ -5731,10 +5766,16 @@ export default function App() {
                           .map((entry, idx) => {
                             const isBlocked = entry.status.includes('BLOCKED');
                             const isSuccess = entry.status === 'SUCCESS';
+                            const { timeStr, dateStr } = formatAuditDateTime(entry.timestamp);
                             return (
                               <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className="hover:bg-slate-800/40 cursor-pointer transition-colors group">
-                                <td className="py-2 px-3 text-[11px] text-slate-400 whitespace-nowrap">
-                                  {formatTime24(entry.timestamp)}
+                                <td className="py-2 px-3 whitespace-nowrap">
+                                  <div className="font-semibold text-slate-200 text-[11px] font-mono">
+                                    {timeStr} <span className="text-[9px] text-slate-400 font-normal">WITA</span>
+                                  </div>
+                                  <div className="text-[10px] text-slate-400">
+                                    {dateStr}
+                                  </div>
                                 </td>
                                 <td className="py-2 px-3 font-semibold text-indigo-400 whitespace-nowrap">
                                   {entry.target}
@@ -5803,7 +5844,7 @@ export default function App() {
                         <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-slate-950/60 border border-slate-800">
                           <div>
                             <span className="text-[10px] text-slate-500 uppercase block">Waktu Eksekusi</span>
-                            <span className="text-slate-300">{formatTime24(selectedAuditEntry.timestamp)} WITA</span>
+                            <span className="text-slate-300 font-semibold">{formatAuditDateTime(selectedAuditEntry.timestamp).dateStr} &bull; {formatAuditDateTime(selectedAuditEntry.timestamp).timeStr} WITA</span>
                           </div>
                           <div>
                             <span className="text-[10px] text-slate-500 uppercase block">Klien Pemanggil</span>

@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.43
-          releaseName: "Hermes Hub Gateway v0.8.43"
-          releaseBody: "Release v0.8.43: Deep Forensics SSH Audit (Output Capture, Exit Code, JSON Export & Inspection Modal)."
+          tagName: v0.8.44
+          releaseName: "Hermes Hub Gateway v0.8.44"
+          releaseBody: "Release v0.8.44: Two-Line Precision WITA Timestamp & Full Audit Date Display."
           releaseDraft: false
           prerelease: false
