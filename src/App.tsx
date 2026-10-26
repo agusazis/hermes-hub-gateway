@@ -591,7 +591,8 @@ export default function App() {
   const [isProvisioningSsh, setIsProvisioningSsh] = useState<boolean>(false);
   const [isTestingSsh, setIsTestingSsh] = useState<boolean>(false);
   const [sshTestResult, setSshTestResult] = useState<{ success: boolean; message: string; latency_ms: number; uname?: string } | null>(null);
-  const [hostPingStatus, setHostPingStatus] = useState<Record<string, { testing?: boolean; success?: boolean; latency_ms?: number; message?: string }>>({});
+  const [hostPingStatus, setHostPingStatus] = useState<Record<string, { testing?: boolean; success?: boolean; latency_ms?: number; message?: string; checked_at?: number }>>({});
+  const [isPingingAll, setIsPingingAll] = useState<boolean>(false);
   const [newMcpCmd, setNewMcpCmd] = useState('');
   const [newMcpArgs, setNewMcpArgs] = useState('');
   const [newMcpDesc, setNewMcpDesc] = useState('');
@@ -633,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.50';
+  const APP_VERSION = 'v0.8.51';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -721,11 +722,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.51',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.51 (Dynamic Header Version & Batch SSH Healthcheck)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Dynamic Header Versioning & Multi-Host SSH Healthcheck: Memperbaiki versi header sidebar yang sebelumnya statis (v0.8.29) menjadi dinamis murni mengacu pada APP_VERSION, serta menambahkan tombol "Uji Semua Host" dan background auto-polling pada kartu remote SSH.',
+      features: [
+        'Dynamic Sidebar Header: Teks "Gateway v0.8.xx" di header sidebar kini otomatis mengikuti konstanta APP_VERSION tanpa hardcoded statis.',
+        'Batch SSH Healthcheck: Tombol "Uji Semua Host" di header panel Remote SSH untuk menguji vitalitas seluruh VM secara paralel.',
+        'Automatic Initial Healthcheck: Auto-ping otomatis saat tab Remote SSH dibuka serta background refresh tiap 45 detik.'
+      ],
+      fixes: [
+        'Memperbaiki inkonsistensi label versi header sidebar v0.8.29.'
+      ],
+      architecture: [
+        'Dynamic Header & Reactive Healthcheck Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.51/Hermes.Hub.Gateway_0.8.51_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.51/Hermes.Hub.Gateway_0.8.51_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.51/Hermes.Hub.Gateway_0.8.51_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.51/Hermes.Hub.Gateway_0.8.51_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.51/Hermes.Hub.Gateway-0.8.51-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.50',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.50 (Pure Vault Key-Based SSH Card Ping & Dual-Mode Probe)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Uji Koneksi SSH Berbasis Kunci Vault Murni: Memisahkan secara tegas metode probe SSH. Tombol TEST PING pada kartu host kini 100% menggunakan Private Key dari Vault HHG (identik dengan runner MCP agent di IDE) tanpa bergantung pada password sama sekali.',
       features: [
         'Pure Key-Based Card Health Check: Eksekusi tombol ping pada kartu host menggunakan OpenSSH native client dengan flag -i key_path, -o BatchMode=yes persis seperti yang digunakan agen IDE.',
@@ -3911,7 +3938,8 @@ export default function App() {
           testing: false,
           success: res.success,
           latency_ms: res.latency_ms,
-          message: res.message
+          message: res.message,
+          checked_at: Date.now()
         }
       }));
     } catch (err: any) {
@@ -3921,11 +3949,45 @@ export default function App() {
           testing: false,
           success: false,
           latency_ms: 0,
-          message: err?.toString() || 'Gagal koneksi'
+          message: err?.toString() || 'Gagal koneksi',
+          checked_at: Date.now()
         }
       }));
     }
   };
+
+  const handlePingAllHosts = async () => {
+    const activeHosts = sshHosts.filter(h => h.enabled !== false);
+    if (activeHosts.length === 0) return;
+    setIsPingingAll(true);
+    try {
+      await Promise.all(activeHosts.map(h => handlePingHostCard(h)));
+      showToast('info', 'Uji Massal Selesai', `Status ${activeHosts.length} VM berhasil diperbarui.`);
+    } finally {
+      setIsPingingAll(false);
+    }
+  };
+
+  // Auto-Healthcheck & Auto-Polling Status Ping SSH
+  useEffect(() => {
+    if (activeTab !== 'mcp_hub' || mcpHubSection !== 'ssh') return;
+
+    // Auto-ping pertama kali ketika tab Remote SSH dibuka jika belum ada status
+    const unprobed = sshHosts.filter(h => h.enabled !== false && !hostPingStatus[h.id]);
+    if (unprobed.length > 0 && !isPingingAll) {
+      unprobed.forEach(h => handlePingHostCard(h));
+    }
+
+    // Background polling tiap 60 detik untuk memastikan indikator selalu up-to-date
+    const interval = setInterval(() => {
+      const active = sshHosts.filter(h => h.enabled !== false);
+      if (active.length > 0) {
+        active.forEach(h => handlePingHostCard(h));
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, mcpHubSection, sshHosts.length]);
 
   const handleProvisionSsh = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -4183,7 +4245,7 @@ export default function App() {
               {!isSidebarCollapsed && (
                 <div className="overflow-hidden">
                   <h1 className="font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">Hermes Hub</h1>
-                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway v0.8.29</span>
+                  <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono tracking-widest uppercase block">Gateway {APP_VERSION}</span>
                 </div>
               )}
             </div>
@@ -5852,6 +5914,19 @@ export default function App() {
                       <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
                         Remote SSH Hosts Gateway ({sshHosts.length} VM Terhubung)
                       </span>
+                      <button
+                        onClick={handlePingAllHosts}
+                        disabled={isPingingAll || sshHosts.length === 0}
+                        className="ml-2 flex items-center gap-1 px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-500/30 hover:border-indigo-400 disabled:opacity-50 text-indigo-300 rounded-lg text-[10px] font-semibold transition-all shadow-sm"
+                        title="Ping dan uji koneksi seluruh VM remote secara serentak"
+                      >
+                        {isPingingAll ? (
+                          <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                        ) : (
+                          <Zap className="w-3 h-3 text-amber-400" />
+                        )}
+                        {isPingingAll ? 'Memeriksa Semua VM...' : 'Uji Semua Host'}
+                      </button>
                     </div>
                     <span className="text-[11px] font-mono text-slate-400">
                       Akses via MCP: <code className="text-indigo-300 font-bold">remote-ssh</code> (Discrete Multi-Host)
