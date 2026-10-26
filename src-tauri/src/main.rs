@@ -616,7 +616,8 @@ async fn trigger_manual_sync() -> serde_json::Value {
     // Otomatis regenerate / timpa AGENTS.md dan mcp_config.json di project tujuan (reset ke default)
     let target_dir = std::path::PathBuf::from(&ws.target_path);
     if target_dir.exists() {
-        let _ = workspace::scaffold_new_agents_structure(&target_dir, &ws.name);
+        let internal_repo = std::path::PathBuf::from(&ws.internal_skills_path);
+        let _ = workspace::scaffold_new_agents_structure_with_repo(&target_dir, &ws.name, Some(&internal_repo));
     }
 
     serde_json::json!({

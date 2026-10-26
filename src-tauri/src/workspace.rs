@@ -253,14 +253,35 @@ pub fn remove_ntfs_junction(link_path: &Path) -> Result<(), String> {
 
 // src-tauri/src/workspace.rs: Zero-Footprint Project Scaffold
 pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Result<(), String> {
-    // Pure Zero-Footprint: Hanya membuat 2 file di root project (AGENTS.md dan mcp_config.json)
-    // DILARANG KERAS membuat folder .agents atau subfolder apa pun di dalam project repository.
+    scaffold_new_agents_structure_with_repo(dest_dir, project_name, None)
+}
 
-    // 1. AGENTS.md (Soul & Directives)
-    let agents_md = format!(r##"# {name} AI Agent Core Directives (HHG {version})
+pub fn scaffold_new_agents_structure_with_repo(dest_dir: &Path, project_name: &str, internal_repo_path: Option<&Path>) -> Result<(), String> {
+    // Pure Zero-Footprint: Menghasilkan AGENTS.md di root project secara non-intrusif
+    // Jika di repositori internal rules terdapat template AGENTS.template.md, gunakan sebagai sumber utama dinamis
+    let mut custom_template: Option<String> = None;
+    if let Some(repo_p) = internal_repo_path {
+        let candidate_template = repo_p.join("AGENTS.template.md");
+        let candidate_agents = repo_p.join("AGENTS.md");
+        if candidate_template.exists() {
+            if let Ok(c) = fs::read_to_string(&candidate_template) {
+                custom_template = Some(c);
+            }
+        } else if candidate_agents.exists() {
+            if let Ok(c) = fs::read_to_string(&candidate_agents) {
+                custom_template = Some(c);
+            }
+        }
+    }
+
+    let agents_md = if let Some(tmpl) = custom_template {
+        tmpl.replace("{name}", project_name)
+            .replace("{version}", "v0.8.41")
+    } else {
+        format!(r##"# {name} AI Agent Core Directives (HHG {version})
 
 > **Arch Signature:** Hermes Hub Gateway `{version}` (Zero-Footprint Engine)
-> **Directives Version:** `{version}` | Generated via HHG Rule Sync
+> **Directives Schema:** `v2.4.0` | Generated via HHG Rule Sync
 
 You are an autonomous AI software engineer operating under the Zero-Footprint Context Architecture powered by Hermes Hub Gateway (HHG {version}).
 All previous filesystem folder hierarchies under `.agents/` (skills, rules, specialists, memory) are fully deprecated and converted into dynamic MCP-first services.
@@ -307,7 +328,9 @@ Evaluate tools dynamically based on their live `description` in your active tool
 5. Dynamic Self-Discovery: Rely on live MCP tool names and descriptions presented in your active session rather than hardcoded assumptions.
 6. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously without an explicit, direct instruction from the user. All code modifications, new files, and patches MUST strictly remain in the local working tree (uncommitted and unstaged) for human inspection and review. Finishing a coding task means leaving clean, verified changes on disk, NEVER committing on your own initiative.
 7. Immutable Soul & System Directives: STRICTLY PROHIBITED from modifying, editing, patching, or appending to `AGENTS.md` or any root system prompt directive files. You do NOT have permission to alter your own directives or apologize by self-editing soul instructions. Only the human architect (Agus Azis) has authority to update the agent soul.
-"##, name = project_name, version = "v0.8.41");
+"##, name = project_name, version = "v0.8.41")
+    };
+
     fs::write(dest_dir.join("AGENTS.md"), agents_md).map_err(|e| e.to_string())?;
 
     // Pure Zero-Footprint Invariant: DILARANG MEMBUAT USER.md atau file sampah lain di root project!

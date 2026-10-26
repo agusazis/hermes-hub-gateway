@@ -3,6 +3,12 @@ name: Build Hermes Hub Gateway (Multi-Platform)
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "src/**"
+      - "src-tauri/**"
+      - "package.json"
+      - "Cargo.toml"
+      - ".github/workflows/build-windows.yml"
   workflow_dispatch:
 
 concurrency:
