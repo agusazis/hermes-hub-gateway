@@ -629,7 +629,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.44';
+  const APP_VERSION = 'v0.8.45';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -717,11 +717,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.45',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.45 (Zero Hardcoded IP in SOUL Template)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Pembersihan Total Hardcoded IP: Menghapus IP statis (172.168.1.202:9125) dari template direktif AGENTS.md. Mengabstrakkan peran background reviewer agar sepenuhnya melalui HHG gateway bridge dan mematuhi prinsip Zero-Footprint Dynamic Discovery.',
+      features: [
+        'Pure Dynamic Bridge Abstraction: Poin 7 AGENTS.md kini sepenuhnya merujuk ke HHG gateway bridge tanpa membocorkan endpoint fisik IP/port evaluator.',
+        'Zero IP Leak in Directives: Mengeliminasi potensi stale IP jika subnet evaluator Hermes berpindah di masa depan.'
+      ],
+      fixes: [
+        'Konsistensi antara prinsip epistemic grounding dinamis dan teks direktif soul.'
+      ],
+      architecture: [
+        'Zero-Hardcoded Topology Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.45/Hermes.Hub.Gateway_0.8.45_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.45/Hermes.Hub.Gateway_0.8.45_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.45/Hermes.Hub.Gateway_0.8.45_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.45/Hermes.Hub.Gateway_0.8.45_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.45/Hermes.Hub.Gateway-0.8.45-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.44',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.44 (Precision WITA Two-Line Audit Timestamp)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyempurnaan Kolom Waktu Forensik Audit: Format waktu kini disajikan dalam dua baris presisi (Jam WITA font mono dengan pemisah standar titik dua + Tanggal lengkap hari/bulan/tahun). Memperbaiki keterbacaan riwayat audit antar-hari.',
       features: [
         'Two-Line Precision Timestamp: Baris atas menampilkan jam:menit:detik WITA (format 24 jam) dan baris bawah menampilkan tanggal (misal: 26 Okt 2026).',
