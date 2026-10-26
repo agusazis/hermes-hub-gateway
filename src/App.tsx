@@ -629,7 +629,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.45';
+  const APP_VERSION = 'v0.8.46';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -717,11 +717,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.46',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.46 (Cross-Platform Linux/macOS Downstream Runner)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Perbaikan Kompatibilitas Eksekusi MCP Downstream Linux/macOS: Memperbaiki resolusi variabel homeDir di runner aggregator Node.js (run_mcp.js) agar menggunakan process.env.HOME dan os.homedir(). Menyelesaikan masalah pending downstream MCP pada Linux AlmaLinux/Ubuntu/Debian.',
+      features: [
+        'Universal Cross-Platform HomeDir Resolution: Runner kini mendeteksi process.env.HOME || process.env.USERPROFILE || os.homedir() secara aman lintas platform.',
+        'Zero Pending Downstream di Linux: Memungkinkan runner di Linux membaca config.json, cache file, dan vault SSH dari ~/.hermes-hub/.'
+      ],
+      fixes: [
+        'Bug runner downstream failing to spawn pada Linux OS karena pencarian path C:\\Users\\user.',
+        'Membuka akses 6 server downstream (Tabularis, GitLab, MariaDB, Grafana, Synology, MikroTik) pada platform Linux.'
+      ],
+      architecture: [
+        'Cross-Platform POSIX & Win32 Bridge Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.46/Hermes.Hub.Gateway_0.8.46_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.46/Hermes.Hub.Gateway_0.8.46_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.46/Hermes.Hub.Gateway_0.8.46_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.46/Hermes.Hub.Gateway_0.8.46_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.46/Hermes.Hub.Gateway-0.8.46-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.45',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.45 (Zero Hardcoded IP in SOUL Template)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Pembersihan Total Hardcoded IP: Menghapus IP statis (172.168.1.202:9125) dari template direktif AGENTS.md. Mengabstrakkan peran background reviewer agar sepenuhnya melalui HHG gateway bridge dan mematuhi prinsip Zero-Footprint Dynamic Discovery.',
       features: [
         'Pure Dynamic Bridge Abstraction: Poin 7 AGENTS.md kini sepenuhnya merujuk ke HHG gateway bridge tanpa membocorkan endpoint fisik IP/port evaluator.',

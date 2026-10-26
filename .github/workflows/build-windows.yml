@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.45
-          releaseName: "Hermes Hub Gateway v0.8.45"
-          releaseBody: "Release v0.8.45: Abstracted Self-Improvement Endpoint & Zero Static IP in AGENTS.md Template."
+          tagName: v0.8.46
+          releaseName: "Hermes Hub Gateway v0.8.46"
+          releaseBody: "Release v0.8.46: Cross-Platform Linux/macOS Downstream Runner Compatibility (HOME & os.homedir fallback)."
           releaseDraft: false
           prerelease: false
