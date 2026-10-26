@@ -4,7 +4,7 @@ import path from 'path';
 
 console.log('=== [HHG VERIFICATION GATE 1/3]: Static Type Checking (tsc --noEmit) ===');
 try {
-  execSync('npx tsc --noEmit', { stdio: 'inherit' });
+  execSync('npx -p typescript tsc --noEmit', { stdio: 'inherit' });
   console.log('✓ TypeScript check PASSED (0 errors).\n');
 } catch (e) {
   console.error('❌ TypeScript check FAILED!\n');

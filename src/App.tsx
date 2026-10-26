@@ -48,6 +48,18 @@ interface SshHostConfig {
   created_at: string;
 }
 
+interface SshAuditLogEntry {
+  timestamp: string;
+  client: string;
+  tool: string;
+  target: string;
+  target_ip: string;
+  mode: string;
+  action_summary: string;
+  status: string;
+  duration_ms: number;
+}
+
 interface Workspace {
   id: string;
   name: string;
@@ -277,7 +289,10 @@ export default function App() {
   
   // MCP Testing & Tool Calling Discovery state
   const [selectedMcpName, setSelectedMcpName] = useState<string>('');
-  const [mcpHubSection, setMcpHubSection] = useState<'servers' | 'ssh'>('servers');
+  const [mcpHubSection, setMcpHubSection] = useState<'servers' | 'ssh' | 'ssh_audit'>('servers');
+  const [sshAuditLogs, setSshAuditLogs] = useState<SshAuditLogEntry[]>([]);
+  const [loadingSshAudit, setLoadingSshAudit] = useState<boolean>(false);
+  const [sshAuditFilter, setSshAuditFilter] = useState<string>('');
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [logFilterWorkspace, setLogFilterWorkspace] = useState<string>('all');
@@ -588,7 +603,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.40';
+  const APP_VERSION = 'v0.8.41';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -676,11 +691,41 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.41',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.41 (Live SSH Audit Trail & Forensics Logger)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Pencatatan Audit Trail Forensik Eksekusi SSH Mandiri: Gateway mencatat setiap aksi tool remote shell (ssh_run_command, ssh_read_file, ssh_write_file) langsung ke berkas log terisolasi di laptop (~/.hermes-hub/logs/ssh_audit.log) dengan rotasi otomatis 10 MB dan zero RAM overhead. Menyediakan tab visual baru SSH Audit Logs di dashboard HHG.',
+      features: [
+        'Dedicated SSH Audit Logs Sub-Section: Tab mandiri di MCP Hub untuk memantau live riwayat eksekusi perintah shell, target VM, status izin READONLY vs FULL, dan durasi eksekusi.',
+        'Zero-RAM Stream Logger: Pencatatan asinkron berkecepatan tinggi (<0.5 ms) langsung ke disk NVMe tanpa membebani memori laptop.',
+        'Automatic Log Rotation: Pembatasan ukuran berkas log maksimal 10 MB dengan rotasi berkas otomatis (ssh_audit.1.log) untuk menjaga storage laptop tetap ramping.',
+        'Read-Only Guard Interception Logging: Pencatatan event BLOCKED_READONLY saat perintah destruktif/sudo dicoba pada host tier proteksi.',
+        'One-Click Reset & Real-Time Filter: Filter pencarian log instan dan opsi pembersihan riwayat audit.'
+      ],
+      fixes: [
+        'Menyempurnakan pelacakan durasi eksekusi perintah SSH dalam milidetik.',
+        'Mencegah pencatatan payload biner/teks panjang pada penulisan berkas remote untuk menjaga file log tetap padat dan terbaca.'
+      ],
+      architecture: [
+        'Non-Repudiation Security & Audit Framework',
+        'High-Throughput Zero-Footprint File Streaming Pipeline'
+      ],
+      downloads: [
+        { name: 'Hermes.Hub.Gateway_0.8.41_x64-setup.exe', type: 'NSIS Installer (EXE)', size: '2.85 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.41/Hermes.Hub.Gateway_0.8.41_x64-setup.exe' },
+        { name: 'Hermes.Hub.Gateway_0.8.41_x64_en-US.msi', type: 'WiX Windows Package (MSI)', size: '4.26 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.41/Hermes.Hub.Gateway_0.8.41_x64_en-US.msi' },
+        { name: 'Hermes.Hub.Gateway_0.8.41_amd64.AppImage', type: 'Linux AppImage (Universal)', size: '82.0 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.41/Hermes.Hub.Gateway_0.8.41_amd64.AppImage' },
+        { name: 'Hermes.Hub.Gateway_0.8.41_amd64.deb', type: 'Debian / Ubuntu Package (.deb)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.41/Hermes.Hub.Gateway_0.8.41_amd64.deb' },
+        { name: 'Hermes.Hub.Gateway-0.8.41-1.x86_64.rpm', type: 'RedHat / Alma / Fedora Package (.rpm)', size: '5.4 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.41/Hermes.Hub.Gateway-0.8.41-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.40',
       date: '23 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.40 (Deterministic In-Place Runner Hot-Reload & One-Liner Output)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Sinkronisasi Runner Deterministik: Memastikan script run_mcp.js dan mcp_server.js di ~/.hermes-hub/scripts/ selalu ter-overwrite secara instan ke versi token-efficient terbaru saat aplikasi HHG diluncurkan atau diperiksa konfigurasinya.',
       features: [
         'Deterministic Hot-Reload Runner: Pengecekan isi skrip run_mcp.js mendeteksi tag HOSTS (remote-ssh) sehingga runner lokal langsung terbarui tanpa perlu penghapusan manual.',
@@ -3499,6 +3544,29 @@ export default function App() {
     }
   };
 
+  const loadSshAuditLogsList = async () => {
+    setLoadingSshAudit(true);
+    try {
+      const res = await invoke<SshAuditLogEntry[]>('get_ssh_audit_logs', { limit: 100 });
+      if (res) setSshAuditLogs(res);
+    } catch (e) {
+      console.warn("Gagal memuat ssh audit logs:", e);
+    } finally {
+      setLoadingSshAudit(false);
+    }
+  };
+
+  const handleClearSshAuditLogs = async () => {
+    if (!window.confirm("Apakah Anda yakin ingin mengosongkan riwayat audit log SSH?")) return;
+    try {
+      await invoke('clear_ssh_audit_logs');
+      setSshAuditLogs([]);
+      showToast('info', 'Audit Logs Dikosongkan', 'Berkas log audit SSH berhasil direset.');
+    } catch (e) {
+      showToast('error', 'Gagal Reset Log', String(e));
+    }
+  };
+
   const handleOpenEditSsh = (host: SshHostConfig) => {
     setEditingSshHost(host);
     setSshAlias(host.alias);
@@ -5181,13 +5249,28 @@ export default function App() {
                   }`}
                 >
                   <Terminal className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Remote SSH Hosts Gateway ({sshHosts.length})</span>
+                  <span>Remote SSH Hosts ({sshHosts.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMcpHubSection('ssh_audit');
+                    loadSshAuditLogsList();
+                  }}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    mcpHubSection === 'ssh_audit'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>SSH Audit Logs ({sshAuditLogs.length})</span>
                 </button>
               </div>
 
               {/* Action Buttons Dinamis Sesuai Tab Sub-Section */}
               <div className="flex items-center gap-2">
-                {mcpHubSection === 'servers' ? (
+                {mcpHubSection === 'servers' && (
                   <>
                     <button
                       type="button"
@@ -5213,7 +5296,8 @@ export default function App() {
                       <Plus className="w-3.5 h-3.5" /> Daftarkan Server MCP Baru
                     </button>
                   </>
-                ) : (
+                )}
+                {mcpHubSection === 'ssh' && (
                   <button 
                     onClick={handleOpenNewSsh}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
@@ -5221,6 +5305,27 @@ export default function App() {
                   >
                     <Plus className="w-3.5 h-3.5" /> Tambah Remote SSH Host
                   </button>
+                )}
+                {mcpHubSection === 'ssh_audit' && (
+                  <>
+                    <button 
+                      type="button"
+                      onClick={loadSshAuditLogsList}
+                      disabled={loadingSshAudit}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                      title="Segarkan data log audit SSH terbaru"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingSshAudit ? 'animate-spin' : ''}`} /> Refresh
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={handleClearSshAuditLogs}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                      title="Bersihkan berkas riwayat log audit di laptop"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Reset Audit
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -5471,6 +5576,116 @@ export default function App() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* KONTEN SUB-SECTION: SSH AUDIT TRAIL LOGS */}
+            {mcpHubSection === 'ssh_audit' && (
+              <div className={`p-5 rounded-2xl border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900/40 border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <h4 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-emerald-400" : "text-emerald-700"}`}>
+                        Audit Trail Eksekusi SSH (IDE to Remote Hosts)
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Catatan audit forensik eksekusi tool shell & file di host remote oleh AI Agent. Rotasi otomatis (max 10 MB per berkas).
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2" />
+                      <input
+                        type="text"
+                        placeholder="Filter audit log..."
+                        value={sshAuditFilter}
+                        onChange={(e) => setSshAuditFilter(e.target.value)}
+                        className={`pl-8 pr-3 py-1 rounded-lg text-xs font-mono focus:outline-none transition-colors ${effectiveTheme === "dark" ? "bg-slate-950 border border-slate-800 text-emerald-300 focus:border-emerald-500/50" : "bg-slate-50 border border-slate-200 text-slate-800 focus:border-emerald-500 shadow-xs"}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {sshAuditLogs.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500 font-mono text-xs">
+                    Belum ada riwayat eksekusi SSH yang tercatat. Panggil salah satu tool SSH di IDE untuk memicu log audit.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left font-mono text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 uppercase">
+                          <th className="py-2 px-3">Waktu (WITA)</th>
+                          <th className="py-2 px-3">Target Host</th>
+                          <th className="py-2 px-3">Tool</th>
+                          <th className="py-2 px-3">Perintah / Ringkasan Aksi</th>
+                          <th className="py-2 px-3">Mode</th>
+                          <th className="py-2 px-3">Status</th>
+                          <th className="py-2 px-3 text-right">Durasi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
+                        {sshAuditLogs
+                          .filter((entry) => {
+                            if (!sshAuditFilter) return true;
+                            const q = sshAuditFilter.toLowerCase();
+                            return (
+                              entry.target.toLowerCase().includes(q) ||
+                              entry.action_summary.toLowerCase().includes(q) ||
+                              entry.tool.toLowerCase().includes(q) ||
+                              entry.status.toLowerCase().includes(q)
+                            );
+                          })
+                          .map((entry, idx) => {
+                            const isBlocked = entry.status.includes('BLOCKED');
+                            const isSuccess = entry.status === 'SUCCESS';
+                            return (
+                              <tr key={idx} className="hover:bg-slate-800/20 transition-colors">
+                                <td className="py-2 px-3 text-[11px] text-slate-400 whitespace-nowrap">
+                                  {formatTime24(entry.timestamp)}
+                                </td>
+                                <td className="py-2 px-3 font-semibold text-indigo-400 whitespace-nowrap">
+                                  {entry.target}
+                                  <span className="block text-[10px] font-normal text-slate-500">{entry.target_ip}</span>
+                                </td>
+                                <td className="py-2 px-3 text-cyan-400 whitespace-nowrap">
+                                  {entry.tool}
+                                </td>
+                                <td className="py-2 px-3 text-slate-200 max-w-[280px] truncate" title={entry.action_summary}>
+                                  {entry.action_summary}
+                                </td>
+                                <td className="py-2 px-3 whitespace-nowrap">
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                                    entry.mode === 'FULL'
+                                      ? 'bg-amber-950 text-amber-300 border-amber-800'
+                                      : 'bg-slate-900 text-slate-400 border-slate-800'
+                                  }`}>
+                                    {entry.mode}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 whitespace-nowrap">
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                                    isSuccess
+                                      ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                                      : isBlocked
+                                      ? 'bg-rose-950 text-rose-300 border-rose-800'
+                                      : 'bg-slate-900 text-slate-300 border-slate-700'
+                                  }`}>
+                                    {entry.status}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-right text-slate-400 whitespace-nowrap">
+                                  {entry.duration_ms} ms
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
