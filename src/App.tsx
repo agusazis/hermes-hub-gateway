@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.51';
+  const APP_VERSION = 'v0.8.52';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.52',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.52 (Manual-Only SSH Healthcheck & 8s Auto-Reset)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Uji Koneksi SSH Murni Manual & Auto-Reset Status: Menghapus background polling/auto-interval untuk menghemat utilisasi resource dan jaringan, serta mengimplementasikan auto-reset otomatis ke label tombol "TEST PING" netral 8 detik setelah pengujian selesai.',
+      features: [
+        '8-Second Auto-Reset: Tombol status latensi (misal: "865ms ✓" atau "GAGAL ✕") otomatis kembali ke label awal "TEST PING" setelah 8 detik sehingga tampilan tidak beku permanen.',
+        'Pure On-Demand Manual Control: Menghapus seluruh background heartbeat/auto-polling interval. Pengujian koneksi hanya dieksekusi saat pengguna menekan tombol "TEST PING" atau "Uji Semua Host".'
+      ],
+      fixes: [
+        'Memperbaiki status tombol ping yang sebelumnya membeku tanpa kembali ke kondisi standby.'
+      ],
+      architecture: [
+        'Zero-Background Overhead & Ephemeral Probe UI'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.52/Hermes.Hub.Gateway_0.8.52_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.52/Hermes.Hub.Gateway_0.8.52_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.52/Hermes.Hub.Gateway_0.8.52_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.52/Hermes.Hub.Gateway_0.8.52_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.52/Hermes.Hub.Gateway-0.8.52-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.51',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.51 (Dynamic Header Version & Batch SSH Healthcheck)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Dynamic Header Versioning & Multi-Host SSH Healthcheck: Memperbaiki versi header sidebar yang sebelumnya statis (v0.8.29) menjadi dinamis murni mengacu pada APP_VERSION, serta menambahkan tombol "Uji Semua Host" dan background auto-polling pada kartu remote SSH.',
       features: [
         'Dynamic Sidebar Header: Teks "Gateway v0.8.xx" di header sidebar kini otomatis mengikuti konstanta APP_VERSION tanpa hardcoded statis.',
@@ -3938,10 +3963,18 @@ export default function App() {
           testing: false,
           success: res.success,
           latency_ms: res.latency_ms,
-          message: res.message,
-          checked_at: Date.now()
+          message: res.message
         }
       }));
+
+      // Auto-reset kembali ke tombol 'TEST PING' netral setelah 8 detik
+      setTimeout(() => {
+        setHostPingStatus(prev => {
+          const next = { ...prev };
+          delete next[host.id];
+          return next;
+        });
+      }, 8000);
     } catch (err: any) {
       setHostPingStatus(prev => ({
         ...prev,
@@ -3949,10 +3982,16 @@ export default function App() {
           testing: false,
           success: false,
           latency_ms: 0,
-          message: err?.toString() || 'Gagal koneksi',
-          checked_at: Date.now()
+          message: err?.toString() || 'Gagal koneksi'
         }
       }));
+      setTimeout(() => {
+        setHostPingStatus(prev => {
+          const next = { ...prev };
+          delete next[host.id];
+          return next;
+        });
+      }, 8000);
     }
   };
 
@@ -3962,32 +4001,11 @@ export default function App() {
     setIsPingingAll(true);
     try {
       await Promise.all(activeHosts.map(h => handlePingHostCard(h)));
-      showToast('info', 'Uji Massal Selesai', `Status ${activeHosts.length} VM berhasil diperbarui.`);
+      showToast('info', 'Uji Selesai', `Status koneksi ${activeHosts.length} VM berhasil diuji.`);
     } finally {
       setIsPingingAll(false);
     }
   };
-
-  // Auto-Healthcheck & Auto-Polling Status Ping SSH
-  useEffect(() => {
-    if (activeTab !== 'mcp_hub' || mcpHubSection !== 'ssh') return;
-
-    // Auto-ping pertama kali ketika tab Remote SSH dibuka jika belum ada status
-    const unprobed = sshHosts.filter(h => h.enabled !== false && !hostPingStatus[h.id]);
-    if (unprobed.length > 0 && !isPingingAll) {
-      unprobed.forEach(h => handlePingHostCard(h));
-    }
-
-    // Background polling tiap 60 detik untuk memastikan indikator selalu up-to-date
-    const interval = setInterval(() => {
-      const active = sshHosts.filter(h => h.enabled !== false);
-      if (active.length > 0) {
-        active.forEach(h => handlePingHostCard(h));
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [activeTab, mcpHubSection, sshHosts.length]);
 
   const handleProvisionSsh = async (e: React.FormEvent) => {
     e.preventDefault();

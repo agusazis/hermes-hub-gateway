@@ -1,6 +1,6 @@
 [package]
 name = "hermes-hub-gateway"
-version = "0.8.51"
+version = "0.8.52"
 description = "Hermes Hub Gateway (HHG) - Desktop MCP Hub & Watcher for SIMGOSv2 AI Agents"
 authors = ["Agus Azis"]
 edition = "2021"
