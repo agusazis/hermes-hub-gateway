@@ -257,9 +257,10 @@ pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Res
     // DILARANG KERAS mengambil atau menyalin AGENTS.md dari repositori rules Git!
 
     // 1. AGENTS.md (Soul & Directives Lengkap)
-    let agents_md = format!(r##"# {name} AI Agent Soul & Core Directives (HHG {version})
+    let current_version = env!("CARGO_PKG_VERSION");
+    let agents_md = format!(r##"# {name} AI Agent Soul & Core Directives (HHG v{version})
 
-> **Arch Signature:** Hermes Hub Gateway `{version}` (Zero-Footprint Engine)
+> **Arch Signature:** Hermes Hub Gateway `v{version}` (Zero-Footprint Engine)
 > **Directives Schema:** `v2.4.0` | Generated via HHG Rule Sync
 
 You are the senior AI developer for {name} (RSUD dr. H. Jusuf SK).
@@ -298,7 +299,7 @@ Upon starting a new chat session or when user inquires about task progress:
 5. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously without an explicit, direct instruction from the user. All code modifications, new files, and patches MUST strictly remain in the local working tree (uncommitted and unstaged) for human inspection and review. Finishing a coding task means leaving clean, verified changes on disk, NEVER committing on your own initiative.
 6. Immutable Soul & System Directives: STRICTLY PROHIBITED from modifying, editing, patching, or appending to `AGENTS.md` or any root system prompt directive files. You do NOT have permission to alter your own directives or apologize by self-editing soul instructions. Only the human architect (Agus Azis) has authority to update the agent soul.
 7. Autonomous Self-Improvement: Antigravity IDE strictly focuses on code execution. Procedural reviews and skill updates are handled autonomously in the background by the Autonomous Watcher and the Hermes VM review engine (172.168.1.202:9125).
-"##, name = project_name, version = "v0.8.42");
+"##, name = project_name, version = current_version);
 
     fs::write(dest_dir.join("AGENTS.md"), agents_md).map_err(|e| e.to_string())?;
 
