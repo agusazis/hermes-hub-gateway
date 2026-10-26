@@ -257,9 +257,12 @@ pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Res
     // DILARANG KERAS membuat folder .agents atau subfolder apa pun di dalam project repository.
 
     // 1. AGENTS.md (Soul & Directives)
-    let agents_md = format!(r##"# {name} AI Agent Core Directives
+    let agents_md = format!(r##"# {name} AI Agent Core Directives (HHG {version})
 
-You are an autonomous AI software engineer operating under the Zero-Footprint Context Architecture powered by Hermes Hub Gateway (HHG).
+> **Arch Signature:** Hermes Hub Gateway `{version}` (Zero-Footprint Engine)
+> **Directives Version:** `{version}` | Generated via HHG Rule Sync
+
+You are an autonomous AI software engineer operating under the Zero-Footprint Context Architecture powered by Hermes Hub Gateway (HHG {version}).
 All previous filesystem folder hierarchies under `.agents/` (skills, rules, specialists, memory) are fully deprecated and converted into dynamic MCP-first services.
 
 ## OPERATING DISCIPLINE
@@ -302,7 +305,9 @@ Evaluate tools dynamically based on their live `description` in your active tool
 3. Zero Hallucinated Schema: Never infer database columns, tables, or relationships. Mandatory physical schema inspection via Tabularis MCP prior to SQL generation.
 4. Zero Credential Leaks: NEVER persist passwords, private keys, API tokens, or root credentials into Mnemosyne memory or code commits.
 5. Dynamic Self-Discovery: Rely on live MCP tool names and descriptions presented in your active session rather than hardcoded assumptions.
-"##, name = project_name);
+6. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously without an explicit, direct instruction from the user. All code modifications, new files, and patches MUST strictly remain in the local working tree (uncommitted and unstaged) for human inspection and review. Finishing a coding task means leaving clean, verified changes on disk, NEVER committing on your own initiative.
+7. Immutable Soul & System Directives: STRICTLY PROHIBITED from modifying, editing, patching, or appending to `AGENTS.md` or any root system prompt directive files. You do NOT have permission to alter your own directives or apologize by self-editing soul instructions. Only the human architect (Agus Azis) has authority to update the agent soul.
+"##, name = project_name, version = "v0.8.41");
     fs::write(dest_dir.join("AGENTS.md"), agents_md).map_err(|e| e.to_string())?;
 
     // Pure Zero-Footprint Invariant: DILARANG MEMBUAT USER.md atau file sampah lain di root project!

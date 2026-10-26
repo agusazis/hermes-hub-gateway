@@ -700,6 +700,8 @@ export default function App() {
       features: [
         'Dedicated SSH Audit Logs Sub-Section: Tab mandiri di MCP Hub untuk memantau live riwayat eksekusi perintah shell, target VM, status izin READONLY vs FULL, dan durasi eksekusi.',
         'Zero-RAM Stream Logger: Pencatatan asinkron berkecepatan tinggi (<0.5 ms) langsung ke disk NVMe tanpa membebani memori laptop.',
+        'Strict Zero Autonomous Git Commit & Push: Penguncian mutlak di template master AGENTS.md (poin 6) yang melarang keras agen mengeksekusi git commit/push tanpa perintah eksplisit pengguna.',
+        'Immutable Soul & System Directives Guard: Larangan keras di template master AGENTS.md (poin 7) bagi agen untuk mengubah, memodifikasi, atau mem-patch file jiwanya sendiri.',
         'Automatic Log Rotation: Pembatasan ukuran berkas log maksimal 10 MB dengan rotasi berkas otomatis (ssh_audit.1.log) untuk menjaga storage laptop tetap ramping.',
         'Read-Only Guard Interception Logging: Pencatatan event BLOCKED_READONLY saat perintah destruktif/sudo dicoba pada host tier proteksi.',
         'One-Click Reset & Real-Time Filter: Filter pencarian log instan dan opsi pembersihan riwayat audit.'
