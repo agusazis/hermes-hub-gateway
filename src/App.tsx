@@ -629,7 +629,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.46';
+  const APP_VERSION = 'v0.8.47';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -717,11 +717,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.47',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.47 (Formal Architectural Grounding & High-Compliance Soul)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Peningkatan Kepatuhan Direktif AGENTS.md: Mengintegrasikan klausul Architectural Grounding & Upstream Gateway Foundation secara formal dalam standar bahasa Inggris imperatif tingkat tinggi. Mencegah cognitive drift agen saat mencari topologi environment atau mengalami kebuntuan.',
+      features: [
+        'Strict English Directive Standard: Seluruh aturan direktif sistem ditulis dalam bahasa Inggris berpresisi tinggi untuk memaksimalkan instruction-following compliance LLM (Claude, GPT, Gemini).',
+        'Separation of Concerns: Menegaskan pemisahan tegas antara Arsitektur Dasar Sistem (hermes_get_environment), Roadmap Proyek (hermes_get_project_context), dan State Memori (Mnemosyne).'
+      ],
+      fixes: [
+        'Mencegah agen tersesat memanggil hermes_get_project_context ketika membutuhkan topologi IP server/VM.',
+        'Protokol resolusi kebuntuan formal (Deadlock Resolution).'
+      ],
+      architecture: [
+        'Formal Upstream Grounding & Zero Cognitive Drift'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.47/Hermes.Hub.Gateway_0.8.47_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.47/Hermes.Hub.Gateway_0.8.47_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.47/Hermes.Hub.Gateway_0.8.47_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.47/Hermes.Hub.Gateway_0.8.47_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.47/Hermes.Hub.Gateway-0.8.47-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.46',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.46 (Cross-Platform Linux/macOS Downstream Runner)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Perbaikan Kompatibilitas Eksekusi MCP Downstream Linux/macOS: Memperbaiki resolusi variabel homeDir di runner aggregator Node.js (run_mcp.js) agar menggunakan process.env.HOME dan os.homedir(). Menyelesaikan masalah pending downstream MCP pada Linux AlmaLinux/Ubuntu/Debian.',
       features: [
         'Universal Cross-Platform HomeDir Resolution: Runner kini mendeteksi process.env.HOME || process.env.USERPROFILE || os.homedir() secara aman lintas platform.',
