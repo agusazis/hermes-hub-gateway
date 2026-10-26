@@ -603,7 +603,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.41';
+  const APP_VERSION = 'v0.8.42';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -691,11 +691,42 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.42',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.42 (Pure Deterministic SOUL & Zero Autonomous Commit)',
+      type: 'RELEASE',
+      status: 'LATEST',
+      highlights: 'Pembersihan Total Arsitektur Soul: AGENTS.md digenerate murni secara deterministik dari biner HHG tanpa bergantung pada file repositori eksternal dan tanpa mencemari prompt dengan katalog skill statis. Memaksa agen IDE melakukan penemuan SOP dinamis via hermes_list_skills serta mengunci larangan commit dan proteksi soul.',
+      features: [
+        'Pure In-Binary Deterministic SOUL: AGENTS.md di-inject langsung oleh engine HHG ke root project target tanpa menyalin dari repositori git.',
+        'Zero Skill-Clutter Prompt: Menghapus blok hardcoded skills catalog dari AGENTS.md, mengembalikan fungsi soul murni yang ramping dan hemat token context window.',
+        'Dynamic Skill Discovery Mandate: Memerintahkan agen menggunakan runtime tool hermes_list_skills dan hermes_get_skill secara on-demand.',
+        'Strict Zero Autonomous Git Commit: Larangan keras mutlak bagi agen melakukan git commit / git push tanpa perintah eksplisit pengguna.',
+        'Immutable Soul Guard: Larangan keras bagi agen di IDE untuk mengedit atau merevisi file AGENTS.md miliknya sendiri.'
+      ],
+      fixes: [
+        'Memastikan tombol "Sync Rules Now" selalu menimpa AGENTS.md di target project dengan template biner mutakhir v0.8.42.',
+        'Menghilangkan kebingungan versi antara frontend dan backend Tauri updater.'
+      ],
+      architecture: [
+        'Pure Zero-Footprint Context Architecture',
+        'Dynamic Runtime Skill Discovery Matrix',
+        'Strict Human-in-the-Loop Git Governance'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.42/Hermes.Hub.Gateway_0.8.42_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.42/Hermes.Hub.Gateway_0.8.42_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.42/Hermes.Hub.Gateway_0.8.42_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.42/Hermes.Hub.Gateway_0.8.42_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.42/Hermes.Hub.Gateway-0.8.42-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.41',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.41 (Live SSH Audit Trail & Forensics Logger)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Pencatatan Audit Trail Forensik Eksekusi SSH Mandiri: Gateway mencatat setiap aksi tool remote shell (ssh_run_command, ssh_read_file, ssh_write_file) langsung ke berkas log terisolasi di laptop (~/.hermes-hub/logs/ssh_audit.log) dengan rotasi otomatis 10 MB dan zero RAM overhead. Menyediakan tab visual baru SSH Audit Logs di dashboard HHG.',
       features: [
         'Dedicated SSH Audit Logs Sub-Section: Tab mandiri di MCP Hub untuk memantau live riwayat eksekusi perintah shell, target VM, status izin READONLY vs FULL, dan durasi eksekusi.',

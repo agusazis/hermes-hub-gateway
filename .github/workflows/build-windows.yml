@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.41
-          releaseName: "Hermes Hub Gateway v0.8.41"
-          releaseBody: "Release v0.8.41: Live SSH Audit Trail & Forensics Logger with zero RAM overhead and auto-rotation."
+          tagName: v0.8.42
+          releaseName: "Hermes Hub Gateway v0.8.42"
+          releaseBody: "Release v0.8.42: Pure Deterministic AGENTS.md Generation & Permanent Zero-Autonomous-Commit Soul Lock."
           releaseDraft: false
           prerelease: false
