@@ -58,6 +58,8 @@ interface SshAuditLogEntry {
   action_summary: string;
   status: string;
   duration_ms: number;
+  output_preview?: string;
+  exit_code?: number | null;
 }
 
 interface Workspace {
@@ -293,6 +295,22 @@ export default function App() {
   const [sshAuditLogs, setSshAuditLogs] = useState<SshAuditLogEntry[]>([]);
   const [loadingSshAudit, setLoadingSshAudit] = useState<boolean>(false);
   const [sshAuditFilter, setSshAuditFilter] = useState<string>('');
+  const [selectedAuditEntry, setSelectedAuditEntry] = useState<SshAuditLogEntry | null>(null);
+
+  const handleExportSshAuditJson = () => {
+    if (sshAuditLogs.length === 0) {
+      showToast('info', 'Audit Log Kosong', 'Tidak ada data log audit untuk diekspor.');
+      return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sshAuditLogs, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `hhg_ssh_audit_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    showToast('success', 'Audit Log Diekspor', `${sshAuditLogs.length} rekaman audit berhasil diunduh (JSON).`);
+  };
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [logFilterWorkspace, setLogFilterWorkspace] = useState<string>('all');
@@ -603,7 +621,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.42';
+  const APP_VERSION = 'v0.8.43';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -691,11 +709,39 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.43',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.43 (Deep Forensics SSH Audit & JSON Export)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Peningkatan Forensik Audit SSH Mendalam: Gateway kini merekam output preview perintah remote dan exit code server ke berkas audit. Menambahkan modal inspeksi forensik detail interaktif pada baris log serta tombol ekspor rekaman audit ke format JSON.',
+      features: [
+        'Deep Forensics Output & Exit Code Capture: Menangkap hingga 200 karakter respon eksekusi server remote dan status exit code secara non-intrusif.',
+        'Interactive Forensics Modal: Klik baris riwayat audit untuk membuka drawer/modal lengkap berisi input command mentah, output preview, dan status host.',
+        'One-Click JSON Audit Export: Tombol unduh rekaman riwayat audit SSH ke format JSON untuk laporan kepatuhan IT rumah sakit.'
+      ],
+      fixes: [
+        'Hover highlight interaktif pada tabel riwayat audit SSH.',
+        'Sanitasi karakter baris baru pada preview output agar log tetap padat.'
+      ],
+      architecture: [
+        'Non-Repudiation Security Framework Level 2',
+        'Lightweight Interactive Forensic Webview Modal'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.43/Hermes.Hub.Gateway_0.8.43_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.43/Hermes.Hub.Gateway_0.8.43_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.43/Hermes.Hub.Gateway_0.8.43_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.43/Hermes.Hub.Gateway_0.8.43_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.43/Hermes.Hub.Gateway-0.8.43-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.42',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.42 (Pure Deterministic SOUL & Zero Autonomous Commit)',
       type: 'RELEASE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Pembersihan Total Arsitektur Soul: AGENTS.md digenerate murni secara deterministik dari biner HHG tanpa bergantung pada file repositori eksternal dan tanpa mencemari prompt dengan katalog skill statis. Memaksa agen IDE melakukan penemuan SOP dinamis via hermes_list_skills serta mengunci larangan commit dan proteksi soul.',
       features: [
         'Pure In-Binary Deterministic SOUL: AGENTS.md di-inject langsung oleh engine HHG ke root project target tanpa menyalin dari repositori git.',
@@ -5628,6 +5674,17 @@ export default function App() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleExportSshAuditJson}
+                      disabled={sshAuditLogs.length === 0}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1.5 disabled:opacity-40 ${
+                        effectiveTheme === "dark" ? "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700" : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                      }`}
+                      title="Ekspor log audit ke format JSON"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Ekspor JSON</span>
+                    </button>
                     <div className="relative">
                       <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2" />
                       <input
@@ -5675,7 +5732,7 @@ export default function App() {
                             const isBlocked = entry.status.includes('BLOCKED');
                             const isSuccess = entry.status === 'SUCCESS';
                             return (
-                              <tr key={idx} className="hover:bg-slate-800/20 transition-colors">
+                              <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className="hover:bg-slate-800/40 cursor-pointer transition-colors group">
                                 <td className="py-2 px-3 text-[11px] text-slate-400 whitespace-nowrap">
                                   {formatTime24(entry.timestamp)}
                                 </td>
@@ -5710,13 +5767,91 @@ export default function App() {
                                   </span>
                                 </td>
                                 <td className="py-2 px-3 text-right text-slate-400 whitespace-nowrap">
-                                  {entry.duration_ms} ms
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <span>{entry.duration_ms} ms</span>
+                                    <span className="text-[10px] text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">Detail &rarr;</span>
+                                  </div>
                                 </td>
                               </tr>
                             );
                           })}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {/* MODAL VIEW DETAILS SSH AUDIT LOG ENTRY */}
+                {selectedAuditEntry && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+                    <div className={`w-full max-w-xl rounded-2xl border p-5 shadow-2xl transition-all ${
+                      effectiveTheme === "dark" ? "bg-slate-900 border-slate-700 text-slate-100" : "bg-white border-slate-200 text-slate-800"
+                    }`}>
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-700/50 mb-4">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                          <h3 className="font-bold text-sm tracking-wide">Detail Forensik Audit SSH</h3>
+                        </div>
+                        <button
+                          onClick={() => setSelectedAuditEntry(null)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-3 font-mono text-xs">
+                        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase block">Waktu Eksekusi</span>
+                            <span className="text-slate-300">{formatTime24(selectedAuditEntry.timestamp)} WITA</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase block">Klien Pemanggil</span>
+                            <span className="text-slate-300">{selectedAuditEntry.client} Agent</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase block">Target Host</span>
+                            <span className="text-indigo-400 font-bold">{selectedAuditEntry.target} ({selectedAuditEntry.target_ip})</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 uppercase block">Mode Izin & Durasi</span>
+                            <span className="text-amber-400">{selectedAuditEntry.mode}</span> &bull; <span className="text-slate-400">{selectedAuditEntry.duration_ms} ms</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Perintah / Aksi (Command Input):</span>
+                          <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-cyan-300 whitespace-pre-wrap break-all select-all font-mono">
+                            {selectedAuditEntry.action_summary}
+                          </pre>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] text-slate-400 uppercase font-bold">Hasil Server (Output Preview):</span>
+                            {typeof selectedAuditEntry.exit_code === "number" && (
+                              <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                                selectedAuditEntry.exit_code === 0 ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-rose-950 text-rose-400 border border-rose-800"
+                              }`}>
+                                Exit Code: {selectedAuditEntry.exit_code}
+                              </span>
+                            )}
+                          </div>
+                          <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 whitespace-pre-wrap break-all select-all font-mono max-h-36 overflow-y-auto">
+                            {selectedAuditEntry.output_preview || "(Tidak ada output atau aksi diblokir sebelum eksekusi)"}
+                          </pre>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 pt-3 border-t border-slate-800 flex justify-end">
+                        <button
+                          onClick={() => setSelectedAuditEntry(null)}
+                          className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                        >
+                          Tutup
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

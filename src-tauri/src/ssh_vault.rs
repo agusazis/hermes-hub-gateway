@@ -53,6 +53,10 @@ pub struct SshAuditLogEntry {
     pub action_summary: String,
     pub status: String,
     pub duration_ms: u64,
+    #[serde(default)]
+    pub output_preview: Option<String>,
+    #[serde(default)]
+    pub exit_code: Option<i32>,
 }
 
 #[tauri::command]
