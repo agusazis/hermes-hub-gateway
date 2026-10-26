@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.47
-          releaseName: "Hermes Hub Gateway v0.8.47"
-          releaseBody: "Release v0.8.47: Formal Architectural Grounding in AGENTS.md Soul Template (Upstream MCP Anchor & Deadlock Protocol)."
+          tagName: v0.8.48
+          releaseName: "Hermes Hub Gateway v0.8.48"
+          releaseBody: "Release v0.8.48: Evolution Logs Multi-Author Filter with Active Profile Default."
           releaseDraft: false
           prerelease: false

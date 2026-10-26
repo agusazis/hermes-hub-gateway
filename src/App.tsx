@@ -314,6 +314,7 @@ export default function App() {
   const [selectedLogIndex, setSelectedLogIndex] = useState<number>(0);
   const [logFilterQuery, setLogFilterQuery] = useState<string>('');
   const [logFilterWorkspace, setLogFilterWorkspace] = useState<string>('all');
+  const [logFilterAuthor, setLogFilterAuthor] = useState<string>('profile');
   // Helper membuat icon tray dengan badge angka merah dinamis (Dynamic Canvas Icon Generator)
   const generateTrayBadgeIcon = async (count: number): Promise<{ rgba: number[]; width: number; height: number } | null> => {
     try {
@@ -629,7 +630,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.47';
+  const APP_VERSION = 'v0.8.48';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -717,11 +718,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.48',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.48 (Evolution Logs Author Filter & Active Profile Default)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Penyaringan Multi-Author pada Continuous Evolution Logs: Menambahkan dropdown filter author dinamis pada telemetry log pembelajaran mandiri, dengan nilai default otomatis terisolasi ke profil developer aktif (config.active_profile).',
+      features: [
+        'Active Profile First: Secara default hanya menampilkan evolusi dan pembaruan aturan/memori yang dihasilkan oleh programmer yang sedang aktif, menjaga fokus kerja tanpa noise dari aktivitas programmer lain.',
+        'Dynamic Multi-Author Dropdown: Opsi pilihan instan antara Profil Aktif, Semua Author, atau author spesifik yang terdeteksi dari riwayat pembelajaran.'
+      ],
+      fixes: [
+        'Mencegah overload visual ketika intensitas evolusi multi-user di tim RSUD meningkat.'
+      ],
+      architecture: [
+        'Author-Isolated Telemetry Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.48/Hermes.Hub.Gateway_0.8.48_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.48/Hermes.Hub.Gateway_0.8.48_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.48/Hermes.Hub.Gateway_0.8.48_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.48/Hermes.Hub.Gateway_0.8.48_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.48/Hermes.Hub.Gateway-0.8.48-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.47',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.47 (Formal Architectural Grounding & High-Compliance Soul)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Peningkatan Kepatuhan Direktif AGENTS.md: Mengintegrasikan klausul Architectural Grounding & Upstream Gateway Foundation secara formal dalam standar bahasa Inggris imperatif tingkat tinggi. Mencegah cognitive drift agen saat mencari topologi environment atau mengalami kebuntuan.',
       features: [
         'Strict English Directive Standard: Seluruh aturan direktif sistem ditulis dalam bahasa Inggris berpresisi tinggi untuk memaksimalkan instruction-following compliance LLM (Claude, GPT, Gemini).',
@@ -6844,6 +6870,27 @@ export default function App() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {/* Filter Author */}
+                <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-mono px-1">Author:</span>
+                  <select
+                    value={logFilterAuthor}
+                    onChange={(e) => setLogFilterAuthor(e.target.value)}
+                    className="bg-slate-950 text-amber-300 text-xs font-mono rounded-lg px-2 py-1 border border-slate-800 focus:outline-none"
+                  >
+                    <option value="profile">
+                      Profil Aktif ({config.active_profile || 'default'})
+                    </option>
+                    <option value="all">Semua Author</option>
+                    {Array.from(new Set(evolutionFeed.map(ev => ev.author).filter(Boolean)))
+                      .filter(author => author !== config.active_profile)
+                      .map(author => (
+                        <option key={author} value={author}>@{author}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+
                 {/* Filter Workspace */}
                 <div className="flex items-center gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
                   <span className="text-[10px] text-slate-400 font-mono px-1">Workspace:</span>
@@ -6886,6 +6933,12 @@ export default function App() {
                     evolutionFeed
                       .filter(ev => {
                         if (logFilterWorkspace !== 'all' && ev.workspace_id !== logFilterWorkspace) return false;
+                        if (logFilterAuthor === 'profile') {
+                          const myProfile = (config.active_profile || 'default').toLowerCase();
+                          if ((ev.author || '').toLowerCase() !== myProfile) return false;
+                        } else if (logFilterAuthor !== 'all') {
+                          if (ev.author !== logFilterAuthor) return false;
+                        }
                         const q = (logFilterQuery || '').toLowerCase();
                         if (!q) return true;
                         return (ev.title || '').toLowerCase().includes(q) ||
@@ -6972,6 +7025,12 @@ export default function App() {
                   if (evolutionFeed.length > 0) {
                     const filtered = evolutionFeed.filter(ev => {
                       if (logFilterWorkspace !== 'all' && ev.workspace_id !== logFilterWorkspace) return false;
+                      if (logFilterAuthor === 'profile') {
+                        const myProfile = (config.active_profile || 'default').toLowerCase();
+                        if ((ev.author || '').toLowerCase() !== myProfile) return false;
+                      } else if (logFilterAuthor !== 'all') {
+                        if (ev.author !== logFilterAuthor) return false;
+                      }
                       const q = (logFilterQuery || '').toLowerCase();
                       if (!q) return true;
                       return (ev.title || '').toLowerCase().includes(q) ||
