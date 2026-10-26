@@ -967,6 +967,7 @@ async fn main() {
             update_tray_status,
             ssh_vault::list_ssh_hosts,
             ssh_vault::provision_ssh_host,
+            ssh_vault::test_ssh_connection,
             ssh_vault::remove_ssh_host,
             ssh_vault::toggle_ssh_host_permission,
             ssh_vault::toggle_ssh_host_enabled,

@@ -6,7 +6,7 @@ import {
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
   BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen, Edit3, Trash2, Bell, Send, MessageSquare,
-  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders, ShieldCheck
+  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders, ShieldCheck, Zap
 } from 'lucide-react';
 
 interface GitTarget {
@@ -589,6 +589,9 @@ export default function App() {
   const [sshAllowElevated, setSshAllowElevated] = useState<boolean>(false);
   const [sshDesc, setSshDesc] = useState<string>('');
   const [isProvisioningSsh, setIsProvisioningSsh] = useState<boolean>(false);
+  const [isTestingSsh, setIsTestingSsh] = useState<boolean>(false);
+  const [sshTestResult, setSshTestResult] = useState<{ success: boolean; message: string; latency_ms: number; uname?: string } | null>(null);
+  const [hostPingStatus, setHostPingStatus] = useState<Record<string, { testing?: boolean; success?: boolean; latency_ms?: number; message?: string }>>({});
   const [newMcpCmd, setNewMcpCmd] = useState('');
   const [newMcpArgs, setNewMcpArgs] = useState('');
   const [newMcpDesc, setNewMcpDesc] = useState('');
@@ -630,7 +633,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.48';
+  const APP_VERSION = 'v0.8.49';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -718,11 +721,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.49',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.49 (Live Remote SSH Connection Probe & Pre-Flight Verifier)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Uji Koneksi & Vitalitas SSH Instan: Menambahkan tombol "Uji Koneksi SSH" di dalam modal konfigurasi dan tombol "TEST PING" pada setiap kartu host remote SSH untuk memverifikasi handshake, kredensial, dan latensi secara real-time sebelum data disimpan.',
+      features: [
+        'Pre-Flight Modal Probe: Memvalidasi kredensial pengguna atau kunci SSH terhadap server target secara langsung tanpa merusak atau mengubah konfigurasi server.',
+        'One-Click Card Health Check: Tombol Test Ping pada kartu host daftar menampilkan status latensi milidetik (ms) serta indikator visual hijau/merah seketika.'
+      ],
+      fixes: [
+        'Mencegah silent failure akibat salah ketik IP, port tertutup firewall, atau kredensial invalid tersimpan ke database host.'
+      ],
+      architecture: [
+        'Non-Destructive SSH2 Handshake & Probe Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.49/Hermes.Hub.Gateway_0.8.49_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.49/Hermes.Hub.Gateway_0.8.49_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.49/Hermes.Hub.Gateway_0.8.49_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.49/Hermes.Hub.Gateway_0.8.49_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.49/Hermes.Hub.Gateway-0.8.49-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.48',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.48 (Evolution Logs Author Filter & Active Profile Default)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyaringan Multi-Author pada Continuous Evolution Logs: Menambahkan dropdown filter author dinamis pada telemetry log pembelajaran mandiri, dengan nilai default otomatis terisolasi ke profil developer aktif (config.active_profile).',
       features: [
         'Active Profile First: Secara default hanya menampilkan evolusi dan pembaruan aturan/memori yang dihasilkan oleh programmer yang sedang aktif, menjaga fokus kerja tanpa noise dari aktivitas programmer lain.',
@@ -3785,6 +3813,7 @@ export default function App() {
   };
 
   const handleOpenEditSsh = (host: SshHostConfig) => {
+    setSshTestResult(null);
     setEditingSshHost(host);
     setSshAlias(host.alias);
     setSshHost(host.host);
@@ -3798,6 +3827,7 @@ export default function App() {
   };
 
   const handleOpenNewSsh = () => {
+    setSshTestResult(null);
     setEditingSshHost(null);
     setSshAlias('');
     setSshHost('');
@@ -3808,6 +3838,68 @@ export default function App() {
     setSshAllowElevated(false);
     setSshDesc('');
     setShowAddSshModal(true);
+  };
+
+  const handleTestSshModal = async () => {
+    if (!sshHost.trim() || !sshUser.trim()) {
+      showToast('error', 'Validasi Gagal', 'Harap isi minimal Host/IP dan Username SSH.');
+      return;
+    }
+    setIsTestingSsh(true);
+    setSshTestResult(null);
+    try {
+      const res = await invoke<{ success: boolean; message: string; latency_ms: number; uname?: string }>('test_ssh_connection', {
+        alias: sshAlias || (editingSshHost ? editingSshHost.alias : null),
+        host: sshHost,
+        port: sshPort || 22,
+        user: sshUser,
+        passwordTemporary: sshPasswordTemp ? sshPasswordTemp : null,
+      });
+      setSshTestResult(res);
+      if (res.success) {
+        showToast('success', 'Uji SSH Berhasil', `${res.message} • ${res.latency_ms}ms`);
+      } else {
+        showToast('error', 'Uji SSH Gagal', res.message);
+      }
+    } catch (err: any) {
+      const msg = err?.toString() || 'Gagal melakukan probe SSH.';
+      setSshTestResult({ success: false, message: msg, latency_ms: 0 });
+      showToast('error', 'Error Koneksi SSH', msg);
+    } finally {
+      setIsTestingSsh(false);
+    }
+  };
+
+  const handlePingHostCard = async (host: SshHostConfig) => {
+    setHostPingStatus(prev => ({ ...prev, [host.id]: { testing: true } }));
+    try {
+      const res = await invoke<{ success: boolean; message: string; latency_ms: number; uname?: string }>('test_ssh_connection', {
+        alias: host.alias,
+        host: host.host,
+        port: host.port || 22,
+        user: host.user,
+        passwordTemporary: null,
+      });
+      setHostPingStatus(prev => ({
+        ...prev,
+        [host.id]: {
+          testing: false,
+          success: res.success,
+          latency_ms: res.latency_ms,
+          message: res.message
+        }
+      }));
+    } catch (err: any) {
+      setHostPingStatus(prev => ({
+        ...prev,
+        [host.id]: {
+          testing: false,
+          success: false,
+          latency_ms: 0,
+          message: err?.toString() || 'Gagal koneksi'
+        }
+      }));
+    }
   };
 
   const handleProvisionSsh = async (e: React.FormEvent) => {
@@ -5666,22 +5758,60 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                {/* Banner Status Hasil Uji Koneksi SSH */}
+                {sshTestResult && (
+                  <div className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs font-mono transition-all ${
+                    sshTestResult.success
+                      ? (effectiveTheme === 'dark' ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300' : 'bg-emerald-50 border-emerald-300 text-emerald-800')
+                      : (effectiveTheme === 'dark' ? 'bg-rose-950/40 border-rose-500/50 text-rose-300' : 'bg-rose-50 border-rose-300 text-rose-800')
+                  }`}>
+                    {sshTestResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1 space-y-0.5">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>{sshTestResult.success ? 'KONEKSI SSH TERUJI & VALID' : 'UJI KONEKSI SSH GAGAL'}</span>
+                        <span className="text-[10px] opacity-80">{sshTestResult.latency_ms}ms</span>
+                      </div>
+                      <div className="text-[11px] opacity-90">{sshTestResult.message}</div>
+                      {sshTestResult.uname && (
+                        <div className="text-[10px] opacity-75 pt-0.5">
+                          Remote Target: <span className="font-semibold underline">{sshTestResult.uname}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                   <button
                     type="button"
-                    onClick={() => setShowAddSshModal(false)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200"
+                    onClick={handleTestSshModal}
+                    disabled={isTestingSsh || isProvisioningSsh}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 hover:border-amber-500/60 disabled:opacity-50 rounded-lg text-xs font-semibold shadow-sm transition-all"
                   >
-                    Batal
+                    {isTestingSsh ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                    {isTestingSsh ? 'Sedang Menguji Koneksi SSH...' : 'Uji Koneksi SSH'}
                   </button>
-                  <button
-                    type="submit"
-                    disabled={isProvisioningSsh}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-md transition-all"
-                  >
-                    {isProvisioningSsh ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                    {isProvisioningSsh ? 'Sedang Memasangkan SSH Key...' : (editingSshHost ? 'Perbarui Host & Kunci' : 'Simpan & Pasangkan Host')}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddSshModal(false)}
+                      className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isProvisioningSsh || isTestingSsh}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-md transition-all"
+                    >
+                      {isProvisioningSsh ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                      {isProvisioningSsh ? 'Sedang Memasangkan SSH Key...' : (editingSshHost ? 'Perbarui Host & Kunci' : 'Simpan & Pasangkan Host')}
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
@@ -5773,6 +5903,33 @@ export default function App() {
                               >
                                 <Power className="w-2.5 h-2.5" />
                                 {h.enabled !== false ? 'AKTIF' : 'NON-AKTIF'}
+                              </button>
+                              <button
+                                onClick={() => handlePingHostCard(h)}
+                                disabled={hostPingStatus[h.id]?.testing || h.enabled === false}
+                                className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 disabled:opacity-40 ${
+                                  hostPingStatus[h.id]?.testing
+                                    ? 'bg-slate-800 text-cyan-300 border-cyan-500/40'
+                                    : hostPingStatus[h.id]?.success === true
+                                    ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
+                                    : hostPingStatus[h.id]?.success === false
+                                    ? 'bg-rose-950 text-rose-300 border-rose-700'
+                                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-amber-300 hover:border-slate-700'
+                                }`}
+                                title={hostPingStatus[h.id]?.message || "Klik untuk ping dan tes uji koneksi SSH ke VM ini"}
+                              >
+                                {hostPingStatus[h.id]?.testing ? (
+                                  <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                                ) : (
+                                  <Zap className="w-2.5 h-2.5 text-amber-400" />
+                                )}
+                                {hostPingStatus[h.id]?.testing
+                                  ? 'PROBING...'
+                                  : hostPingStatus[h.id]?.success === true
+                                  ? `${hostPingStatus[h.id]?.latency_ms}ms ✓`
+                                  : hostPingStatus[h.id]?.success === false
+                                  ? 'GAGAL ✕'
+                                  : 'TEST PING'}
                               </button>
                             </div>
                             <button

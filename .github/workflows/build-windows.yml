@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.48
-          releaseName: "Hermes Hub Gateway v0.8.48"
-          releaseBody: "Release v0.8.48: Evolution Logs Multi-Author Filter with Active Profile Default."
+          tagName: v0.8.49
+          releaseName: "Hermes Hub Gateway v0.8.49"
+          releaseBody: "Release v0.8.49: Live Remote SSH Connection Probe & Pre-Flight Health Checker."
           releaseDraft: false
           prerelease: false

@@ -282,3 +282,101 @@ pub async fn provision_ssh_host(
     save_ssh_hosts(&hosts)?;
     Ok(hosts)
 }
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct SshTestResult {
+    pub success: bool,
+    pub message: String,
+    pub latency_ms: u64,
+    pub uname: Option<String>,
+}
+
+#[tauri::command]
+pub async fn test_ssh_connection(
+    alias: Option<String>,
+    host: String,
+    port: Option<u16>,
+    user: String,
+    password_temporary: Option<String>,
+) -> Result<SshTestResult, String> {
+    let start_time = std::time::Instant::now();
+    let ssh_port = port.unwrap_or(22);
+    let target_addr = format!("{}:{}", host.trim(), ssh_port);
+
+    use std::net::{TcpStream, ToSocketAddrs};
+    use std::time::Duration;
+
+    let addrs: Vec<_> = target_addr
+        .to_socket_addrs()
+        .map_err(|e| format!("Gagal me-resolve alamat {}: {}", target_addr, e))?
+        .collect();
+
+    if addrs.is_empty() {
+        return Err(format!("Tidak dapat menemukan IP untuk {}", target_addr));
+    }
+
+    let tcp = TcpStream::connect_timeout(&addrs[0], Duration::from_secs(5))
+        .map_err(|e| format!("Koneksi TCP timeout/gagal ke {}: {}", target_addr, e))?;
+    
+    let _ = tcp.set_read_timeout(Some(Duration::from_secs(8)));
+    let _ = tcp.set_write_timeout(Some(Duration::from_secs(8)));
+
+    let mut sess = ssh2::Session::new()
+        .map_err(|e| format!("Gagal inisialisasi sesi SSH: {}", e))?;
+    sess.set_tcp_stream(tcp);
+    sess.handshake()
+        .map_err(|e| format!("Handshake SSH gagal ke {}: {}", target_addr, e))?;
+
+    let user_str = user.trim();
+    let mut authenticated = false;
+
+    // 1. Coba autentikasi via password sementara jika diberikan
+    if let Some(pass) = password_temporary {
+        let trimmed_pass = pass.trim();
+        if !trimmed_pass.is_empty() {
+            if sess.userauth_password(user_str, trimmed_pass).is_ok() && sess.authenticated() {
+                authenticated = true;
+            }
+        }
+    }
+
+    // 2. Jika belum, coba autentikasi dengan private key yang tersimpan di vault (jika alias ada)
+    if !authenticated {
+        if let Some(a) = alias {
+            let clean_alias = a.trim().replace(|c: char| !c.is_alphanumeric() && c != '_' && c != '-', "_");
+            let priv_key_file = get_ssh_vault_dir().join("ssh_keys").join(format!("{}.key", clean_alias));
+            if priv_key_file.exists() {
+                if sess.userauth_pubkey_file(user_str, None, &priv_key_file, None).is_ok() && sess.authenticated() {
+                    authenticated = true;
+                }
+            }
+        }
+    }
+
+    if !authenticated {
+        let latency = start_time.elapsed().as_millis() as u64;
+        return Ok(SshTestResult {
+            success: false,
+            message: format!("Autentikasi ditolak/gagal untuk user '{}'@{}", user_str, target_addr),
+            latency_ms: latency,
+            uname: None,
+        });
+    }
+
+    // 3. Jalankan probe perintah ringan: uname -srmo || hostname
+    use std::io::Read;
+    let mut uname_str = String::new();
+    if let Ok(mut channel) = sess.channel_session() {
+        let _ = channel.exec("uname -srm 2>/dev/null || hostname");
+        let _ = channel.read_to_string(&mut uname_str);
+        let _ = channel.wait_close();
+    }
+
+    let latency = start_time.elapsed().as_millis() as u64;
+    Ok(SshTestResult {
+        success: true,
+        message: format!("Terhubung sukses via SSH ({})", target_addr),
+        latency_ms: latency,
+        uname: Some(uname_str.trim().to_string()),
+    })
+}
