@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.52';
+  const APP_VERSION = 'v0.8.53';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.53',
+      date: '26 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.53 (Dynamic Active Profile Author for Direct Memory Mutations)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Dynamic Author Identity for IDE Memory Mutations: Memperbaiki atribusi author pada webhook mutasi memori langsung (mnemosyne_remember/canonical) yang sebelumnya hardcoded "Agus Azis" menjadi dinamis 100% mengikuti config.active_profile pengguna aktif.',
+      features: [
+        'Dynamic Active Profile Attribution: Setiap kali agen IDE memanggil tool mutasi memori langsung, author yang tercatat di Telegram alert dan Evolution Logs otomatis menggunakan profile_id milik pengguna aktif yang sedang login di HHG.',
+        'Multi-Developer Support: Mencegah tercampurnya identitas commit/memori antar anggota tim pengembang yang menggunakan instalasi HHG masing-masing.'
+      ],
+      fixes: [
+        'Menghapus hardcoded string "Agus Azis" pada runner upstream run_mcp.js.'
+      ],
+      architecture: [
+        'Decentralized Profile Attribution Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.53/Hermes.Hub.Gateway_0.8.53_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.53/Hermes.Hub.Gateway_0.8.53_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.53/Hermes.Hub.Gateway_0.8.53_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.53/Hermes.Hub.Gateway_0.8.53_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.53/Hermes.Hub.Gateway-0.8.53-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.52',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.52 (Manual-Only SSH Healthcheck & 8s Auto-Reset)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Uji Koneksi SSH Murni Manual & Auto-Reset Status: Menghapus background polling/auto-interval untuk menghemat utilisasi resource dan jaringan, serta mengimplementasikan auto-reset otomatis ke label tombol "TEST PING" netral 8 detik setelah pengujian selesai.',
       features: [
         '8-Second Auto-Reset: Tombol status latensi (misal: "865ms ✓" atau "GAGAL ✕") otomatis kembali ke label awal "TEST PING" setelah 8 detik sehingga tampilan tidak beku permanen.',

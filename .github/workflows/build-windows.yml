@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.52
-          releaseName: "Hermes Hub Gateway v0.8.52"
-          releaseBody: "Release v0.8.52: Manual-Only SSH Ping with 8s Auto-Reset to Standby State."
+          tagName: v0.8.53
+          releaseName: "Hermes Hub Gateway v0.8.53"
+          releaseBody: "Release v0.8.53: Dynamic Active Profile Author for Direct Memory Mutation Events."
           releaseDraft: false
           prerelease: false
