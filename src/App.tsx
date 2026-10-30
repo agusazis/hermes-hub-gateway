@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.55';
+  const APP_VERSION = 'v0.8.56';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.56',
+      date: '30 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.56 (Absolute Database CLI Guard for SSH READ-ONLY Mode)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Total Database CLI Guard pada Mode READ-ONLY: Menolak seluruh eksekusi query atau interaksi database CLI (mysql, mariadb, psql, sqlite3) via SSH saat host remote berada dalam mode READ-ONLY, sekaligus mengarahkan agen AI untuk menggunakan MCP Database terisolasi.',
+      features: [
+        'Total Database Isolation: Menutup total eksekusi mysql, mariadb, dan psql pada tool SSH di mode READ-ONLY. Akses SSH hanya difokuskan untuk inspeksi sistem berkas dan service.',
+        'Intelligent MCP Guidance: Memberikan feedback terstruktur ke agen agar memanggil tool database melalui MCP khusus (seperti database-simrs atau tabularis) daripada mengeksekusi shell SQL via SSH.'
+      ],
+      fixes: [
+        'Mencegah eksekusi query database langsung di remote shell SSH pada host berstatus READ-ONLY.'
+      ],
+      architecture: [
+        'Dedicated MCP Boundary Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.56/Hermes.Hub.Gateway_0.8.56_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.56/Hermes.Hub.Gateway_0.8.56_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.56/Hermes.Hub.Gateway_0.8.56_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.56/Hermes.Hub.Gateway_0.8.56_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.56/Hermes.Hub.Gateway-0.8.56-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.55',
       date: '30 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.55 (Database DML/DDL Guard for Remote SSH READ-ONLY Mode)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Intersepsi Mutasi Database pada Mode Host READ-ONLY: Memperluas filter keamanan runner MCP (run_mcp.js) pada ssh_run_command agar secara otomatis memblokir query DML/DDL destruktif (INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, REPLACE, CREATE, GRANT, REVOKE) pada client database (mysql, mariadb, psql) saat host berada dalam mode READ-ONLY.',
       features: [
         'Database Mutation Interception: Menjamin agen AI hanya dapat mengeksekusi query aman (SELECT, SHOW, DESCRIBE, EXPLAIN) saat host disetel ke mode READ-ONLY, sekaligus memblokir query modifikasi data tanpa hak FULL (Sudo).',
