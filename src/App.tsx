@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.53';
+  const APP_VERSION = 'v0.8.54';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.54',
+      date: '30 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.54 (Strict Host READ-ONLY Guard & File Mutation Interception)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Strict Enforcement Mode READ-ONLY pada Host Remote SSH: Memperketat filter keamanan runner MCP (run_mcp.js) pada ssh_run_command agar secara deterministik memblokir perintah manipulasi berkas (cp, mv, touch, chmod, tee, truncate), output redirection (> dan >>), in-place sed/perl, serta skrip inline mutasi file saat host disetel ke mode READ-ONLY.',
+      features: [
+        'Strict File Mutation Interception: Mencegah agen AI memodifikasi berkas remote (melalui cp, mv, sed -i, script python/perl, atau operator redirection) ketika host remote SSH disetel dalam mode READ-ONLY.',
+        'Deterministic Error Feedback: Mengembalikan respon eksplisit [PERMISSION REFUSED] ke agen jika mendeteksi aksi penulisan berkas tanpa hak FULL (Sudo), menghentikan asumsi keliru pada konteks model.'
+      ],
+      fixes: [
+        'Memperbaiki celah keamanan dimana perintah cp, sed -i, dan script inline write sebelumnya lolos pada host mode READ-ONLY karena hanya memeriksa blacklist sudo dan rm -rf.'
+      ],
+      architecture: [
+        'Deterministic Multi-Pattern Execution Guard Architecture'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.54/Hermes.Hub.Gateway_0.8.54_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.54/Hermes.Hub.Gateway_0.8.54_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.54/Hermes.Hub.Gateway_0.8.54_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.54/Hermes.Hub.Gateway_0.8.54_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.54/Hermes.Hub.Gateway-0.8.54-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.53',
       date: '26 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.53 (Dynamic Active Profile Author for Direct Memory Mutations)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Dynamic Author Identity for IDE Memory Mutations: Memperbaiki atribusi author pada webhook mutasi memori langsung (mnemosyne_remember/canonical) yang sebelumnya hardcoded "Agus Azis" menjadi dinamis 100% mengikuti config.active_profile pengguna aktif.',
       features: [
         'Dynamic Active Profile Attribution: Setiap kali agen IDE memanggil tool mutasi memori langsung, author yang tercatat di Telegram alert dan Evolution Logs otomatis menggunakan profile_id milik pengguna aktif yang sedang login di HHG.',
