@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.54
-          releaseName: "Hermes Hub Gateway v0.8.54"
-          releaseBody: "Release v0.8.54: Strict Host READ-ONLY Guard & File Mutation Interception."
+          tagName: v0.8.55
+          releaseName: "Hermes Hub Gateway v0.8.55"
+          releaseBody: "Release v0.8.55: Database DML/DDL Guard for Remote SSH READ-ONLY Mode."
           releaseDraft: false
           prerelease: false

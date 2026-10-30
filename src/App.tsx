@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.54';
+  const APP_VERSION = 'v0.8.55';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,36 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.55',
+      date: '30 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.55 (Database DML/DDL Guard for Remote SSH READ-ONLY Mode)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Intersepsi Mutasi Database pada Mode Host READ-ONLY: Memperluas filter keamanan runner MCP (run_mcp.js) pada ssh_run_command agar secara otomatis memblokir query DML/DDL destruktif (INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, REPLACE, CREATE, GRANT, REVOKE) pada client database (mysql, mariadb, psql) saat host berada dalam mode READ-ONLY.',
+      features: [
+        'Database Mutation Interception: Menjamin agen AI hanya dapat mengeksekusi query aman (SELECT, SHOW, DESCRIBE, EXPLAIN) saat host disetel ke mode READ-ONLY, sekaligus memblokir query modifikasi data tanpa hak FULL (Sudo).',
+        'End-to-End Safe Mode: Mengamankan kedua lapisan infrastruktur (Filesystem & Database) secara terpadu tanpa celah kebocoran mutasi data.'
+      ],
+      fixes: [
+        'Menutup celah keamanan dimana query UPDATE/DELETE pada mysql CLI sebelumnya dapat dieksekusi pada host remote berstatus READ-ONLY.'
+      ],
+      architecture: [
+        'Full-Stack Defensive Execution Isolation'
+      ],
+      downloads: [
+        { name: 'Hermes Hub Gateway Windows Installer (.exe)', type: 'EXE', size: '3.1 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.55/Hermes.Hub.Gateway_0.8.55_x64-setup.exe' },
+        { name: 'Hermes Hub Gateway Windows Enterprise (.msi)', type: 'MSI', size: '4.6 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.55/Hermes.Hub.Gateway_0.8.55_x64_en-US.msi' },
+        { name: 'Hermes Hub Gateway Linux AppImage', type: 'AppImage', size: '86 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.55/Hermes.Hub.Gateway_0.8.55_amd64.AppImage' },
+        { name: 'Hermes Hub Gateway Debian/Ubuntu (.deb)', type: 'DEB', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.55/Hermes.Hub.Gateway_0.8.55_amd64.deb' },
+        { name: 'Hermes Hub Gateway RedHat/AlmaLinux (.rpm)', type: 'RPM', size: '5.8 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.55/Hermes.Hub.Gateway-0.8.55-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.54',
       date: '30 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.54 (Strict Host READ-ONLY Guard & File Mutation Interception)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Strict Enforcement Mode READ-ONLY pada Host Remote SSH: Memperketat filter keamanan runner MCP (run_mcp.js) pada ssh_run_command agar secara deterministik memblokir perintah manipulasi berkas (cp, mv, touch, chmod, tee, truncate), output redirection (> dan >>), in-place sed/perl, serta skrip inline mutasi file saat host disetel ke mode READ-ONLY.',
       features: [
         'Strict File Mutation Interception: Mencegah agen AI memodifikasi berkas remote (melalui cp, mv, sed -i, script python/perl, atau operator redirection) ketika host remote SSH disetel dalam mode READ-ONLY.',
