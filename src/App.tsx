@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.56';
+  const APP_VERSION = 'v0.8.57';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.57',
+      date: '31 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.57 (Auto-Refresh SSH Audit Logs Stream)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Auto-Refresh Real-Time SSH Audit Logs: Tab SSH Audit Logs kini otomatis menyegarkan data audit forensik eksekusi remote shell setiap 4 detik saat tab aktif, tanpa membebani resource saat beralih ke tab lain.',
+      features: [
+        'Real-time SSH Audit Polling: Interval auto-refresh aktif 4 detik khusus ketika pengguna berada di tab SSH Audit Logs.',
+        'Silent Background Refresh: Pembaruan log otomatis berjalan tanpa mengganggu interaksi scroll atau filtering tabel.',
+        'Zero-Overhead Tab Switching: Interval timer otomatis dibersihkan dan dinonaktifkan seketika saat beralih ke tab lain.'
+      ],
+      fixes: [
+        'Meniadakan keharusan menekan tombol Refresh berulang kali saat memantau eksekusi agen IDE secara live.'
+      ],
+      architecture: [
+        'Lifecycle-aware useEffect hook dengan dependency tracking pada activeTab dan mcpHubSection.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.57/Hermes.Hub.Gateway_0.8.57_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.57/Hermes.Hub.Gateway_0.8.57_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.57/hermes-hub-gateway_0.8.57_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.57/hermes-hub-gateway_0.8.57_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.57/hermes-hub-gateway-0.8.57-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.56',
       date: '30 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.56 (Absolute Database CLI Guard for SSH READ-ONLY Mode)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Total Database CLI Guard pada Mode READ-ONLY: Menolak seluruh eksekusi query atau interaksi database CLI (mysql, mariadb, psql, sqlite3) via SSH saat host remote berada dalam mode READ-ONLY, sekaligus mengarahkan agen AI untuk menggunakan MCP Database terisolasi.',
       features: [
         'Total Database Isolation: Menutup total eksekusi mysql, mariadb, dan psql pada tool SSH di mode READ-ONLY. Akses SSH hanya difokuskan untuk inspeksi sistem berkas dan service.',
@@ -3966,17 +3992,27 @@ export default function App() {
     }
   };
 
-  const loadSshAuditLogsList = async () => {
-    setLoadingSshAudit(true);
+  const loadSshAuditLogsList = async (silent: boolean = false) => {
+    if (!silent) setLoadingSshAudit(true);
     try {
       const res = await invoke<SshAuditLogEntry[]>('get_ssh_audit_logs', { limit: 100 });
       if (res) setSshAuditLogs(res);
     } catch (e) {
       console.warn("Gagal memuat ssh audit logs:", e);
     } finally {
-      setLoadingSshAudit(false);
+      if (!silent) setLoadingSshAudit(false);
     }
   };
+
+  // Auto-refresh SSH audit logs every 4 seconds when in mcp_hub tab and ssh_audit section
+  useEffect(() => {
+    if (activeTab === 'mcp_hub' && mcpHubSection === 'ssh_audit') {
+      const interval = setInterval(() => {
+        loadSshAuditLogsList(true);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, mcpHubSection]);
 
   const handleClearSshAuditLogs = async () => {
     if (!window.confirm("Apakah Anda yakin ingin mengosongkan riwayat audit log SSH?")) return;
