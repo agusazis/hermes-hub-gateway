@@ -5805,7 +5805,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setMcpHubSection('ssh_audit');
-                    loadSshAuditLogsList();
+                    loadSshAuditLogsList(false);
                   }}
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     mcpHubSection === 'ssh_audit'
@@ -5860,7 +5860,7 @@ export default function App() {
                   <>
                     <button 
                       type="button"
-                      onClick={loadSshAuditLogsList}
+                      onClick={() => loadSshAuditLogsList(false)}
                       disabled={loadingSshAudit}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold shadow-sm transition-all"
                       title="Segarkan data log audit SSH terbaru"
