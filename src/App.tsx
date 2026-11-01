@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.58';
+  const APP_VERSION = 'v0.8.59';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.59',
+      date: '31 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.59 (Vibrant Emerald Contrast for Active SSH Hosts)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Peningkatan Kontras Visual Panel SSH Aktif: Mengoptimalkan saturasi warna panel aktif ke Hijau Emerald yang lebih pekat, hidup, dan berkarakter (bg-gradient-to-br from-emerald-900/80 via-emerald-950/90 to-emerald-950 dengan border emerald-500/80) sehingga langsung kontras dan terlihat jelas perbedaannya dengan server non-aktif.',
+      features: [
+        'Vibrant Emerald Contrast: Panel host aktif kini menggunakan warna hijau yang jauh lebih kontras dan tegas tanpa menusuk mata.',
+        'Emerald Border & Glow Accent: Garis tepi kartu aktif menggunakan border emerald-500/80 dengan subtle glow shadow.',
+        'Clear Host Differentiation: Server aktif dan non-aktif (seperti 172.168.1.4) terbedakan dengan sangat kontras seketika.'
+      ],
+      fixes: [
+        'Memperbaiki warna emerald-950/60 sebelumnya yang tampak terlalu gelap mendekati warna hitam di beberapa monitor.'
+      ],
+      architecture: [
+        'Enhanced Tailwind gradient palette with ring/glow highlights for active host cards.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.59/Hermes.Hub.Gateway_0.8.59_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.59/Hermes.Hub.Gateway_0.8.59_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.59/hermes-hub-gateway_0.8.59_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.59/hermes-hub-gateway_0.8.59_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.59/hermes-hub-gateway-0.8.59-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.58',
       date: '31 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.58 (Dynamic Emerald Panel for Active SSH Hosts)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Visual Status Indication Real-Time: Panel kartu SSH Host kini otomatis bertransisi menggunakan warna latar belakang Hijau Emerald elegan (bg-emerald-950/70) dan border hijau menyala saat status AKTIF, dan kembali ke hitam default saat NON-AKTIF.',
       features: [
         'Dynamic Emerald Active Panel: Latar kartu host aktif bertransformasi ke nuansa hijau emerald kontras untuk diferensiasi visual seketika.',
@@ -6132,11 +6158,11 @@ export default function App() {
                           className={`p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
                             effectiveTheme === 'dark'
                               ? h.enabled !== false
-                                ? 'bg-emerald-950/60 border-emerald-600/50 shadow-sm shadow-emerald-950/50'
-                                : 'bg-slate-950/80 border-slate-800'
+                                ? 'bg-gradient-to-br from-emerald-900/80 via-emerald-950/90 to-emerald-950 border-emerald-500/80 shadow-md shadow-emerald-950/60 ring-1 ring-emerald-500/40'
+                                : 'bg-slate-950/80 border-slate-800 text-slate-400 opacity-80'
                               : h.enabled !== false
-                              ? 'bg-emerald-50 border-emerald-300 shadow-sm'
-                              : 'bg-white border-slate-200 shadow-sm'
+                              ? 'bg-emerald-100/80 border-emerald-400 shadow-sm'
+                              : 'bg-white border-slate-200 shadow-sm opacity-80'
                           }`}
                         >
                           <div>
