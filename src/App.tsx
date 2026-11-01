@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.57';
+  const APP_VERSION = 'v0.8.58';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.58',
+      date: '31 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.58 (Dynamic Emerald Panel for Active SSH Hosts)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Visual Status Indication Real-Time: Panel kartu SSH Host kini otomatis bertransisi menggunakan warna latar belakang Hijau Emerald elegan (bg-emerald-950/70) dan border hijau menyala saat status AKTIF, dan kembali ke hitam default saat NON-AKTIF.',
+      features: [
+        'Dynamic Emerald Active Panel: Latar kartu host aktif bertransformasi ke nuansa hijau emerald kontras untuk diferensiasi visual seketika.',
+        'Clean Default Fallback: Host non-aktif tetap menggunakan kontur hitam slate standar tanpa mengubah tata letak elemen.',
+        'Preserved Action Layout: Tata letak tombol AKTIF, TEST PING, dan FULL/READ-ONLY tetap 100% konsisten dan presisi.'
+      ],
+      fixes: [
+        'Meningkatkan kewaspadaan operator/sysadmin dalam membedakan host aktif vs non-aktif secara glanceable.'
+      ],
+      architecture: [
+        'Theme-aware condition pada container card SSH host berbasis status h.enabled.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.58/Hermes.Hub.Gateway_0.8.58_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.58/Hermes.Hub.Gateway_0.8.58_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.58/hermes-hub-gateway_0.8.58_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.58/hermes-hub-gateway_0.8.58_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.58/hermes-hub-gateway-0.8.58-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.57',
       date: '31 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.57 (Auto-Refresh SSH Audit Logs Stream)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Auto-Refresh Real-Time SSH Audit Logs: Tab SSH Audit Logs kini otomatis menyegarkan data audit forensik eksekusi remote shell setiap 4 detik saat tab aktif, tanpa membebani resource saat beralih ke tab lain.',
       features: [
         'Real-time SSH Audit Polling: Interval auto-refresh aktif 4 detik khusus ketika pengguna berada di tab SSH Audit Logs.',
@@ -6103,8 +6129,14 @@ export default function App() {
                       {sshHosts.map((h) => (
                         <div
                           key={h.id}
-                          className={`p-3 rounded-xl border flex flex-col justify-between ${
-                            effectiveTheme === 'dark' ? 'bg-slate-950/80 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
+                          className={`p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
+                            effectiveTheme === 'dark'
+                              ? h.enabled !== false
+                                ? 'bg-emerald-950/60 border-emerald-600/50 shadow-sm shadow-emerald-950/50'
+                                : 'bg-slate-950/80 border-slate-800'
+                              : h.enabled !== false
+                              ? 'bg-emerald-50 border-emerald-300 shadow-sm'
+                              : 'bg-white border-slate-200 shadow-sm'
                           }`}
                         >
                           <div>
