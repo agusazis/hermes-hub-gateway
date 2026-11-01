@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.59';
+  const APP_VERSION = 'v0.8.60';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,11 +722,37 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.60',
+      date: '31 Oktober 2026',
+      name: 'Hermes Hub Gateway v0.8.60 (Unified Emerald Styling for Local MCP Cards)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penyelarasan Desain Visual Kartu Server MCP Lokal: Mengadopsi styling Emerald aktif yang konsisten dengan panel Remote SSH Hosts—kartu MCP aktif kini otomatis menggunakan latar belakang gradasi hijau emerald pekat dengan border menyala, dan kembali ke hitam default saat non-aktif.',
+      features: [
+        'Unified Emerald MCP Card: Kartu Server MCP Lokal aktif tampil konsisten dengan gradasi hijau emerald berkarakter (from-emerald-900/80 via-emerald-950/90 to-emerald-950).',
+        'State-Aware Highlight: Saat kartu MCP dipilih/diklik (selected), border kartu bertransisi ke ring emerald menyala untuk indikasi fokus yang tegas.',
+        'Seamless Non-Active Slate Fallback: Server MCP yang dinonaktifkan kembali ke nuansa gelap netral standar.'
+      ],
+      fixes: [
+        'Mewujudkan keselarasan desain visual antara tab Server MCP Lokal dan Remote SSH Hosts Gateway.'
+      ],
+      architecture: [
+        'Reused dynamic emerald styling across both MCP local servers grid and SSH hosts gateway.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.60/Hermes.Hub.Gateway_0.8.60_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.60/Hermes.Hub.Gateway_0.8.60_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.60/hermes-hub-gateway_0.8.60_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.60/hermes-hub-gateway_0.8.60_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.60/hermes-hub-gateway-0.8.60-1.x86_64.rpm' }
+      ]
+    },
+    {
       version: 'v0.8.59',
       date: '31 Oktober 2026',
       name: 'Hermes Hub Gateway v0.8.59 (Vibrant Emerald Contrast for Active SSH Hosts)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Peningkatan Kontras Visual Panel SSH Aktif: Mengoptimalkan saturasi warna panel aktif ke Hijau Emerald yang lebih pekat, hidup, dan berkarakter (bg-gradient-to-br from-emerald-900/80 via-emerald-950/90 to-emerald-950 dengan border emerald-500/80) sehingga langsung kontras dan terlihat jelas perbedaannya dengan server non-aktif.',
       features: [
         'Vibrant Emerald Contrast: Panel host aktif kini menggunakan warna hijau yang jauh lebih kontras dan tegas tanpa menusuk mata.',
@@ -6738,14 +6764,18 @@ export default function App() {
                     <div 
                       key={mcp.name}
                       onClick={() => setSelectedMcpName(mcp.name)}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                        isSelected 
-                          ? (effectiveTheme === 'dark' 
-                              ? "bg-cyan-950/40 border-cyan-500/60 shadow-sm" 
-                              : "bg-cyan-50 border-cyan-500/80 shadow-sm ring-1 ring-cyan-500/30") 
-                          : (effectiveTheme === 'dark'
-                              ? "bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
-                              : "bg-slate-50/80 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80")
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-200 ${
+                        effectiveTheme === 'dark'
+                          ? mcp.enabled
+                            ? isSelected
+                              ? 'bg-gradient-to-br from-emerald-900/90 via-emerald-950 to-emerald-950 border-emerald-400 shadow-lg shadow-emerald-950/70 ring-2 ring-emerald-400/50'
+                              : 'bg-gradient-to-br from-emerald-900/80 via-emerald-950/90 to-emerald-950 border-emerald-500/80 shadow-md shadow-emerald-950/60 ring-1 ring-emerald-500/40'
+                            : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200 opacity-80'
+                          : mcp.enabled
+                          ? isSelected
+                            ? 'bg-emerald-100 border-emerald-500 shadow-md ring-2 ring-emerald-500/40'
+                            : 'bg-emerald-50/90 border-emerald-300 shadow-sm'
+                          : 'bg-slate-50/80 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 opacity-80'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
