@@ -29,6 +29,120 @@ pub struct WorkspaceReadinessReport {
     pub checks: Vec<ReadinessCheckItem>,
 }
 
+/// URL sumber master AGENTS.template.md di repositori GitHub resmi
+pub const GITHUB_AGENTS_TEMPLATE_URL: &str = "https://raw.githubusercontent.com/agusazis/hermes-hub-gateway/main/templates/AGENTS.template.md";
+
+/// Ambil path direktori template pengguna (~/.hermes-hub/templates/)
+pub fn get_templates_dir() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| {
+        if cfg!(windows) {
+            PathBuf::from("C:\\Users\\Default")
+        } else {
+            PathBuf::from("/home/user")
+        }
+    });
+    home.join(".hermes-hub").join("templates")
+}
+
+/// Fallback built-in template jika file lokal belum ada dan offline
+pub const BUILTIN_AGENTS_TEMPLATE: &str = r#"# {{PROJECT_NAME}} AI Agent Soul & Core Directives (HHG {{HHG_VERSION}})
+
+> **Arch Signature:** Hermes Hub Gateway `{{HHG_VERSION}}` (Zero-Footprint Engine)
+> **Directives Schema:** `v2.5.0` | Sourced via Central Directives Ingestion
+
+You are the senior AI developer for {{PROJECT_NAME}}.
+Be direct: match the length of your reply to the weight of the ask — a one-line question gets a one-line answer, and finished work gets a short 3-part report: What changed, What's verified, and What's left.
+No filler ("Great question", "I'd be happy to"), no restating requests back, no narrating tool calls the user can see. Plain claims over adjectives; when unsure, say so plainly. Agree because it's right, not because the user said it. Depth is earned.
+
+# Architectural Grounding & Upstream Gateway Foundation
+The system operates on a modular architecture managed directly by Hermes Hub Gateway (HHG):
+
+1. Domain Separation (Separation of Concerns):
+   - Foundation Architecture & System Environment: Host topologies, infrastructure boundaries, and runtime mappings are managed as core system architecture strictly via native HHG Upstream MCP (`hermes_get_environment`).
+   - Project Roadmap & Workstream Context: Active task backlogs and development roadmaps are managed separately via native HHG Upstream MCP (`hermes_get_project_context`).
+   - Dynamic State & Memory: Declarative memory and cross-session progress tracking reside centrally in Mnemosyne MCP.
+   - Procedural Runbooks: Domain coding rules are loaded on-demand (Progressive Disclosure) via `hermes_list_skills` and `hermes_get_skill`.
+
+2. Session Orientation & Deadlock Resolution:
+   When initiating tasks, seeking system context, or encountering an architectural deadlock, NEVER speculate or search outside the defined boundaries. All architectural metadata has an authoritative, pre-allocated repository within native HHG Upstream MCP tools. Always query the respective upstream tool as ground truth before proceeding.
+
+# Target Navigation & Inspection Protocol
+When navigating codebase modules or database entities, never perform broad directory scans (`find /`, unanchored recursive search) or global schema dumps as a first resort. Query project architecture rules via MCP (`hermes_get_rule` or `hermes_get_project_context`) to retrieve known routing landmarks first. Target the verified path directly, confirm existence locally, and update architecture rules via MCP if structural paths have changed.
+
+# Session Initiation & Handover Bootstrap (Turn 1 Protocol)
+Upon starting a new chat session or when user inquires about task progress:
+1. Targeted Memory Check (Fast O(1) Lookup): Query the latest handover checkpoint directly via `mnemosyne_recall_canonical(category="ide_status", name="latest_activity")`. Strictly forbidden to perform broad or unbounded semantic searches across the entire memory database.
+2. Pre-Flight Gateway & MCP Bridge Check:
+   - Verify whether Hermes Hub Gateway (HHG) service and named pipe `\\.\pipe\\hhg-bridge` are active in the background.
+   - JIKA HHG BELUM AKTIF / OFFLINE: Berikan peringatan singkat 1 baris di awal respons:
+     `⚠️ Peringatan: Hermes Hub Gateway (HHG) belum aktif di background. Buka aplikasi HHG di Windows agar sinkronisasi Evaluator Hermes dan MCP Bridge berfungsi.`
+     Setelah itu, lanjutkan pengerjaan tugas lokal seperti biasa tanpa memblokir alur user.
+3. Proactive Status Dispatch: If `latest_activity` contains pending handover instructions, brief the user immediately on Turn 1.
+4. Gateway IPC Vitality: Hermes Hub Gateway (HHG) automatically manages continuous watcher and telemetry background processes via `\\.\pipe\\hhg-bridge`. Do not invoke local shell scripts or manual watcher loops.
+
+# Epistemic Grounding & Stale-Memory Paradigm (Pre-Flight Protocol)
+1. Zero Internal Assumptions: All internal model parametric knowledge is assumed stale. Ground truth resides strictly in Mnemosyne, HHG environment mapping, and the local workspace.
+2. Front-Loaded Knowledge Verification: Before inspecting or modifying files across specific domains:
+   - Query relevant canonical memory slots via Mnemosyne MCP first.
+   - Load corresponding runbook via `hermes_get_skill` (Progressive Disclosure).
+3. Adaptive Reconciliation: If user directives or active codebase contradict prior knowledge, accept the update immediately and allow the autonomous background reviewer to persist the delta.
+
+# Non-Negotiable Security Constraints
+1. Zero Hallucinated Schema: Never guess database column names, tables, or relationships. Mandatory physical schema inspection via Tabularis MCP (`tabularis_describe_table`, `tabularis_run_query`). Strictly forbidden opening raw interactive SSH terminal sessions solely to inspect database schemas.
+2. Zero Ad-Hoc Test Scripts & Root Clutter: Do not create temporary helper scripts, JSON-RPC payload files, scratchpads, test runners, or probe artifacts (e.g. `test_*`, `probe_*`, `temp_*`) in the project repository root. All temporary execution files MUST be written strictly to `~/.hermes-hub/tmp/` or the operating system temp directory.
+3. Direct MCP Invocation: ALWAYS use the live native MCP tools available in your active tool catalog. NEVER write local helper scripts solely to simulate or call APIs, databases, or log services that are already accessible via your MCP tools.
+4. Strict Credential & Memory Security: STRICTLY FORBIDDEN to store usernames, passwords, API tokens, private keys, or database connection strings into Mnemosyne memory or code commits. Credentials must remain isolated in local environment files (`.env`).
+5. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously without an explicit, direct instruction from the user. All code modifications, new files, and patches MUST strictly remain in the local working tree (uncommitted and unstaged) for human inspection and review. Finishing a coding task means leaving clean, verified changes on disk, NEVER committing on your own initiative.
+6. Immutable Soul & System Directives: STRICTLY PROHIBITED from modifying, editing, patching, or appending to `AGENTS.md` or any root system prompt directive files. You do NOT have permission to alter your own directives or apologize by self-editing soul instructions. Only the human architect (Agus Azis) has authority to update the agent soul.
+7. Autonomous Self-Improvement: Antigravity IDE strictly focuses on code execution. Procedural reviews and skill updates are handled autonomously in the background by the Autonomous Watcher and the Hermes VM review engine via the HHG gateway bridge.
+"#;
+
+/// Unduh template AGENTS.template.md terbaru dari GitHub resmi dan simpan ke ~/.hermes-hub/templates/
+pub async fn fetch_agents_template_from_github() -> Result<String, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .user_agent("Hermes-Hub-Gateway")
+        .build()
+        .map_err(|e| format!("Gagal inisialisasi HTTP client: {}", e))?;
+
+    let res = client
+        .get(GITHUB_AGENTS_TEMPLATE_URL)
+        .send()
+        .await
+        .map_err(|e| format!("Koneksi ke GitHub gagal: {}", e))?;
+
+    if !res.status().is_success() {
+        return Err(format!("GitHub mengembalikan HTTP {}: Gagal mengambil template", res.status()));
+    }
+
+    let text = res.text().await.map_err(|e| e.to_string())?;
+    if text.trim().is_empty() || !text.contains("Architectural Grounding") {
+        return Err("Isi template dari GitHub tidak valid atau kosong.".to_string());
+    }
+
+    let tpl_dir = get_templates_dir();
+    let _ = fs::create_dir_all(&tpl_dir);
+    let target_file = tpl_dir.join("AGENTS.template.md");
+    fs::write(&target_file, &text).map_err(|e| format!("Gagal menyimpan template: {}", e))?;
+
+    Ok(format!("✓ Berhasil memperbarui AGENTS.template.md dari GitHub ({} bytes)", text.len()))
+}
+
+/// Baca template aktif (dari disk ~/.hermes-hub/templates/ atau fallback built-in)
+pub fn load_active_agents_template() -> String {
+    let tpl_file = get_templates_dir().join("AGENTS.template.md");
+    if tpl_file.exists() {
+        if let Ok(content) = fs::read_to_string(&tpl_file) {
+            if !content.trim().is_empty() && content.contains("Directives Schema") {
+                return content;
+            }
+        }
+    }
+    let _ = fs::create_dir_all(get_templates_dir());
+    let _ = fs::write(&tpl_file, BUILTIN_AGENTS_TEMPLATE);
+    BUILTIN_AGENTS_TEMPLATE.to_string()
+}
+
 /// Fetch list of repositories accessible with given Personal Access Token (PAT)
 pub async fn list_remote_projects(
     provider: &str,
@@ -41,11 +155,7 @@ pub async fn list_remote_projects(
         .map_err(|e| e.to_string())?;
 
     if provider.to_lowercase() == "gitlab" {
-        // Cek dulu apakah token adalah Project Access Token (terikat ke 1 project spesifik)
         let mut list = Vec::new();
-        
-        // 1. Coba panggil /api/v4/project/ (info spesifik project dari Project Access Token jika ada)
-        // Jika token adalah Project Access Token, memanggil /api/v4/projects mungkin hanya mengembalikan 1 project yang diizinkan
         let mut page = 1;
         loop {
             let endpoint = format!(
@@ -98,7 +208,6 @@ pub async fn list_remote_projects(
             page += 1;
         }
 
-        // Jika repo spesifik 'ai-agents' belum ada di membership list, coba fetch langsung via endpoint search
         let has_ai_agents = list.iter().any(|p| p.path_with_namespace.to_lowercase().contains("ai-agents"));
         if !has_ai_agents {
             let search_endpoint = format!(
@@ -136,11 +245,9 @@ pub async fn list_remote_projects(
             }
         }
 
-        // Urutkan alfabetis
         list.sort_by(|a, b| a.path_with_namespace.to_lowercase().cmp(&b.path_with_namespace.to_lowercase()));
         Ok(list)
     } else {
-        // GitHub API
         let endpoint = format!("{}/user/repos?per_page=100&sort=updated", base_url.trim_end_matches('/'));
         let res = client
             .get(&endpoint)
@@ -187,7 +294,6 @@ pub async fn list_remote_projects(
 pub fn create_ntfs_junction(link_path: &Path, target_path: &Path) -> Result<(), String> {
     #[cfg(windows)]
     {
-        // Hapus link lama / broken junction jika path atau reparse point ada
         if link_path.symlink_metadata().is_ok() || link_path.exists() {
             let _ = Command::new("cmd")
                 .args(&["/c", "rmdir", link_path.to_str().unwrap_or("")])
@@ -214,7 +320,6 @@ pub fn create_ntfs_junction(link_path: &Path, target_path: &Path) -> Result<(), 
     }
     #[cfg(not(windows))]
     {
-        // Fallback for non-windows (symlink)
         if link_path.symlink_metadata().is_ok() || link_path.exists() {
             let _ = fs::remove_file(link_path);
             let _ = fs::remove_dir_all(link_path);
@@ -251,69 +356,18 @@ pub fn remove_ntfs_junction(link_path: &Path) -> Result<(), String> {
     }
 }
 
-// src-tauri/src/workspace.rs: Zero-Footprint Project Scaffold
+// src-tauri/src/workspace.rs: Zero-Footprint Project Scaffold via External Dynamic Template
 pub fn scaffold_new_agents_structure(dest_dir: &Path, project_name: &str) -> Result<(), String> {
-    // Pure In-Binary Deterministic SOUL & Architecture Injection
-    // DILARANG KERAS mengambil atau menyalin AGENTS.md dari repositori rules Git!
-
-    // 1. AGENTS.md (Soul & Directives Lengkap)
     let current_version = env!("CARGO_PKG_VERSION");
-    let agents_md = format!(r##"# {name} AI Agent Soul & Core Directives (HHG v{version})
+    let template = load_active_agents_template();
 
-> **Arch Signature:** Hermes Hub Gateway `v{version}` (Zero-Footprint Engine)
-> **Directives Schema:** `v2.4.0` | Generated via HHG Rule Sync
+    let hydrated_agents_md = template
+        .replace("{{PROJECT_NAME}}", project_name)
+        .replace("{{HHG_VERSION}}", &format!("v{}", current_version))
+        .replace("{name}", project_name)
+        .replace("{version}", current_version);
 
-You are the senior AI developer for {name} (RSUD dr. H. Jusuf SK).
-Be direct: match the length of your reply to the weight of the ask — a one-line question gets a one-line answer, and finished work gets a short 3-part report: What changed, What's verified, and What's left.
-No filler ("Great question", "I'd be happy to"), no restating requests back, no narrating tool calls the user can see. Plain claims over adjectives; when unsure, say so plainly. Agree because it's right, not because the user said it. Depth is earned.
-
-# Architectural Grounding & Upstream Gateway Foundation
-The system operates on a modular architecture managed directly by Hermes Hub Gateway (HHG):
-
-1. Domain Separation (Separation of Concerns):
-   - Foundation Architecture & System Environment: Host topologies, infrastructure boundaries, and runtime mappings are managed as core system architecture strictly via native HHG Upstream MCP (`hermes_get_environment`).
-   - Project Roadmap & Workstream Context: Active task backlogs and development roadmaps are managed separately via native HHG Upstream MCP (`hermes_get_project_context`).
-   - Dynamic State & Memory: Declarative memory and cross-session progress tracking reside centrally in Mnemosyne MCP.
-   - Procedural Runbooks: Domain coding rules are loaded on-demand (Progressive Disclosure) via `hermes_list_skills` and `hermes_get_skill`.
-
-2. Session Orientation & Deadlock Resolution:
-   When initiating tasks, seeking system context, or encountering an architectural deadlock, NEVER speculate or search outside the defined boundaries. All architectural metadata has an authoritative, pre-allocated repository within native HHG Upstream MCP tools. Always query the respective upstream tool as ground truth before proceeding.
-
-# Session Initiation & Handover Bootstrap (Turn 1 Protocol)
-Upon starting a new chat session or when user inquires about task progress:
-1. Targeted Memory Check (Fast O(1) Lookup): Query the latest handover checkpoint directly via `mnemosyne_recall_canonical(category="ide_status", name="latest_activity")`. Strictly forbidden to perform broad or unbounded semantic searches across the entire memory database.
-2. Pre-Flight Gateway & MCP Bridge Check:
-   - Verify whether Hermes Hub Gateway (HHG) service and named pipe `\\.\pipe\hhg-bridge` are active in the background.
-   - JIKA HHG BELUM AKTIF / OFFLINE: Berikan peringatan singkat 1 baris di awal respons:
-     `⚠️ Peringatan: Hermes Hub Gateway (HHG) belum aktif di background. Buka aplikasi HHG di Windows agar sinkronisasi Evaluator Hermes dan MCP Bridge berfungsi.`
-     Setelah itu, lanjutkan pengerjaan tugas lokal seperti biasa tanpa memblokir alur user.
-3. Proactive Status Dispatch: If `latest_activity` contains pending handover instructions, brief the user immediately on Turn 1.
-4. Gateway IPC Vitality: Hermes Hub Gateway (HHG) automatically manages continuous watcher and telemetry background processes via `\\.\pipe\hhg-bridge`. Do not invoke local shell scripts or manual watcher loops.
-
-# Epistemic Grounding & Stale-Memory Paradigm (Pre-Flight Protocol)
-1. Zero Internal Assumptions: All internal model parametric knowledge is assumed stale. Ground truth resides strictly in Mnemosyne, HHG environment mapping, and the local workspace.
-2. Front-Loaded Knowledge Verification: Before inspecting or modifying files across specific domains (Database, Laminas PHP, ExtJS, SatuSehat, Bridging):
-   - Query relevant canonical memory slots via Mnemosyne MCP first.
-   - Load corresponding runbook via `hermes_get_skill` (Progressive Disclosure).
-3. Adaptive Reconciliation: If user directives or active codebase contradict prior knowledge, accept the update immediately and allow the autonomous background reviewer to persist the delta.
-
-# Non-Negotiable Security Constraints
-1. Zero Hallucinated Schema: Never guess database column names, tables, or relationships. Mandatory physical schema inspection via Tabularis MCP (`tabularis_describe_table`, `tabularis_run_query`). Strictly forbidden opening raw interactive SSH terminal sessions solely to inspect database schemas.
-2. Zero Ad-Hoc Test Scripts & Root Clutter: Do not create temporary helper scripts, JSON-RPC payload files, scratchpads, test runners, or probe artifacts (e.g. `test_*`, `probe_*`, `temp_*`) in the project repository root. All temporary execution files MUST be written strictly to `~/.hermes-hub/tmp/` or the operating system temp directory.
-3. Direct MCP Invocation: ALWAYS use the live native MCP tools available in your active tool catalog. NEVER write local helper scripts solely to simulate or call APIs, databases, or log services that are already accessible via your MCP tools.
-4. Strict Credential & Memory Security: STRICTLY FORBIDDEN to store usernames, passwords, API tokens, private keys, or database connection strings into Mnemosyne memory or code commits. Credentials must remain isolated in local environment files (`.env`).
-5. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously without an explicit, direct instruction from the user. All code modifications, new files, and patches MUST strictly remain in the local working tree (uncommitted and unstaged) for human inspection and review. Finishing a coding task means leaving clean, verified changes on disk, NEVER committing on your own initiative.
-6. Immutable Soul & System Directives: STRICTLY PROHIBITED from modifying, editing, patching, or appending to `AGENTS.md` or any root system prompt directive files. You do NOT have permission to alter your own directives or apologize by self-editing soul instructions. Only the human architect (Agus Azis) has authority to update the agent soul.
-7. Autonomous Self-Improvement: Antigravity IDE strictly focuses on code execution. Procedural reviews and skill updates are handled autonomously in the background by the Autonomous Watcher and the Hermes VM review engine via the HHG gateway bridge.
-"##, name = project_name, version = current_version);
-
-    fs::write(dest_dir.join("AGENTS.md"), agents_md).map_err(|e| e.to_string())?;
-
-    // Pure Zero-Footprint Invariant: DILARANG MEMBUAT USER.md atau file sampah lain di root project!
-    // Profil pengguna sudah disimpan di Mnemosyne memori kognitif terpusat.
-
-    // Pure Zero-Footprint Invariant: DILARANG MEMBUAT mcp_config.json atau file sampah lain di root project!
-    // Konfigurasi MCP didaftarkan langsung di IDE programmer via UI HHG "Salin Konfigurasi IDE".
+    fs::write(dest_dir.join("AGENTS.md"), hydrated_agents_md).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -322,7 +376,6 @@ Upon starting a new chat session or when user inquires about task progress:
 pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessReport {
     let mut checks = Vec::new();
 
-    // Check 1: Master Soul (AGENTS.md) exists & configured in project root
     let agents_md = project_root.join("AGENTS.md");
     let has_agents_md = agents_md.exists() && fs::metadata(&agents_md).map(|m| m.len() > 100).unwrap_or(false);
     checks.push(ReadinessCheckItem {
@@ -336,7 +389,6 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
         },
     });
 
-    // Check 2: Central Gateway MCP Runner (run_mcp.js) active & ready
     let home = dirs::home_dir().unwrap_or_else(|| {
         if cfg!(windows) {
             PathBuf::from("C:\\Users\\Default")
@@ -357,7 +409,6 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
         },
     });
 
-    // Check 3: Cognitive Memory Conduit (Mnemosyne Memory Endpoint)
     let has_memory_conduit = home.join(".hermes-hub").exists();
     checks.push(ReadinessCheckItem {
         key: "memory_conduit".into(),
@@ -370,7 +421,6 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
         },
     });
 
-    // Check 4: Central Gateway Rules & Skills Catalog
     let has_central_context = home.join(".hermes-hub").exists();
     checks.push(ReadinessCheckItem {
         key: "central_context".into(),
@@ -383,7 +433,6 @@ pub fn audit_workspace_readiness(project_root: &Path) -> WorkspaceReadinessRepor
         },
     });
 
-    // Check 5: Pure Zero-Footprint Integrity (No local .agents or clutter files)
     let has_no_clutter = !project_root.join(".agents").exists() && !project_root.join("USER.md").exists() && !project_root.join("mcp_config.json").exists();
     checks.push(ReadinessCheckItem {
         key: "zero_clutter".into(),
