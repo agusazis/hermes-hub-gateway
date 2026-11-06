@@ -490,12 +490,12 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
         }
     }
 
-    Ok(serde_json::json!(({
+    Ok(serde_json::json!({
         "name": skill_name,
         "content": content,
         "references": references,
         "path": skill_dir.to_string_lossy().to_string()
-    })))
+    }))
 }
 
 #[tauri::command]
