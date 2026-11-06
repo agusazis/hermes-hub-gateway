@@ -40,7 +40,6 @@ async fn select_project_folder() -> Result<Option<String>, String> {
     }
     #[cfg(not(windows))]
     {
-        // 1. Coba zenity (GNOME / Universal Linux GUI)
         if let Ok(out) = tokio::process::Command::new("zenity")
             .args(&["--file-selection", "--directory", "--title=Pilih Folder Project Target"])
             .output()
@@ -54,7 +53,6 @@ async fn select_project_folder() -> Result<Option<String>, String> {
             }
         }
 
-        // 2. Coba kdialog (KDE Plasma)
         if let Ok(out) = tokio::process::Command::new("kdialog")
             .args(&["--getexistingdirectory", "--title", "Pilih Folder Project Target"])
             .output()
@@ -68,7 +66,6 @@ async fn select_project_folder() -> Result<Option<String>, String> {
             }
         }
 
-        // 3. Fallback macOS via osascript
         #[cfg(target_os = "macos")]
         {
             if let Ok(out) = tokio::process::Command::new("osascript")
@@ -99,7 +96,7 @@ pub struct PlatformEnvironment {
 
 #[tauri::command]
 fn get_platform_environment() -> PlatformEnvironment {
-    let _ = config::get_app_data_dir(); // Trigger sinkronisasi script runner jika ada pembaruan versi
+    let _ = config::get_app_data_dir();
     let os = std::env::consts::OS.to_string();
     let home = dirs::home_dir().unwrap_or_else(|| {
         if os == "windows" {
@@ -132,7 +129,6 @@ fn get_platform_environment() -> PlatformEnvironment {
 
 #[tauri::command]
 fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
-    // ATURAN TEGAS: Server Hermes Evaluator dan Server Mnemosyne WAJIB satu host IP yang sama!
     let eval_host = cfg.default_hermes_evaluator_url.split(':').nth(1).unwrap_or("").trim_start_matches('/');
     let mnemo_host = cfg.default_mnemosyne_url.split(':').nth(1).unwrap_or("").trim_start_matches('/');
     
@@ -255,11 +251,9 @@ async fn check_app_update(current_version: String) -> Result<AppUpdateInfo, Stri
         .unwrap_or("https://github.com/agusazis/hermes-hub-gateway/releases")
         .to_string();
 
-    // Normalisasi versi string (contoh: v0.8.30 vs 0.8.30)
     let clean_curr = current_version.trim_start_matches('v').trim();
     let clean_latest = tag_name.trim_start_matches('v').trim();
 
-    // Simple SemVer comparison helper
     fn parse_semver(s: &str) -> Vec<u64> {
         s.split('.')
             .map(|p| p.chars().take_while(|c| c.is_ascii_digit()).collect::<String>())
@@ -271,7 +265,6 @@ async fn check_app_update(current_version: String) -> Result<AppUpdateInfo, Stri
     let latest_parts = parse_semver(clean_latest);
 
     let mut has_update = false;
-    // Jangan munculkan update jika versi sama atau versi latest lebih rendah/sama
     if clean_curr == clean_latest {
         has_update = false;
     } else {
@@ -288,7 +281,6 @@ async fn check_app_update(current_version: String) -> Result<AppUpdateInfo, Stri
         }
     }
 
-    // Deteksi aset binary yang tepat sesuai platform client saat ini
     let mut download_url = None;
     let mut asset_name = None;
 
@@ -310,7 +302,6 @@ async fn check_app_update(current_version: String) -> Result<AppUpdateInfo, Stri
             }
         }
 
-        // Fallback jika installer spesifik di atas tidak ditemukan
         if download_url.is_none() {
             for asset in assets {
                 if let Some(name) = asset.get("name").and_then(|v| v.as_str()) {
@@ -377,11 +368,9 @@ async fn download_and_install_update(download_url: String, asset_name: String) -
 
     #[cfg(windows)]
     {
-        // Ambil path executable HHG yang sedang berjalan agar bisa di-launch ulang setelah update
         let current_exe = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("Hermes Hub Gateway.exe"));
         let current_exe_str = current_exe.to_string_lossy().to_string();
 
-        // Buat batch script wrapper di temp: jalankan installer silent (/S), tunggu hingga selesai, lalu start kembali aplikasi HHG
         let restart_bat = temp_dir.join("hhg_update_restart.bat");
         let bat_content = format!(
             "@echo off\r\ntimeout /t 2 /nobreak >nul\r\nstart /wait \"\" \"{installer}\" /S\r\ntimeout /t 1 /nobreak >nul\r\nstart \"\" \"{app_exe}\"\r\ndel \"%~f0\"\r\n",
@@ -474,7 +463,6 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
         }
     };
     let raw_internal = PathBuf::from(&ws.internal_skills_path);
-    // Jika repositori memiliki subfolder skills/, gunakan subfolder tersebut sebagai root skills
     let internal_path = if raw_internal.join("skills").is_dir() {
         raw_internal.join("skills")
     } else {
@@ -502,12 +490,12 @@ fn get_skill_detail(workspace_id: String, skill_name: String) -> Result<serde_js
         }
     }
 
-    Ok(serde_json::json!({
+    Ok(serde_json::json!(({
         "name": skill_name,
         "content": content,
         "references": references,
         "path": skill_dir.to_string_lossy().to_string()
-    }))
+    })))
 }
 
 #[tauri::command]
@@ -576,12 +564,9 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
 
     let target_dir = PathBuf::from(&target_path);
     if target_dir.exists() {
-        // Zero-Footprint Context: Tidak lagi membuat NTFS Junction (.agents)
-        // Hubungkan project secara non-intrusif cukup dengan AGENTS.md dan mcp_config.json
         let _ = workspace::scaffold_new_agents_structure(&target_dir, &name);
     }
 
-    // Periksa apakah workspace dengan ID ini sudah ada untuk mencegah duplikasi entri
     if let Some(pos) = cfg.workspaces.iter().position(|w| w.id == id) {
         cfg.workspaces[pos] = ws.clone();
     } else {
@@ -591,6 +576,26 @@ fn create_workspace_declarative(name: String, target_path: String) -> Result<con
     config::save_config(&cfg);
 
     Ok(ws)
+}
+
+#[tauri::command]
+async fn update_agents_template_from_github() -> Result<serde_json::Value, String> {
+    match workspace::fetch_agents_template_from_github().await {
+        Ok(msg) => {
+            let cfg = config::load_config();
+            if let Some(active_ws) = cfg.workspaces.iter().find(|w| w.id == cfg.active_workspace_id) {
+                let target_dir = std::path::PathBuf::from(&active_ws.target_path);
+                if target_dir.exists() {
+                    let _ = workspace::scaffold_new_agents_structure(&target_dir, &active_ws.name);
+                }
+            }
+            Ok(serde_json::json!({
+                "success": true,
+                "message": format!("{} dan otomatis diterapkan ke workspace aktif!", msg)
+            }))
+        },
+        Err(e) => Err(e)
+    }
 }
 
 #[tauri::command]
@@ -610,10 +615,8 @@ async fn trigger_manual_sync() -> serde_json::Value {
         }
     };
     
-    // Sinkronkan secara langsung (await) agar selesai sebelum response dikembalikan ke frontend
     watcher::sync_rules_from_git(&ws).await;
 
-    // Otomatis regenerate / timpa AGENTS.md dan mcp_config.json di project tujuan (reset ke default)
     let target_dir = std::path::PathBuf::from(&ws.target_path);
     if target_dir.exists() {
         let _ = workspace::scaffold_new_agents_structure(&target_dir, &ws.name);
@@ -682,8 +685,6 @@ fn get_skills_hierarchy(workspace_id: String) -> Result<Vec<serde_json::Value>, 
         }
     };
     let raw_internal = PathBuf::from(&ws.internal_skills_path);
-    // STANDAR STRUKTUR EVALUATOR:
-    // Selalu gunakan subfolder skills/ jika ada atau gunakan raw_internal jika di dalamnya terdapat subfolder ber-SKILL.md
     let internal_path = if raw_internal.join("skills").is_dir() {
         raw_internal.join("skills")
     } else {
@@ -763,7 +764,6 @@ async fn test_gateway_connection(evaluator_url: String, mnemosyne_url: String) -
         .build()
         .map_err(|e| e.to_string())?;
 
-    // Check Evaluator API
     let eval_url = if evaluator_url.ends_with('/') {
         format!("{}health", evaluator_url)
     } else {
@@ -776,7 +776,6 @@ async fn test_gateway_connection(evaluator_url: String, mnemosyne_url: String) -
         Err(e) => format!("Gagal: {}", e)
     };
 
-    // Check Mnemosyne Shared Memory Server
     let mnemo_res = client.get(&mnemosyne_url).send().await;
     let mnemo_status = match mnemo_res {
         Ok(r) if r.status().is_success() => "ONLINE (HTTP 200)".to_string(),
@@ -858,8 +857,6 @@ fn link_workspace_junction(project_path: String, agents_source_path: String) -> 
 async fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            // Saat instance kedua diluncurkan (misal user klik lagi icon di desktop):
-            // Jangan exit diam-diam! Bawa jendela instance utama yang sedang jalan di tray ke layar depan!
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.unminimize();
@@ -922,7 +919,6 @@ async fn main() {
 
             let handle_clone = app_handle.clone();
             tauri::async_runtime::spawn(async move {
-                                // Auto-sync rules dari Git repositori saat startup
                 let initial_cfg = config::load_config();
                 if let Some(active_ws) = initial_cfg.workspaces.iter().find(|w| w.id == initial_cfg.active_workspace_id) {
                     watcher::sync_rules_from_git(active_ws).await;
@@ -952,6 +948,7 @@ async fn main() {
             get_skill_reference_content,
             create_workspace_declarative,
             trigger_manual_sync,
+            update_agents_template_from_github,
             test_telegram_broadcast,
             get_skills_hierarchy,
             test_gateway_connection,
