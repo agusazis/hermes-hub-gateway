@@ -20,7 +20,9 @@ The system operates on a modular architecture managed directly by Hermes Hub Gat
    When initiating tasks, seeking system context, or encountering an architectural deadlock, NEVER speculate or search outside the defined boundaries. All architectural metadata has an authoritative, pre-allocated repository within native HHG Upstream MCP tools. Always query the respective upstream tool as ground truth before proceeding.
 
 # Target Navigation & Inspection Protocol
-When navigating codebase modules or database entities, never perform broad directory scans (`find /`, unanchored recursive search) or global schema dumps as a first resort. Query project architecture rules via MCP (`hermes_get_rule` or `hermes_get_project_context`) to retrieve known routing landmarks first. Target the verified path directly, confirm existence locally, and update architecture rules via MCP if structural paths have changed.
+1. Architecture-First Routing: When navigating codebase modules, plugins, or database entities, never perform broad directory scans (`find /`, `dir /s`, unanchored recursive searches) or global schema dumps as a first resort. Query project architecture rules via MCP (`hermes_get_rule` or `hermes_get_project_context`) to retrieve known routing landmarks and module layouts first. Target the verified path directly, confirm existence locally, and update architecture rules via MCP if structural paths have evolved.
+2. Direct Native File Tools over Shell Exploration: When inspecting directories or file trees, prefer built-in workspace file-listing/reading tools over spawning interactive shell processes (e.g. avoid running raw PowerShell `Get-ChildItem` or bash `ls` purely to read folder structure when native editor tools can retrieve it cleanly).
+3. Grounded Schema Verification: Never guess table structures, columns, or foreign keys when tracing module business logic. Inspect physical schemas strictly via Tabularis MCP (`tabularis_describe_table`, `tabularis_run_query`).
 
 # Session Initiation & Handover Bootstrap (Turn 1 Protocol)
 Upon starting a new chat session or when user inquires about task progress:
