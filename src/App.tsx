@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.61';
+  const APP_VERSION = 'v0.8.62';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -721,6 +721,33 @@ export default function App() {
   }
 
   const releaseLogs: ReleaseLog[] = [
+    {
+      version: 'v0.8.62',
+      date: '06 November 2026',
+      name: 'Hermes Hub Gateway v0.8.62 (Tabularis-Grade Dual Theme & Locked Semantic Accents)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Transformasi Total Desain Antarmuka Terinspirasi dari Tabularis: Arsitektur 5-Tier Elevation Surfaces (Tabularis Dark & Tabularis Light), High-Contrast WCAG AA Compliance, dan Penguncian Baku Palet Aksen Semantik yang Diaudit secara Otomatis oleh Pre-Build Gate.',
+      features: [
+        'Tabularis Light & Dark Dual Theme: Background Crisp White (#ffffff) & Deep Midnight Obsidian (#020617) dengan kontras teks dan border yang presisi.',
+        'Locked Semantic Accent Palette: Penguncian baku token warna fungsional (Primary Cobalt, AI Violet, Success Emerald, Warning Amber, Error Crimson, Telemetry Cyan).',
+        'Standardized Component Atoms: Penerapan formula tinted opacity (12% fill + 35% border) pada seluruh button, card, badge, dan modal dialog.',
+        'Theme Token Pre-Build Gate: Pintu uji otomatis di scripts/verify-all.mjs yang memvalidasi integritas 10 token aksen wajib sebelum build.'
+      ],
+      fixes: [
+        'Menghilangkan seluruh kontras pudar di mode terang serta ketidakkonsistenan warna aksen di dashboard.'
+      ],
+      architecture: [
+        'Established formal Design Token Governance contract in docs/DESIGN_TOKENS.md backed by mechanical CI/CD validation.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/Hermes.Hub.Gateway_0.8.62_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/Hermes.Hub.Gateway_0.8.62_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/hermes-hub-gateway_0.8.62_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/hermes-hub-gateway_0.8.62_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/hermes-hub-gateway-0.8.62-1.x86_64.rpm' }
+      ]
+    },
     {
       version: 'v0.8.61',
       date: '04 November 2026',
