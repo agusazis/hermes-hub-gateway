@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.67
-          releaseName: "Hermes Hub Gateway v0.8.67"
-          releaseBody: "Release v0.8.67: Universal Locked Grid Button & Badges Palette."
+          tagName: v0.8.68
+          releaseName: "Hermes Hub Gateway v0.8.68"
+          releaseBody: "Release v0.8.68: Unified Rules Sync, MCP Auto-Discovery, OS Log Explorer & OmniRoute Palette."
           releaseDraft: false
           prerelease: false
