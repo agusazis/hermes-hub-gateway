@@ -92,6 +92,8 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
+export const APP_VERSION = 'v0.8.69';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
   const activeTabRef = useRef(activeTab);
@@ -674,8 +676,7 @@ export default function App() {
   const [selectedReleaseTag, setSelectedReleaseTag] = useState<string>(() => APP_VERSION);
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
-  // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.68';
+  // Auto-Update & Update Notification State (uses top-level APP_VERSION)
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -763,11 +764,32 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.69',
+      date: '07 November 2026',
+      name: 'Hermes Hub Gateway v0.8.69 (Runtime Exception Fix & Top-Level Version Scoping)',
+      type: 'HOTFIX',
+      status: 'LATEST',
+      highlights: 'Perbaikan Kritis Runtime Exception: Mengeliminasi ReferenceError Temporal Dead Zone (TDZ) pada inisialisasi state changelog dengan mengangkat deklarasi APP_VERSION ke top-level module scope, menjamin aplikasi terbuka dengan mulus tanpa crash layar putih.',
+      features: [
+        'Top-Level Module Scope Architecture: APP_VERSION dideklarasikan pada tingkat modul teratas sehingga aman diakses oleh seluruh hooks dan helper functions sejak inisialisasi pertama.',
+        'Runtime White-Screen Resilience: Memastikan antarmuka stabil dan kebal terhadap ReferenceError bundler saat startup.'
+      ],
+      fixes: [
+        'Memperbaiki ReferenceError: Cannot access ca before initialization pada startup aplikasi.',
+        'Menyelaraskan seluruh state initializers agar bebas dari dependensi hoisting.'
+      ],
+      architecture: [
+        'Zero-TDZ Module Architecture',
+        'Strict Component Initialization Boundary'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.68',
       date: '07 November 2026',
       name: 'Hermes Hub Gateway v0.8.68 (Unified Rules Sync, MCP Auto-Discovery, OS Log Explorer & OmniRoute Palette)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyatuan Alur Sinkronisasi Template & Rules, Auto-Discovery & Caching MCP Tools, Buka Folder Log Fisik (Windows/Linux), dan Penguncian Baku Palet Desain OmniRoute: Tombol Sync Rules Now kini otomatis menarik template AGENTS.md terbaru dari repo GitHub sekaligus menimpa berkas AGENTS.md di project tujuan dalam satu kali klik, kartu MCP server otomatis memindai tools calling di latar belakang secara persisten, dan tombol Buka Folder Log fisik memudahkan inspeksi audit forensik.',
       features: [
         'One-Click Combined Sync: Tombol "Sync Rules Now" otomatis menarik template AGENTS.md terbaru dari repositori GitHub sekaligus menimpa berkas AGENTS.md di project tujuan dalam satu operasi.',
