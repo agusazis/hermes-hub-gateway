@@ -162,6 +162,37 @@ fn update_tray_status(app: tauri::AppHandle, tooltip: String, unread_count: u32,
 }
 
 #[tauri::command]
+fn open_ssh_audit_logs_folder() -> Result<String, String> {
+    let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+    let log_dir = home.join(".hermes-hub").join("logs");
+    let _ = std::fs::create_dir_all(&log_dir);
+
+    #[cfg(windows)]
+    {
+        std::process::Command::new("explorer")
+            .arg(&log_dir)
+            .spawn()
+            .map_err(|e| format!("Gagal membuka Windows Explorer: {}", e))?;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&log_dir)
+            .spawn()
+            .map_err(|e| format!("Gagal membuka file manager Linux (xdg-open): {}", e))?;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&log_dir)
+            .spawn()
+            .map_err(|e| format!("Gagal membuka Finder macOS: {}", e))?;
+    }
+
+    Ok(log_dir.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 fn open_in_browser(url: String) -> Result<(), String> {
     if url.trim().is_empty() {
         return Ok(());
@@ -958,6 +989,7 @@ async fn main() {
             scaffold_new_agents_project,
             link_workspace_junction,
             remove_workspace_junction,
+            open_ssh_audit_logs_folder,
             open_in_browser,
             check_app_update,
             download_and_install_update,
