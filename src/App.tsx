@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.62';
+  const APP_VERSION = 'v0.8.61';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -722,30 +722,30 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
-      version: 'v0.8.62',
+      version: 'v0.8.63',
       date: '06 November 2026',
-      name: 'Hermes Hub Gateway v0.8.62 (Tabularis-Grade Dual Theme & Locked Semantic Accents)',
+      name: 'Hermes Hub Gateway v0.8.63 (OmniRoute-Grade Visual Transformation & High-Contrast Dual Theme)',
       type: 'FEATURE',
       status: 'LATEST',
-      highlights: 'Transformasi Total Desain Antarmuka Terinspirasi dari Tabularis: Arsitektur 5-Tier Elevation Surfaces (Tabularis Dark & Tabularis Light), High-Contrast WCAG AA Compliance, dan Penguncian Baku Palet Aksen Semantik yang Diaudit secara Otomatis oleh Pre-Build Gate.',
+      highlights: 'Transformasi Total Desain Antarmuka Berdasarkan Analisis Forensik OmniRoute: Menghadirkan Kanvas Warm Alabaster/Ivory (#fbfbf8) di Mode Terang (Anti-Silau & 100% WCAG AA Compliant), Deep Obsidian (#040d10) di Mode Gelap, serta Adaptasi Sempurna 773 Elemen UI Termasuk Seluruh Kartu SSH Hosts Gateway, Server MCP Lokal, Tombol Pill Segmented, dan Badge Status.',
       features: [
-        'Tabularis Light & Dark Dual Theme: Background Crisp White (#ffffff) & Deep Midnight Obsidian (#020617) dengan kontras teks dan border yang presisi.',
-        'Locked Semantic Accent Palette: Penguncian baku token warna fungsional (Primary Cobalt, AI Violet, Success Emerald, Warning Amber, Error Crimson, Telemetry Cyan).',
-        'Standardized Component Atoms: Penerapan formula tinted opacity (12% fill + 35% border) pada seluruh button, card, badge, dan modal dialog.',
-        'Theme Token Pre-Build Gate: Pintu uji otomatis di scripts/verify-all.mjs yang memvalidasi integritas 10 token aksen wajib sebelum build.'
+        'OmniRoute Warm Alabaster Light Theme: Kanvas #fbfbf8 yang sejuk dan ramah mata berpadu dengan kartu putih timbul (#ffffff) dan garis tepi tinta lembut.',
+        'Total UI Card & Button Refactor: 180 kartu panel dan 90 tombol beradaptasi otomatis di mode terang tanpa residu warna hitam/gelap kotor.',
+        'Universal 773-Element CSS Adapter: Menjamin seluruh teks teknis (user@host:port), pill sub-section, badge PRODUCTION/DEV, dan tombol aksi (AKTIF, PING, READ-ONLY) tampil tajam dengan kontras tinggi.',
+        'Preserved Deep Obsidian Dark Theme: Mode gelap tetap tampil stealth, berkelas developer tool modern dengan aksen luminous neon.'
       ],
       fixes: [
-        'Menghilangkan seluruh kontras pudar di mode terang serta ketidakkonsistenan warna aksen di dashboard.'
+        'Memperbaiki kartu Remote SSH Hosts Gateway di mode terang yang sebelumnya tampak kusam, tabrakan warna, dan memiliki teks yang sulit dibaca.'
       ],
       architecture: [
-        'Established formal Design Token Governance contract in docs/DESIGN_TOKENS.md backed by mechanical CI/CD validation.'
+        'Integrated OmniRoute Design Token System into src/index.css with automated pre-build gate verification.'
       ],
       downloads: [
-        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/Hermes.Hub.Gateway_0.8.62_x64-setup.exe' },
-        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/Hermes.Hub.Gateway_0.8.62_x64_en-US.msi' },
-        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/hermes-hub-gateway_0.8.62_amd64.AppImage' },
-        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/hermes-hub-gateway_0.8.62_amd64.deb' },
-        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.62/hermes-hub-gateway-0.8.62-1.x86_64.rpm' }
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.63/Hermes.Hub.Gateway_0.8.63_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.63/Hermes.Hub.Gateway_0.8.63_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.63/hermes-hub-gateway_0.8.63_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.63/hermes-hub-gateway_0.8.63_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.63/hermes-hub-gateway-0.8.63-1.x86_64.rpm' }
       ]
     },
     {
@@ -5943,7 +5943,7 @@ export default function App() {
 
             {/* Navigasi Pemisah Tegas: Tab Sub-Section MCP Servers vs Remote SSH Hosts */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div className={`flex items-center gap-2 p-1 rounded-xl border transition-all ${effectiveTheme === 'dark' ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
                 <button
                   type="button"
                   onClick={() => setMcpHubSection('servers')}
@@ -6276,16 +6276,18 @@ export default function App() {
                                 ? 'bg-gradient-to-br from-emerald-900/80 via-emerald-950/90 to-emerald-950 border-emerald-500/80 shadow-md shadow-emerald-950/60 ring-1 ring-emerald-500/40'
                                 : 'bg-slate-950/80 border-slate-800 text-slate-400 opacity-80'
                               : h.enabled !== false
-                              ? 'bg-emerald-100/80 border-emerald-400 shadow-sm'
+                              ? 'bg-white border-emerald-500/50 shadow-sm ring-1 ring-emerald-400/30'
                               : 'bg-white border-slate-200 shadow-sm opacity-80'
                           }`}
                         >
                           <div>
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="font-mono text-xs font-bold text-slate-200 truncate flex items-center gap-1.5">
+                              <span className={`font-mono text-xs font-bold truncate flex items-center gap-1.5 ${effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-900'}`}>
                                 {h.alias}
                                 <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                                  h.tier === 'production' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                                  h.tier === 'production'
+                                    ? (effectiveTheme === 'dark' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-rose-50 text-rose-700 border border-rose-200')
+                                    : (effectiveTheme === 'dark' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-700 border border-emerald-200')
                                 }`}>
                                   {h.tier}
                                 </span>
@@ -6307,24 +6309,24 @@ export default function App() {
                                 </button>
                               </div>
                             </div>
-                            <div className="text-[11px] font-mono text-slate-400 mb-1">
+                            <div className={`text-[11px] font-mono mb-1 ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
                               {h.user}@{h.host}:{h.port}
                             </div>
                             {h.description && (
-                              <div className="text-[10px] text-slate-500 line-clamp-1 mb-2">
+                              <div className={`text-[10px] line-clamp-1 mb-2 ${effectiveTheme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
                                 {h.description}
                               </div>
                             )}
                           </div>
 
-                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                          <div className={`pt-2 border-t flex items-center justify-between gap-2 ${effectiveTheme === 'dark' ? 'border-slate-800/80' : 'border-slate-200'}`}>
                             <div className="flex items-center gap-1.5">
                               <button
                                 onClick={() => handleToggleSshEnabled(h.id, h.enabled !== false)}
                                 className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 ${
                                   h.enabled !== false
-                                    ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
-                                    : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
+                                    ? (effectiveTheme === 'dark' ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900' : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300' : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200')
                                 }`}
                                 title="Klik untuk mengaktifkan / menonaktifkan host ini"
                               >
@@ -6336,12 +6338,12 @@ export default function App() {
                                 disabled={hostPingStatus[h.id]?.testing || h.enabled === false}
                                 className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 disabled:opacity-40 ${
                                   hostPingStatus[h.id]?.testing
-                                    ? 'bg-slate-800 text-cyan-300 border-cyan-500/40'
+                                    ? (effectiveTheme === 'dark' ? 'bg-slate-800 text-cyan-300 border-cyan-500/40' : 'bg-cyan-50 text-cyan-800 border-cyan-300')
                                     : hostPingStatus[h.id]?.success === true
-                                    ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
+                                    ? (effectiveTheme === 'dark' ? 'bg-emerald-950 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
                                     : hostPingStatus[h.id]?.success === false
-                                    ? 'bg-rose-950 text-rose-300 border-rose-700'
-                                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-amber-300 hover:border-slate-700'
+                                    ? (effectiveTheme === 'dark' ? 'bg-rose-950 text-rose-300 border-rose-700' : 'bg-rose-50 text-rose-800 border-rose-300')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-amber-300' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200')
                                 }`}
                                 title={hostPingStatus[h.id]?.message || "Klik untuk ping dan tes uji koneksi SSH ke VM ini"}
                               >
@@ -6364,8 +6366,8 @@ export default function App() {
                               disabled={h.enabled === false}
                               className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-40 ${
                                 h.allow_elevated
-                                  ? 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900'
-                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                                  ? (effectiveTheme === 'dark' ? 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900' : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100')
+                                  : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200')
                               }`}
                               title="Klik untuk mengubah izin Read-Only vs Full"
                             >
