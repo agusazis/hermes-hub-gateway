@@ -178,10 +178,10 @@ export default function App() {
     }
   };
 
-  // Theme Management (Dark / Light / System Auto)
+  // Theme Management (Dark / Light / System Auto - Defaults strictly to System)
   const [themeMode, setThemeMode] = useState<'dark' | 'light' | 'system'>(() => {
     try {
-      const saved = localStorage.getItem('hhg_theme_mode');
+      const saved = localStorage.getItem('hhg_theme_mode_v2');
       if (saved === 'dark' || saved === 'light' || saved === 'system') return saved;
     } catch (_) {}
     return 'system';
@@ -205,7 +205,7 @@ export default function App() {
             document.documentElement.classList.remove('dark');
           }
         }
-        try { localStorage.setItem('hhg_theme_mode', themeMode); } catch (_) {}
+        try { localStorage.setItem('hhg_theme_mode_v2', themeMode); localStorage.setItem('hhg_theme_mode', themeMode); } catch (_) {}
       } catch (e) {
         setEffectiveTheme('dark');
         if (typeof document !== 'undefined') {
@@ -4276,11 +4276,20 @@ export default function App() {
 
   const loadSshAuditLogsList = async (silent: boolean = false) => {
     if (!silent) setLoadingSshAudit(true);
+    const startTime = Date.now();
     try {
       const res = await invoke<SshAuditLogEntry[]>('get_ssh_audit_logs', { limit: 100 });
       if (res) setSshAuditLogs(res);
+      if (!silent) {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 400) {
+          await new Promise((r) => setTimeout(r, 400 - elapsed));
+        }
+        showToast('info', 'Audit Log Diperbarui', `Berhasil memuat ${res?.length || 0} entri riwayat log audit forensik.`);
+      }
     } catch (e) {
       console.warn("Gagal memuat ssh audit logs:", e);
+      if (!silent) showToast('error', 'Gagal Memuat Log', String(e));
     } finally {
       if (!silent) setLoadingSshAudit(false);
     }
@@ -6200,10 +6209,15 @@ export default function App() {
                       type="button"
                       onClick={() => loadSshAuditLogsList(false)}
                       disabled={loadingSshAudit}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95 cursor-pointer ${
+                        effectiveTheme === 'dark'
+                          ? 'bg-[#0d191c] hover:bg-[#1a2b2f] text-slate-200 border-slate-700'
+                          : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                      }`}
                       title="Segarkan data log audit SSH terbaru"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${loadingSshAudit ? 'animate-spin' : ''}`} /> Refresh
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingSshAudit ? 'animate-spin text-cyan-400' : ''}`} />
+                      <span>{loadingSshAudit ? 'Memuat...' : 'Refresh'}</span>
                     </button>
 
                   </>
@@ -6392,29 +6406,33 @@ export default function App() {
             {mcpHubSection === 'ssh' && (
               <div className="space-y-4">
                 {/* Panel Remote SSH Managed Hosts */}
-                <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-[#0d191c] border-indigo-500/30 shadow-md' : 'bg-white border-slate-200/90 shadow-xs'}`}>
+                <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-[#0d191c] border-slate-800 shadow-md' : 'bg-white border-slate-200/90 shadow-xs'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <Terminal className="w-4 h-4 text-indigo-400" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      <Terminal className={`w-4 h-4 ${effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-slate-800'}`} />
+                      <span className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
                         Remote SSH Hosts Gateway ({sshHosts.length} VM Terhubung)
                       </span>
                       <button
                         onClick={handlePingAllHosts}
                         disabled={isPingingAll || sshHosts.length === 0}
-                        className="ml-2 flex items-center gap-1 px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-500/30 hover:border-indigo-400 disabled:opacity-50 text-indigo-300 rounded-lg text-[10px] font-semibold transition-all shadow-sm"
+                        className={`ml-2 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all border shadow-xs disabled:opacity-50 cursor-pointer ${
+                          effectiveTheme === 'dark'
+                            ? 'bg-[#142b4f] text-[#8fbaff] border-[#3b82f6]/60 hover:bg-[#1c3a6b]'
+                            : 'bg-[#f0f9ff] text-[#026aa2] border-[#b9e6fe] hover:bg-[#e0f2fe]'
+                        }`}
                         title="Ping dan uji koneksi seluruh VM remote secara serentak"
                       >
                         {isPingingAll ? (
-                          <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                          <RefreshCw className="w-3 h-3 animate-spin text-amber-500" />
                         ) : (
-                          <Zap className="w-3 h-3 text-amber-400" />
+                          <Zap className="w-3 h-3 text-cyan-500" />
                         )}
-                        {isPingingAll ? 'Memeriksa Semua VM...' : 'Uji Semua Host'}
+                        <span>{isPingingAll ? 'Memeriksa Semua VM...' : 'Uji Semua Host'}</span>
                       </button>
                     </div>
                     <span className="text-[11px] font-mono text-slate-400">
-                      Akses via MCP: <code className="text-indigo-300 font-bold">remote-ssh</code> (Discrete Multi-Host)
+                      Akses via MCP: <code className={effectiveTheme === 'dark' ? 'text-cyan-300 font-bold' : 'text-slate-900 font-bold'}>remote-ssh</code> (Discrete Multi-Host)
                     </span>
                   </div>
 
@@ -6705,71 +6723,99 @@ export default function App() {
 
                 {/* MODAL VIEW DETAILS SSH AUDIT LOG ENTRY */}
                 {selectedAuditEntry && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
                     <div className={`w-full max-w-xl rounded-2xl border p-5 shadow-2xl transition-all ${
-                      effectiveTheme === "dark" ? "bg-slate-900 border-slate-700 text-slate-100" : "bg-white border-slate-200 text-slate-800"
+                      effectiveTheme === "dark" ? "bg-[#0d191c] border-slate-800 text-slate-100" : "bg-white border-slate-200 text-slate-900 shadow-xl"
                     }`}>
-                      <div className="flex items-center justify-between pb-3 border-b border-slate-700/50 mb-4">
+                      <div className={`flex items-center justify-between pb-3 border-b mb-4 ${
+                        effectiveTheme === "dark" ? "border-slate-800" : "border-slate-200"
+                      }`}>
                         <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                          <ShieldCheck className="w-5 h-5 text-emerald-500" />
                           <h3 className="font-bold text-sm tracking-wide">Detail Forensik Audit SSH</h3>
                         </div>
                         <button
                           onClick={() => setSelectedAuditEntry(null)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                          }`}
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
 
                       <div className="space-y-3 font-mono text-xs">
-                        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                        <div className={`grid grid-cols-2 gap-2 p-3 rounded-xl border ${
+                          effectiveTheme === 'dark' ? 'bg-[#040d10] border-slate-800' : 'bg-[#f7f7f2] border-slate-200'
+                        }`}>
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Waktu Eksekusi</span>
-                            <span className="text-slate-300 font-semibold">{formatAuditDateTime(selectedAuditEntry.timestamp).dateStr} &bull; {formatAuditDateTime(selectedAuditEntry.timestamp).timeStr} WITA</span>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-0.5">Waktu Eksekusi</span>
+                            <span className={`font-semibold ${effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
+                              {formatAuditDateTime(selectedAuditEntry.timestamp).dateStr} &bull; {formatAuditDateTime(selectedAuditEntry.timestamp).timeStr} WITA
+                            </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Klien Pemanggil</span>
-                            <span className="text-slate-300">{selectedAuditEntry.client} Agent</span>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-0.5">Klien Pemanggil</span>
+                            <span className={effectiveTheme === 'dark' ? 'text-slate-200 font-semibold' : 'text-slate-800 font-semibold'}>
+                              {selectedAuditEntry.client} Agent
+                            </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Target Host</span>
-                            <span className="text-indigo-400 font-bold">{selectedAuditEntry.target} ({selectedAuditEntry.target_ip})</span>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-0.5">Target Host</span>
+                            <span className={`font-bold ${effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-700'}`}>
+                              {selectedAuditEntry.target} ({selectedAuditEntry.target_ip})
+                            </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Mode Izin & Durasi</span>
-                            <span className="text-amber-400">{selectedAuditEntry.mode}</span> &bull; <span className="text-slate-400">{selectedAuditEntry.duration_ms} ms</span>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block mb-0.5">Mode Izin & Durasi</span>
+                            <span className={effectiveTheme === 'dark' ? 'text-amber-400 font-semibold' : 'text-amber-700 font-semibold'}>
+                              {selectedAuditEntry.mode}
+                            </span> &bull; <span className="text-slate-500">{selectedAuditEntry.duration_ms} ms</span>
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Perintah / Aksi (Command Input):</span>
-                          <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-cyan-300 whitespace-pre-wrap break-all select-all font-mono">
+                          <span className={`text-[10px] uppercase font-bold block mb-1 ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+                            Perintah / Aksi (Command Input):
+                          </span>
+                          <pre className={`p-3 rounded-xl border text-xs whitespace-pre-wrap break-all select-all font-mono ${
+                            effectiveTheme === 'dark' ? 'bg-[#040d10] border-slate-800 text-cyan-300' : 'bg-[#fbfbf8] border-slate-200 text-cyan-950 font-semibold'
+                          }`}>
                             {selectedAuditEntry.action_summary}
                           </pre>
                         </div>
 
                         <div>
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] text-slate-400 uppercase font-bold">Hasil Server (Output Preview):</span>
+                            <span className={`text-[10px] uppercase font-bold ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+                              Hasil Server (Output Preview):
+                            </span>
                             {typeof selectedAuditEntry.exit_code === "number" && (
-                              <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                                selectedAuditEntry.exit_code === 0 ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : "bg-rose-950 text-rose-400 border border-rose-800"
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                                selectedAuditEntry.exit_code === 0
+                                  ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
+                                  : (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]')
                               }`}>
                                 Exit Code: {selectedAuditEntry.exit_code}
                               </span>
                             )}
                           </div>
-                          <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 whitespace-pre-wrap break-all select-all font-mono max-h-36 overflow-y-auto">
+                          <pre className={`p-3 rounded-xl border text-xs whitespace-pre-wrap break-all select-all font-mono max-h-44 overflow-y-auto ${
+                            effectiveTheme === 'dark' ? 'bg-[#040d10] border-slate-800 text-slate-300' : 'bg-[#fbfbf8] border-slate-200 text-slate-800'
+                          }`}>
                             {selectedAuditEntry.output_preview || "(Tidak ada output atau aksi diblokir sebelum eksekusi)"}
                           </pre>
                         </div>
                       </div>
 
-                      <div className="mt-5 pt-3 border-t border-slate-800 flex justify-end">
+                      <div className={`mt-5 pt-3 border-t flex justify-end ${effectiveTheme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`}>
                         <button
                           onClick={() => setSelectedAuditEntry(null)}
-                          className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                          className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                            effectiveTheme === 'dark'
+                              ? 'bg-[#040d10] hover:bg-[#1a2b2f] text-slate-200 border-slate-800'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                          }`}
                         >
                           Tutup
                         </button>
@@ -8169,9 +8215,17 @@ export default function App() {
                             <a
                               key={i}
                               href={dl.url}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                invoke('open_in_browser', { url: dl.url });
+                              }}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-2.5 bg-slate-950 border border-slate-800 hover:border-cyan-500/50 rounded-xl flex items-center justify-between text-xs transition-all group"
+                              className={`p-2.5 rounded-xl flex items-center justify-between text-xs transition-all group border cursor-pointer ${
+                                effectiveTheme === 'dark'
+                                  ? 'bg-[#0d191c] border-slate-800 hover:border-cyan-500/50'
+                                  : 'bg-white border-slate-200 hover:border-cyan-500/50 shadow-xs'
+                              }`}
                             >
                               <div className="space-y-0.5 truncate pr-2">
                                 <div className="font-mono text-cyan-400 font-semibold truncate group-hover:text-cyan-300">
