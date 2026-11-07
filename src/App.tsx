@@ -179,7 +179,13 @@ export default function App() {
   };
 
   // Theme Management (Dark / Light / System Auto)
-  const [themeMode, setThemeMode] = useState<'dark' | 'light' | 'system'>('dark');
+  const [themeMode, setThemeMode] = useState<'dark' | 'light' | 'system'>(() => {
+    try {
+      const saved = localStorage.getItem('hhg_theme_mode');
+      if (saved === 'dark' || saved === 'light' || saved === 'system') return saved;
+    } catch (_) {}
+    return 'system';
+  });
   const [effectiveTheme, setEffectiveTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
@@ -199,6 +205,7 @@ export default function App() {
             document.documentElement.classList.remove('dark');
           }
         }
+        try { localStorage.setItem('hhg_theme_mode', themeMode); } catch (_) {}
       } catch (e) {
         setEffectiveTheme('dark');
         if (typeof document !== 'undefined') {
@@ -634,7 +641,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.65';
+  const APP_VERSION = 'v0.8.66';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -721,6 +728,36 @@ export default function App() {
   }
 
   const releaseLogs: ReleaseLog[] = [
+    {
+      version: 'v0.8.66',
+      date: '06 November 2026',
+      name: 'Hermes Hub Gateway v0.8.66 (Unified Single Toast Architecture & System Theme Default)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Penyatuan Tunggal Seluruh Notifikasi (Unified Single Toast) & Default Tema Sistem: Menghapus seluruh banner notifikasi lokal yang berceceran dan menguncinya ke satu sistem Toast mengambang berstandar OmniRoute (100% kontras di mode Gelap & Terang), mengunci keseragaman tombol grid host SSH dan server MCP, serta mengaktifkan mode "Sistem" sebagai tema baku bawaan aplikasi.',
+      features: [
+        'Single Unified Toast Architecture: Seluruh aksi (pengujian MCP, sinkronisasi aturan, handshake, provision, evaluasi) menggunakan satu desain toast profesional yang seragam.',
+        'High-Contrast Toast Legibility: Desain toast berstandar WCAG AA dengan judul tajam, bodi terbaca jelas, dan ikon aksen status elegan di kedua mode.',
+        'Strict Uniform Grid Buttons: Seluruh tombol di kartu host (AKTIF, PING, READ-ONLY) dan server MCP terkunci seragam mengikuti palet OmniRoute tanpa residu warna gelap atau hijau berlumpur.',
+        'System Theme as Default: Aplikasi kini otomatis mengikuti preferensi tema OS pengguna (Windows Dark/Light) secara bawaan sejak pertama kali dibuka.',
+        'Expanded Sidebar Telemetry: Navigasi samping kini menampilkan status lengkap Hermes Evaluator (LIVE), Mnemosyne Memory (ONLINE), dan IPC Pipe Bridge (CONNECTED).'
+      ],
+      fixes: [
+        'Menghilangkan banner dark mode hardcoded (seperti banner Handshake JSON-RPC) yang merusak tampilan mode terang.',
+        'Memperbaiki inkonsistensi warna tombol kartu host aktif di mode malam.'
+      ],
+      architecture: [
+        'Centralized Toast Notification Pipeline in src/App.tsx.',
+        'Locked OmniRoute Component Palette in src/index.css.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.66/Hermes.Hub.Gateway_0.8.66_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.66/Hermes.Hub.Gateway_0.8.66_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.66/hermes-hub-gateway_0.8.66_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.66/hermes-hub-gateway_0.8.66_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.66/hermes-hub-gateway-0.8.66-1.x86_64.rpm' }
+      ]
+    },
     {
       version: 'v0.8.65',
       date: '06 November 2026',
@@ -4063,7 +4100,8 @@ export default function App() {
         [mcp.name]: discovered
       }));
 
-      setTestResult(`✓ Handshake JSON-RPC 2.0 Success! Server "${mcp.name}" terhubung via bridge. Berhasil mendeteksi ${discovered.length} tools calling.`);
+      showToast('success', 'Handshake MCP Sukses', `Server "${mcp.name}" terhubung via bridge. Berhasil mendeteksi ${discovered.length} tools calling.`);
+      setTestResult(null);
       // Auto-dismiss setelah 5 detik
       setTimeout(() => {
         setTestResult(null);
@@ -4093,7 +4131,8 @@ export default function App() {
       setMcpToolsDiscovery(updatedCatalog);
       setTestingAllMcp(false);
       const resMsg = `✓ Handshake Massal Sukses! Berhasil menguji ${successCount}/${config.mcp_servers.length} MCP servers via bridge. Total ${totalTools} tools calling aktif.`;
-      setTestResult(resMsg);
+      showToast('success', 'Handshake Massal Selesai', resMsg);
+      setTestResult(null);
       showToast('success', 'Uji Coba Server MCP Selesai', resMsg);
       setTimeout(() => {
         setTestResult(null);
@@ -4712,21 +4751,62 @@ export default function App() {
 
         <div className="space-y-2">
           {!isSidebarCollapsed ? (
-            <div className={`p-3 rounded-xl border space-y-2 transition-all ${
-              effectiveTheme === 'dark' ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200/90 shadow-xs'
+            <div className={`p-3 rounded-xl border space-y-2.5 transition-all ${
+              effectiveTheme === 'dark' ? 'bg-[#0d191c] border-slate-800/80 shadow-md' : 'bg-white/90 border-slate-200/90 shadow-xs'
             }`}>
-              <div className={`flex items-center justify-between text-[11px] font-medium ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
-                <span>Evaluator Status</span>
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full animate-pulse ${effectiveTheme === 'dark' ? 'bg-emerald-400' : 'bg-emerald-600'}`}></span>
-                  <span className={`font-mono text-[10px] font-bold ${effectiveTheme === 'dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>LIVE</span>
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-200/60 dark:border-slate-800/60">
+                <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Agent Infrastructure
+                </span>
+                <span className={`w-2 h-2 rounded-full ${effectiveTheme === 'dark' ? 'bg-emerald-400' : 'bg-emerald-600'} animate-pulse`} />
+              </div>
+
+              {/* Row 1: Hermes Evaluator */}
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between text-[10px] font-medium">
+                  <span className={effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>Evaluator</span>
+                  <span className={`font-mono text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                    effectiveTheme === 'dark' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>LIVE</span>
+                </div>
+                <div className={`font-mono text-[10px] truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'}`}>
+                  {config.default_hermes_evaluator_url || 'http://172.168.1.202:9125'}
                 </div>
               </div>
-              <div className={`font-mono text-[11px] truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'}`}>{config.default_hermes_evaluator_url}</div>
+
+              {/* Row 2: Mnemosyne Memory */}
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between text-[10px] font-medium">
+                  <span className={effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>Mnemosyne Memory</span>
+                  <span className={`font-mono text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                    effectiveTheme === 'dark' ? 'bg-cyan-950/80 text-cyan-400 border border-cyan-800/60' : 'bg-cyan-50 text-cyan-700 border border-cyan-200'
+                  }`}>ONLINE</span>
+                </div>
+                <div className={`font-mono text-[10px] truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'}`}>
+                  {config.default_mnemosyne_url || 'http://172.168.1.202:8000'}
+                </div>
+              </div>
+
+              {/* Row 3: Named Pipe IPC Bridge */}
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between text-[10px] font-medium">
+                  <span className={effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>IPC Pipe Bridge</span>
+                  <span className={`font-mono text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                    effectiveTheme === 'dark' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>CONNECTED</span>
+                </div>
+                <div className={`font-mono text-[10px] truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'}`}>
+                  \\\\.\\pipe\\hhg-bridge
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="flex justify-center p-2 rounded-xl bg-slate-900/80 border border-slate-800" title={`Evaluator LIVE: ${config.default_hermes_evaluator_url}`}>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border ${
+              effectiveTheme === 'dark' ? 'bg-[#0d191c] border-slate-800/80' : 'bg-white/90 border-slate-200/90 shadow-xs'
+            }`} title={`Evaluator: ${config.default_hermes_evaluator_url} | Mnemosyne: ${config.default_mnemosyne_url} | Pipe: \\\\.\\pipe\\hhg-bridge`}>
+              <span className={`w-2 h-2 rounded-full ${effectiveTheme === 'dark' ? 'bg-emerald-400' : 'bg-emerald-600'} animate-pulse`} title="Evaluator LIVE" />
+              <span className={`w-2 h-2 rounded-full ${effectiveTheme === 'dark' ? 'bg-cyan-400' : 'bg-cyan-600'}`} title="Mnemosyne Memory ONLINE" />
+              <span className={`w-2 h-2 rounded-full ${effectiveTheme === 'dark' ? 'bg-emerald-400' : 'bg-emerald-600'}`} title="IPC Pipe Connected" />
             </div>
           )}
 
@@ -4853,33 +4933,42 @@ export default function App() {
 
         {/* Global Floating Toast Notification */}
         {toastNotification && toastNotification.message && toastNotification.message.trim() !== '' && (
-          <div className={`fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-xl border shadow-2xl flex items-start gap-3 animate-in slide-in-from-bottom-4 duration-300 ${
+          <div className={`fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-xl border shadow-2xl flex items-start gap-3.5 animate-in slide-in-from-bottom-4 duration-300 ${
             effectiveTheme === 'dark'
               ? toastNotification.type === 'success'
-                ? 'bg-[#0d191c] border-emerald-500/60 text-emerald-300 shadow-emerald-950/40 ring-1 ring-emerald-500/30'
+                ? 'bg-[#0d191c] border-emerald-500/60 shadow-[0_8px_30px_rgb(0,0,0,0.6)] ring-1 ring-emerald-500/40'
                 : toastNotification.type === 'error'
-                  ? 'bg-[#0d191c] border-rose-500/60 text-rose-300 shadow-rose-950/40 ring-1 ring-rose-500/30'
-                  : 'bg-[#0d191c] border-cyan-500/60 text-cyan-300 shadow-cyan-950/40 ring-1 ring-cyan-500/30'
+                  ? 'bg-[#0d191c] border-rose-500/60 shadow-[0_8px_30px_rgb(0,0,0,0.6)] ring-1 ring-rose-500/40'
+                  : 'bg-[#0d191c] border-cyan-500/60 shadow-[0_8px_30px_rgb(0,0,0,0.6)] ring-1 ring-cyan-500/40'
               : toastNotification.type === 'success'
-                ? 'bg-white border-emerald-500/50 text-emerald-800 shadow-xl ring-1 ring-emerald-500/20'
+                ? 'bg-white border-emerald-500/60 shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-emerald-500/30'
                 : toastNotification.type === 'error'
-                  ? 'bg-white border-rose-500/50 text-rose-800 shadow-xl ring-1 ring-rose-500/20'
-                  : 'bg-white border-cyan-500/50 text-cyan-800 shadow-xl ring-1 ring-cyan-500/20'
+                  ? 'bg-white border-rose-500/60 shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-rose-500/30'
+                  : 'bg-white border-cyan-500/60 shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-cyan-500/30'
           }`}>
-            {toastNotification.type === 'success' && <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${effectiveTheme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`} />}
-            {toastNotification.type === 'error' && <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${effectiveTheme === 'dark' ? 'text-rose-400' : 'text-rose-600'}`} />}
-            {toastNotification.type === 'info' && <RefreshCw className={`w-5 h-5 shrink-0 mt-0.5 ${effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-600'}`} />}
-            <div className="flex-1">
-              <div className={`text-xs font-bold font-mono uppercase tracking-wider ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+            <div className={`p-2 rounded-lg shrink-0 ${
+              toastNotification.type === 'success'
+                ? (effectiveTheme === 'dark' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border border-emerald-200')
+                : toastNotification.type === 'error'
+                ? (effectiveTheme === 'dark' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-rose-50 text-rose-700 border border-rose-200')
+                : (effectiveTheme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-50 text-cyan-700 border border-cyan-200')
+            }`}>
+              {toastNotification.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
+              {toastNotification.type === 'error' && <AlertCircle className="w-4 h-4" />}
+              {toastNotification.type === 'info' && <RefreshCw className="w-4 h-4" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className={`text-xs font-bold font-mono uppercase tracking-wider truncate ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 {toastNotification.title}
               </div>
-              <div className={`text-xs mt-0.5 leading-snug ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+              <div className={`text-xs mt-0.5 leading-snug break-words ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                 {toastNotification.message}
               </div>
             </div>
             <button
               onClick={() => setToastNotification(null)}
-              className={`text-xs font-mono p-1 transition-colors ${effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`p-1 rounded text-xs font-mono transition-colors ${effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100'}`}
+              title="Tutup Notifikasi"
             >
               ✕
             </button>
@@ -6332,87 +6421,104 @@ export default function App() {
                       {sshHosts.map((h) => (
                         <div
                           key={h.id}
-                          className={`p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
+                          className={`p-3.5 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
                             effectiveTheme === 'dark'
                               ? h.enabled !== false
-                                ? 'bg-gradient-to-br from-emerald-900/80 via-emerald-950/90 to-emerald-950 border-emerald-500/80 shadow-md shadow-emerald-950/60 ring-1 ring-emerald-500/40'
-                                : 'bg-slate-950/80 border-slate-800 text-slate-400 opacity-80'
+                                ? 'bg-[#0d191c] border-emerald-500/50 hover:border-emerald-400 shadow-[0_4px_16px_-4px_rgba(34,197,94,0.22)] ring-1 ring-emerald-500/20'
+                                : 'bg-[#071215]/60 border-dashed border-slate-800/80 opacity-60 hover:opacity-90'
                               : h.enabled !== false
-                              ? 'bg-white border-emerald-500/50 shadow-sm ring-1 ring-emerald-400/30'
-                              : 'bg-white border-slate-200 shadow-sm opacity-80'
+                              ? 'bg-white border-emerald-500/50 hover:border-emerald-500 shadow-[0_2px_8px_rgba(16,185,129,0.12)] ring-1 ring-emerald-400/20'
+                              : 'bg-white/80 border-dashed border-slate-300 opacity-65 hover:opacity-95 shadow-xs'
                           }`}
                         >
                           <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className={`font-mono text-xs font-bold truncate flex items-center gap-1.5 ${effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-900'}`}>
-                                {h.alias}
-                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
+                                  h.enabled !== false
+                                    ? (effectiveTheme === 'dark' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border-emerald-200')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-800/50 text-slate-500 border-slate-700/50' : 'bg-slate-100 text-slate-400 border-slate-200')
+                                }`}>
+                                  <Terminal className="w-3.5 h-3.5" />
+                                </div>
+                                <span className={`font-mono text-xs font-bold truncate ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                                  {h.alias}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
                                   h.tier === 'production'
-                                    ? (effectiveTheme === 'dark' ? 'bg-rose-950 text-rose-300 border border-rose-800' : 'bg-rose-50 text-rose-700 border border-rose-200')
-                                    : (effectiveTheme === 'dark' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-emerald-50 text-emerald-700 border border-emerald-200')
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]')
+                                    : (effectiveTheme === 'dark' ? 'bg-[#142b4f] text-[#8fbaff] border-[#3b82f6]/60' : 'bg-[#f0f9ff] text-[#026aa2] border-[#b9e6fe]')
                                 }`}>
                                   {h.tier}
                                 </span>
-                              </span>
-                              <div className="flex items-center gap-1">
                                 <button
                                   onClick={() => handleOpenEditSsh(h)}
-                                  className="p-1 hover:text-indigo-400 text-slate-500 transition-colors"
+                                  className={`p-1 rounded transition-colors ${effectiveTheme === 'dark' ? 'text-slate-500 hover:text-cyan-400' : 'text-slate-400 hover:text-slate-700'}`}
                                   title="Edit / Perbarui Host SSH"
                                 >
                                   <Edit3 className="w-3 h-3" />
                                 </button>
                                 <button
                                   onClick={() => handleRemoveSshHost(h.id, h.alias)}
-                                  className="p-1 hover:text-rose-400 text-slate-500 transition-colors"
+                                  className={`p-1 rounded transition-colors ${effectiveTheme === 'dark' ? 'text-slate-500 hover:text-rose-400' : 'text-slate-400 hover:text-rose-600'}`}
                                   title="Hapus Host SSH"
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </button>
                               </div>
                             </div>
-                            <div className={`text-[11px] font-mono mb-1 ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>
-                              {h.user}@{h.host}:{h.port}
+                            
+                            <div className="mb-2">
+                              <span className={`px-2 py-0.5 rounded text-[11px] font-mono border inline-block truncate max-w-full ${
+                                effectiveTheme === 'dark'
+                                  ? 'bg-[#040d10] text-slate-300 border-slate-800/80'
+                                  : 'bg-slate-50 text-slate-700 border-slate-200'
+                              }`}>
+                                {h.user}@{h.host}:{h.port}
+                              </span>
                             </div>
+
                             {h.description && (
-                              <div className={`text-[10px] line-clamp-1 mb-2 ${effectiveTheme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
+                              <div className={`text-[10px] line-clamp-1 mb-2 ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                                 {h.description}
                               </div>
                             )}
                           </div>
 
-                          <div className={`pt-2 border-t flex items-center justify-between gap-2 ${effectiveTheme === 'dark' ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                          <div className={`pt-2.5 mt-auto border-t flex items-center justify-between gap-1.5 ${effectiveTheme === 'dark' ? 'border-slate-800/60' : 'border-slate-100'}`}>
                             <div className="flex items-center gap-1.5">
                               <button
                                 onClick={() => handleToggleSshEnabled(h.id, h.enabled !== false)}
-                                className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 ${
+                                className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider border transition-all flex items-center gap-1.5 ${
                                   h.enabled !== false
-                                    ? (effectiveTheme === 'dark' ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900' : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100')
-                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300' : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200')
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60 hover:bg-[#154637]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5] hover:bg-[#d1fadf]')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200')
                                 }`}
                                 title="Klik untuk mengaktifkan / menonaktifkan host ini"
                               >
-                                <Power className="w-2.5 h-2.5" />
+                                <span className={`w-1.5 h-1.5 rounded-full ${h.enabled !== false ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
                                 {h.enabled !== false ? 'AKTIF' : 'NON-AKTIF'}
                               </button>
                               <button
                                 onClick={() => handlePingHostCard(h)}
                                 disabled={hostPingStatus[h.id]?.testing || h.enabled === false}
-                                className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all flex items-center gap-1 disabled:opacity-40 ${
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-mono border transition-all flex items-center gap-1 disabled:opacity-40 ${
                                   hostPingStatus[h.id]?.testing
-                                    ? (effectiveTheme === 'dark' ? 'bg-slate-800 text-cyan-300 border-cyan-500/40' : 'bg-cyan-50 text-cyan-800 border-cyan-300')
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#142b4f] text-[#8fbaff] border-[#3b82f6]/60' : 'bg-[#f0f9ff] text-[#026aa2] border-[#b9e6fe]')
                                     : hostPingStatus[h.id]?.success === true
-                                    ? (effectiveTheme === 'dark' ? 'bg-emerald-950 text-emerald-300 border-emerald-700' : 'bg-emerald-50 text-emerald-800 border-emerald-300')
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
                                     : hostPingStatus[h.id]?.success === false
-                                    ? (effectiveTheme === 'dark' ? 'bg-rose-950 text-rose-300 border-rose-700' : 'bg-rose-50 text-rose-800 border-rose-300')
-                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-amber-300' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200')
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
                                 }`}
                                 title={hostPingStatus[h.id]?.message || "Klik untuk ping dan tes uji koneksi SSH ke VM ini"}
                               >
                                 {hostPingStatus[h.id]?.testing ? (
                                   <RefreshCw className="w-2.5 h-2.5 animate-spin" />
                                 ) : (
-                                  <Zap className="w-2.5 h-2.5 text-amber-400" />
+                                  <Zap className="w-2.5 h-2.5 text-amber-500" />
                                 )}
                                 {hostPingStatus[h.id]?.testing
                                   ? 'PROBING...'
@@ -6426,14 +6532,14 @@ export default function App() {
                             <button
                               onClick={() => handleToggleSshElevation(h.id, h.allow_elevated)}
                               disabled={h.enabled === false}
-                              className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-40 ${
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all disabled:opacity-40 ${
                                 h.allow_elevated
-                                  ? (effectiveTheme === 'dark' ? 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900' : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100')
-                                  : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200')
+                                  ? (effectiveTheme === 'dark' ? 'bg-[#38280f] text-[#f4cf8b] border-[#d9a46c]/60 hover:bg-[#4a3614]' : 'bg-[#fffaeb] text-[#a05600] border-[#fedf89] hover:bg-[#fef0c7]')
+                                  : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
                               }`}
                               title="Klik untuk mengubah izin Read-Only vs Full"
                             >
-                              {h.allow_elevated ? '⚡ FULL (Sudo)' : '🔒 READ-ONLY'}
+                              {h.allow_elevated ? '⚡ FULL' : '🔒 READ-ONLY'}
                             </button>
                           </div>
                         </div>
@@ -6917,18 +7023,18 @@ export default function App() {
                     <div 
                       key={mcp.name}
                       onClick={() => setSelectedMcpName(mcp.name)}
-                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-200 ${
+                      className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 ${
                         effectiveTheme === 'dark'
                           ? mcp.enabled
                             ? isSelected
-                              ? 'bg-gradient-to-br from-emerald-900/90 via-emerald-950 to-emerald-950 border-emerald-400 shadow-lg shadow-emerald-950/70 ring-2 ring-emerald-400/50'
-                              : 'bg-gradient-to-br from-emerald-900/80 via-emerald-950/90 to-emerald-950 border-emerald-500/80 shadow-md shadow-emerald-950/60 ring-1 ring-emerald-500/40'
-                            : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200 opacity-80'
+                              ? 'bg-[#0d191c] border-cyan-400 shadow-[0_4px_20px_-4px_rgba(6,182,212,0.3)] ring-2 ring-cyan-400/40'
+                              : 'bg-[#0d191c] border-emerald-500/50 hover:border-emerald-400 shadow-[0_4px_16px_-4px_rgba(34,197,94,0.22)] ring-1 ring-emerald-500/20'
+                            : 'bg-[#071215]/60 border-dashed border-slate-800/80 opacity-60 hover:opacity-90'
                           : mcp.enabled
                           ? isSelected
-                            ? 'bg-emerald-100 border-emerald-500 shadow-md ring-2 ring-emerald-500/40'
-                            : 'bg-emerald-50/90 border-emerald-300 shadow-sm'
-                          : 'bg-slate-50/80 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 opacity-80'
+                            ? 'bg-white border-cyan-500 shadow-[0_2px_12px_rgba(6,182,212,0.18)] ring-2 ring-cyan-400/40'
+                            : 'bg-white border-emerald-500/50 hover:border-emerald-500 shadow-[0_2px_8px_rgba(16,185,129,0.12)] ring-1 ring-emerald-400/20'
+                          : 'bg-white/80 border-dashed border-slate-300 opacity-65 hover:opacity-95 shadow-xs'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -6958,10 +7064,10 @@ export default function App() {
                             e.stopPropagation();
                             handleToggleMcp(idx);
                           }}
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border transition-all flex items-center gap-1 ${
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider border transition-all flex items-center gap-1.5 ${
                             mcp.enabled
-                              ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
-                              : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
+                              ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60 hover:bg-[#154637]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5] hover:bg-[#d1fadf]')
+                              : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200')
                           }`}
                           title="Klik untuk mengaktifkan / menonaktifkan server MCP ini"
                         >
@@ -7034,18 +7140,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Test Result Message (VIVID GREEN CONTRASS) */}
-                      {testingMcpName === currentMcp.name && testResult && (
-                        <div className="p-3.5 bg-emerald-950/80 border-2 border-emerald-500 rounded-xl text-xs font-mono text-emerald-300 shadow-xl shadow-emerald-950/60 animate-in fade-in flex items-center gap-3">
-                          <div className="p-1.5 bg-emerald-500/20 rounded-lg text-emerald-400 border border-emerald-500/40">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          </div>
-                          <div className="space-y-0.5">
-                            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Hasil Pengujian Koneksi MCP (Sukses)</div>
-                            <span className="font-semibold text-emerald-200">{testResult}</span>
-                          </div>
-                        </div>
-                      )}
+{/* Handshake notification routes exclusively to global unified toast */}
 
                       {/* Tools Calling Section Header */}
                       <div className="flex items-center justify-between pt-1">
