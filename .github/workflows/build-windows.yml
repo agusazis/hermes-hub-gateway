@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.65
-          releaseName: "Hermes Hub Gateway v0.8.65"
-          releaseBody: "Release v0.8.65: OmniRoute Canvas Palette & Notification Legibility Fix."
+          tagName: v0.8.66
+          releaseName: "Hermes Hub Gateway v0.8.66"
+          releaseBody: "Release v0.8.66: Unified Single Toast Architecture & System Theme Default."
           releaseDraft: false
           prerelease: false
