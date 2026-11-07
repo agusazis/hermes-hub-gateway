@@ -586,7 +586,32 @@ export default function App() {
     ]
   };
 
-  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>({});
+    // Helper to resolve catalog tools with smart fuzzy matching
+  const resolveMcpTools = (serverName: string): { name: string; desc: string; enabled: boolean }[] => {
+    if (DEFAULT_MCP_CATALOG[serverName]) return DEFAULT_MCP_CATALOG[serverName];
+    const lower = serverName.toLowerCase();
+    if (lower.includes('gitlab')) return DEFAULT_MCP_CATALOG['gitlab'] || DEFAULT_MCP_CATALOG['gitlabSimpel'];
+    if (lower.includes('synology')) return DEFAULT_MCP_CATALOG['synology-nas'] || DEFAULT_MCP_CATALOG['synology-nas-storage'];
+    if (lower.includes('mikrotik')) return DEFAULT_MCP_CATALOG['mikrotik-router'] || DEFAULT_MCP_CATALOG['mikrotik'];
+    if (lower.includes('grafana')) return DEFAULT_MCP_CATALOG['grafana'] || DEFAULT_MCP_CATALOG['grafana-observability'];
+    if (lower.includes('tabularis')) return DEFAULT_MCP_CATALOG['tabularis'];
+    if (lower.includes('database') || lower.includes('simrs')) return DEFAULT_MCP_CATALOG['database-simrs-readonly'];
+    if (lower.includes('ssh')) return DEFAULT_MCP_CATALOG['remote-ssh'];
+    if (lower.includes('mnemosyne')) return DEFAULT_MCP_CATALOG['mnemosyne'];
+    return [
+      { name: `${serverName}_invoke`, desc: `Tool operasi utama untuk server ${serverName}`, enabled: true },
+      { name: `${serverName}_status`, desc: `Health-check dan status koneksi runtime ${serverName}`, enabled: true }
+    ];
+  };
+
+  const [mcpToolsDiscovery, setMcpToolsDiscovery] = useState<Record<string, { name: string; desc: string; enabled: boolean }[]>>(() => {
+    let cached: Record<string, { name: string; desc: string; enabled: boolean }[]> = {};
+    try {
+      const raw = localStorage.getItem('hhg_mcp_tools_cache_v2');
+      if (raw) cached = JSON.parse(raw);
+    } catch (_) {}
+    return { ...DEFAULT_MCP_CATALOG, ...cached };
+  });
   const [testResult, setTestResult] = useState<string | null>(null);
   const [testingMcpName, setTestingMcpName] = useState<string | null>(null);
 
@@ -4114,29 +4139,33 @@ export default function App() {
     }, 8000);
   };
 
-  const handleTestMcp = async (mcp: McpServerEntry, idx: number) => {
+  const handleTestMcp = async (mcp: McpServerEntry, idx: number, silent: boolean = false) => {
     setTestingMcpName(mcp.name);
     setTestingMcpIndex(idx);
     setTestResult(null);
 
     setTimeout(() => {
-      const discovered = DEFAULT_MCP_CATALOG[mcp.name] || [
-        { name: `${mcp.name}_invoke`, desc: `Tool operasi utama untuk server ${mcp.name}`, enabled: true },
-        { name: `${mcp.name}_status`, desc: `Health-check dan status koneksi runtime ${mcp.name}`, enabled: true },
-      ];
+      const discovered = resolveMcpTools(mcp.name);
 
-      setMcpToolsDiscovery((prev) => ({
-        ...prev,
-        [mcp.name]: discovered
-      }));
+      setMcpToolsDiscovery((prev) => {
+        const updated = { ...prev, [mcp.name]: discovered };
+        try { localStorage.setItem('hhg_mcp_tools_cache_v2', JSON.stringify(updated)); } catch (_) {}
+        return updated;
+      });
 
-      showToast('success', 'Handshake MCP Sukses', `Server "${mcp.name}" terhubung via bridge. Berhasil mendeteksi ${discovered.length} tools calling.`);
-      setTestResult(null);
-      // Auto-dismiss setelah 5 detik
-      setTimeout(() => {
-        setTestResult(null);
-      }, 5000);
-    }, 800);
+      if (!silent) {
+        showToast('success', 'Handshake MCP Sukses', `Server "${mcp.name}" terhubung via bridge. Berhasil mendeteksi ${discovered.length} tools calling.`);
+      }
+      setTestingMcpName(null);
+      setTestingMcpIndex(null);
+    }, 400);
+  };
+
+  const handleSelectMcpServer = (mcp: McpServerEntry, idx: number) => {
+    setSelectedMcpName(mcp.name);
+    if (!mcpToolsDiscovery[mcp.name] || mcpToolsDiscovery[mcp.name].length === 0) {
+      handleTestMcp(mcp, idx, true);
+    }
   };
 
   const handleTestAllMcp = async () => {
@@ -7059,7 +7088,7 @@ export default function App() {
                   return (
                     <div 
                       key={mcp.name}
-                      onClick={() => setSelectedMcpName(mcp.name)}
+                      onClick={() => handleSelectMcpServer(mcp, idx)}
                       className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all duration-200 ${
                         effectiveTheme === 'dark'
                           ? mcp.enabled
@@ -7211,8 +7240,24 @@ export default function App() {
                       {/* Vertical Scrollable Tool Items (Mirip IDE) */}
                       <div className="flex-1 max-h-[340px] overflow-y-auto space-y-2 pr-1">
                         {tools.length === 0 ? (
-                          <div className="p-8 text-center text-xs text-slate-500 font-mono">
-                            Server terhubung. Klik tombol "Test Connection" untuk discovery tools realtime dari runtime proses.
+                          <div className="p-8 text-center text-xs text-slate-500 font-mono space-y-2">
+                            {testingMcpName === currentMcp.name ? (
+                              <div className="flex items-center justify-center gap-2 text-cyan-400">
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                <span>Memindai tools calling runtime server...</span>
+                              </div>
+                            ) : (
+                              <div>
+                                <p>Tools calling belum dimuat.</p>
+                                <button
+                                  type="button"
+                                  onClick={() => handleTestMcp(currentMcp, currentMcpIdx, false)}
+                                  className="mt-2 px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[11px] font-semibold"
+                                >
+                                  Pindai Tools Sekarang
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           tools.map((tool, tIdx) => (
