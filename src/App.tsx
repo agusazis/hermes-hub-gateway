@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.61';
+  const APP_VERSION = 'v0.8.64';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -721,6 +721,32 @@ export default function App() {
   }
 
   const releaseLogs: ReleaseLog[] = [
+    {
+      version: 'v0.8.64',
+      date: '06 November 2026',
+      name: 'Hermes Hub Gateway v0.8.64 (OmniRoute Dual Theme & Updater Process Isolation)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Sinkronisasi Presisi Versi Frontend & Windows Updater Process Isolation: Memperbaiki konstanta APP_VERSION yang sebelumnya tertahan di v0.8.61 sehingga tidak lagi memicu loop update, serta menyematkan taskkill process isolation pada updater Windows untuk instalasi yang mulus.',
+      features: [
+        'OmniRoute-Grade Visual Transformation: Tampilan Warm Alabaster/Ivory (#fbfbf8) di mode terang dan Deep Obsidian di mode gelap.',
+        'Zero-Loop Frontend Version Sync: APP_VERSION tersinkronisasi 100% ke v0.8.64.',
+        'Seamless In-App Silent Update: Menghilangkan file-lock Windows saat proses update otomatis.'
+      ],
+      fixes: [
+        'Memperbaiki loop modal update yang berulang akibat konstanta versi frontend yang tertinggal.'
+      ],
+      architecture: [
+        'Strengthened 5-point release synchronization with automated release audit verification.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.64/Hermes.Hub.Gateway_0.8.64_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.64/Hermes.Hub.Gateway_0.8.64_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.64/hermes-hub-gateway_0.8.64_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.64/hermes-hub-gateway_0.8.64_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.64/hermes-hub-gateway-0.8.64-1.x86_64.rpm' }
+      ]
+    },
     {
       version: 'v0.8.63',
       date: '06 November 2026',
