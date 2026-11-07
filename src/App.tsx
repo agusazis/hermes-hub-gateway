@@ -6650,7 +6650,7 @@ export default function App() {
                             const isSuccess = entry.status === 'SUCCESS';
                             const { timeStr, dateStr } = formatAuditDateTime(entry.timestamp);
                             return (
-                              <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className={`cursor-pointer transition-colors group ${effectiveTheme === "dark" ? "hover:bg-slate-800/40" : "hover:bg-slate-50"}`}
+                              <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className={`cursor-pointer transition-colors group ${effectiveTheme === "dark" ? "hover:bg-slate-800/40" : "hover:bg-slate-50"}`}>
                                 <td className="py-2 px-3 whitespace-nowrap">
                                   <div className="font-semibold text-slate-200 text-[11px] font-mono">
                                     {timeStr} <span className="text-[9px] text-slate-400 font-normal">WITA</span>
