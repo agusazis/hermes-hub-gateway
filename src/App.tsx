@@ -92,7 +92,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.69';
+export const APP_VERSION = 'v0.8.70';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -764,11 +764,32 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.70',
+      date: '07 November 2026',
+      name: 'Hermes Hub Gateway v0.8.70 (Structured Vertical List Toast & UI Polish)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penyempurnaan Tampilan Notifikasi Toast: Seluruh notifikasi multi-baris kini diformat secara otomatis menjadi daftar poin vertikal yang rapi dengan indikator ikon per butir dan kanvas yang lebih lega.',
+      features: [
+        'Structured Vertical List Toast: Notifikasi Toast otomatis memecah pesan multi-baris menjadi daftar poin vertikal yang rapi dengan badge ceklis emerald terpisah.',
+        'Expanded Toast Canvas: Lebar notifikasi diperluas menjadi max-w-lg agar alamat URL repository Git dan pesan teknis panjang tampil leluasa tanpa terpotong.'
+      ],
+      fixes: [
+        'Memperbaiki format teks notifikasi Sync Rules yang sebelumnya menyatu horizontal menjadi daftar vertikal ke bawah yang terstruktur.',
+        'Meningkatkan keterbacaan kontras pesan pada floating toast di mode Terang dan Gelap.'
+      ],
+      architecture: [
+        'Structured Itemized Toast Renderer',
+        'OmniRoute High-Legibility Typography'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.69',
       date: '07 November 2026',
       name: 'Hermes Hub Gateway v0.8.69 (Runtime Exception Fix & Top-Level Version Scoping)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Perbaikan Kritis Runtime Exception: Mengeliminasi ReferenceError Temporal Dead Zone (TDZ) pada inisialisasi state changelog dengan mengangkat deklarasi APP_VERSION ke top-level module scope, menjamin aplikasi terbuka dengan mulus tanpa crash layar putih.',
       features: [
         'Top-Level Module Scope Architecture: APP_VERSION dideklarasikan pada tingkat modul teratas sehingga aman diakses oleh seluruh hooks dan helper functions sejak inisialisasi pertama.',
@@ -5056,7 +5077,7 @@ export default function App() {
 
         {/* Global Floating Toast Notification */}
         {toastNotification && toastNotification.message && toastNotification.message.trim() !== '' && (
-          <div className={`fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-xl border shadow-2xl flex items-start gap-3.5 animate-in slide-in-from-bottom-4 duration-300 ${
+          <div className={`fixed bottom-6 right-6 z-50 max-w-lg p-4 rounded-xl border shadow-2xl flex items-start gap-3.5 animate-in slide-in-from-bottom-4 duration-300 ${
             effectiveTheme === 'dark'
               ? toastNotification.type === 'success'
                 ? 'bg-[#0d191c] border-emerald-500/60 shadow-[0_8px_30px_rgb(0,0,0,0.6)] ring-1 ring-emerald-500/40'
@@ -5084,8 +5105,30 @@ export default function App() {
               <div className={`text-xs font-bold font-mono uppercase tracking-wider truncate ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 {toastNotification.title}
               </div>
-              <div className={`text-xs mt-0.5 leading-snug break-words ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                {toastNotification.message}
+              <div className={`text-xs mt-1.5 leading-relaxed ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                {toastNotification.message.includes('\n') ? (
+                  <div className="space-y-1.5 pt-0.5">
+                    {toastNotification.message.split('\n').filter(l => l.trim() !== '').map((line, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-[11px] leading-snug">
+                        {line.startsWith('✓') ? (
+                          <>
+                            <span className="text-emerald-500 font-bold shrink-0 mt-0.5">✓</span>
+                            <span className="break-words font-medium">{line.replace(/^✓\s*/, '')}</span>
+                          </>
+                        ) : line.startsWith('•') ? (
+                          <>
+                            <span className="text-cyan-500 font-bold shrink-0 mt-0.5">•</span>
+                            <span className="break-words font-medium">{line.replace(/^•\s*/, '')}</span>
+                          </>
+                        ) : (
+                          <span className="break-words">{line}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="break-words whitespace-pre-line">{toastNotification.message}</div>
+                )}
               </div>
             </div>
             <button
