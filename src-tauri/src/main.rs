@@ -373,7 +373,7 @@ async fn download_and_install_update(download_url: String, asset_name: String) -
 
         let restart_bat = temp_dir.join("hhg_update_restart.bat");
         let bat_content = format!(
-            "@echo off\r\ntimeout /t 2 /nobreak >nul\r\nstart /wait \"\" \"{installer}\" /S\r\ntimeout /t 1 /nobreak >nul\r\nstart \"\" \"{app_exe}\"\r\ndel \"%~f0\"\r\n",
+            "@echo off\r\ntaskkill /F /IM \"Hermes Hub Gateway.exe\" >nul 2>&1\r\ntimeout /t 2 /nobreak >nul\r\nstart /wait \"\" \"{installer}\" /S\r\ntimeout /t 1 /nobreak >nul\r\nstart \"\" \"{app_exe}\"\r\ndel \"%~f0\"\r\n",
             installer = installer_str,
             app_exe = current_exe_str
         );
