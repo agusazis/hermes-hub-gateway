@@ -304,6 +304,15 @@ export default function App() {
   const [sshAuditFilter, setSshAuditFilter] = useState<string>('');
   const [selectedAuditEntry, setSelectedAuditEntry] = useState<SshAuditLogEntry | null>(null);
 
+  const handleOpenAuditLogsFolder = async () => {
+    try {
+      const folderPath = await invoke<string>('open_ssh_audit_logs_folder');
+      showToast('info', 'Folder Log Dibuka', `Membuka direktori audit: ${folderPath}`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Membuka Folder', err?.toString() || 'Tidak dapat membuka file manager sistem');
+    }
+  };
+
   const handleExportSshAuditJson = () => {
     if (sshAuditLogs.length === 0) {
       showToast('info', 'Audit Log Kosong', 'Tidak ada data log audit untuk diekspor.');
@@ -734,7 +743,7 @@ export default function App() {
       name: 'Hermes Hub Gateway v0.8.67 (Universal Locked Grid Button & Badges Palette)',
       type: 'FEATURE',
       status: 'LATEST',
-      highlights: 'Penguncian Baku Pallet Pattern Tombol & Badges Grid Menyeluruh: Mengunci seluruh tombol dan kartu di 6 area grid (Remote SSH Hosts, MCP Server, MCP Tools Calling, Audit Trail Forensik, Readiness Audit, dan Project Workspaces) secara seragam mengikuti standar desain OmniRoute di kedua mode (Dark & Light).',
+      highlights: 'Penguncian Baku Pallet Pattern Tombol Grid, Tombol Buka Folder Log Fisik (Windows/Linux), & Eliminasi Total Seluruh Varian Toast: Menyediakan tombol eksplorasi folder log audit fisik (~/.hermes-hub/logs), menghapus tombol berbahaya Reset Audit agar integritas forensik SSH terjaga, memperbaiki kontras tab non-aktif, serta mengunci keseragaman tombol grid dan satu sistem toast floating tunggal.',
       features: [
         'Locked Status Toggle Buttons: Tombol AKTIF/NON-AKTIF, ENABLED/DISABLED, dan PASSED/ACTION REQUIRED terkunci seragam dengan pill status ber-dot indikator pulsing.',
         'High-Contrast Audit Trail Badges: Tabel audit forensik kini menggunakan teks kontras tajam (hitam arang di mode terang, putih/slate di mode malam) dan pill mode FULL & SUCCESS elegan.',
@@ -6571,10 +6580,22 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
+                      type="button"
+                      onClick={handleOpenAuditLogsFolder}
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                        effectiveTheme === "dark" ? "bg-[#0d191c] hover:bg-[#1a2b2f] text-slate-200 border-slate-700" : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs"
+                      }`}
+                      title="Buka direktori fisik berkas log audit di sistem operasi (Windows Explorer / Linux xdg-open)"
+                    >
+                      <Folder className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Buka Folder Log</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={handleExportSshAuditJson}
                       disabled={sshAuditLogs.length === 0}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1.5 disabled:opacity-40 ${
-                        effectiveTheme === "dark" ? "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700" : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all flex items-center gap-1.5 disabled:opacity-40 ${
+                        effectiveTheme === "dark" ? "bg-[#0d191c] hover:bg-[#1a2b2f] text-slate-200 border-slate-700" : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs"
                       }`}
                       title="Ekspor log audit ke format JSON"
                     >
