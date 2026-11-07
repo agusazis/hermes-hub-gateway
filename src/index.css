@@ -293,5 +293,79 @@
     .bg-emerald-500\/10 {
       background-color: color-mix(in srgb, var(--color-accent-success) 8%, transparent) !important;
     }
+  
+    /* ==========================================================================
+       OMNIROUTE HIGH-CONTRAST TOASTS, BANNERS & STATUS ALERTS (LIGHT MODE)
+       Passes WCAG AA (>= 4.5:1) — Eliminates pale/washed-out alert text!
+       ========================================================================== */
+    .bg-emerald-500\/10,
+    .bg-emerald-500\/20 {
+      background-color: #ecfdf3 !important;
+    }
+    .border-emerald-500\/30,
+    .border-emerald-500\/40,
+    .border-emerald-500\/20 {
+      border-color: #a6f4c5 !important;
+    }
+    .text-emerald-400,
+    .text-emerald-300 {
+      color: #087a4f !important;
+    }
+
+    .bg-cyan-500\/10,
+    .bg-cyan-500\/20 {
+      background-color: #f0f9ff !important;
+    }
+    .border-cyan-500\/30,
+    .border-cyan-500\/40,
+    .border-cyan-500\/20 {
+      border-color: #b9e6fe !important;
+    }
+    .text-cyan-400,
+    .text-cyan-300 {
+      color: #026aa2 !important;
+    }
+
+    .bg-amber-500\/10,
+    .bg-amber-500\/20 {
+      background-color: #fffaeb !important;
+    }
+    .border-amber-500\/30,
+    .border-amber-500\/40,
+    .border-amber-500\/20 {
+      border-color: #fedf89 !important;
+    }
+    .text-amber-400,
+    .text-amber-300 {
+      color: #a05600 !important;
+    }
+
+    .bg-rose-500\/10,
+    .bg-rose-500\/20 {
+      background-color: #fef3f2 !important;
+    }
+    .border-rose-500\/30,
+    .border-rose-500\/40,
+    .border-rose-500\/20 {
+      border-color: #fecdca !important;
+    }
+    .text-rose-400,
+    .text-rose-300 {
+      color: #bf3636 !important;
+    }
+
+    .bg-violet-500\/10,
+    .bg-violet-500\/20 {
+      background-color: #f9f5ff !important;
+    }
+    .border-violet-500\/30,
+    .border-violet-500\/40 {
+      border-color: #e9d7fe !important;
+    }
+    .text-violet-400,
+    .text-violet-300 {
+      color: #5c35c4 !important;
+    }
+
   }
 }
