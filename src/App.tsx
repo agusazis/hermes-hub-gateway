@@ -641,7 +641,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.66';
+  const APP_VERSION = 'v0.8.67';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -728,6 +728,34 @@ export default function App() {
   }
 
   const releaseLogs: ReleaseLog[] = [
+    {
+      version: 'v0.8.67',
+      date: '06 November 2026',
+      name: 'Hermes Hub Gateway v0.8.67 (Universal Locked Grid Button & Badges Palette)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Penguncian Baku Pallet Pattern Tombol & Badges Grid Menyeluruh: Mengunci seluruh tombol dan kartu di 6 area grid (Remote SSH Hosts, MCP Server, MCP Tools Calling, Audit Trail Forensik, Readiness Audit, dan Project Workspaces) secara seragam mengikuti standar desain OmniRoute di kedua mode (Dark & Light).',
+      features: [
+        'Locked Status Toggle Buttons: Tombol AKTIF/NON-AKTIF, ENABLED/DISABLED, dan PASSED/ACTION REQUIRED terkunci seragam dengan pill status ber-dot indikator pulsing.',
+        'High-Contrast Audit Trail Badges: Tabel audit forensik kini menggunakan teks kontras tajam (hitam arang di mode terang, putih/slate di mode malam) dan pill mode FULL & SUCCESS elegan.',
+        'Sleek Tools Calling Sub-Grid: Kartu tool calling dan tombol aksi Select All / Deselect All beradaptasi sempurna dengan latar belakang murni tanpa kontras kotor.',
+        'Refined Readiness Audit Cards: Kartu skor kesiapan dan checklist audit keselarasan AI Agent menggunakan surface elevation OmniRoute yang bersih.'
+      ],
+      fixes: [
+        'Menghilangkan hardcoded bg-slate-950 dan text-slate-200 pada tabel audit dan tools calling.',
+        'Menyelaraskan seluruh tombol di dalam grid kartu agar tidak lagi kontras menyilaukan di mode terang.'
+      ],
+      architecture: [
+        'Strict OmniRoute Grid Component Specification in src/App.tsx.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.67/Hermes.Hub.Gateway_0.8.67_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.67/Hermes.Hub.Gateway_0.8.67_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.67/hermes-hub-gateway_0.8.67_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.67/hermes-hub-gateway_0.8.67_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.67/hermes-hub-gateway-0.8.67-1.x86_64.rpm' }
+      ]
+    },
     {
       version: 'v0.8.66',
       date: '06 November 2026',
@@ -3633,7 +3661,7 @@ export default function App() {
     try {
       const res: any = await invoke('update_agents_template_from_github');
       if (res.success) {
-        setSyncMessage(res.message);
+        showToast('success', 'Update Template Berhasil', res.message);
         const activeWs = config.workspaces.find(w => w.id === config.active_workspace_id);
         if (activeWs?.target_path) {
           try {
@@ -4020,18 +4048,11 @@ export default function App() {
         mnemosyneUrl: config.default_mnemosyne_url
       });
       setTestingGateway(false);
-      setGatewayTestResult({
-        success: true,
-        message: `✓ Validasi Gateway Nyata: Evaluator (${res.evaluator_status}) & Mnemosyne (${res.mnemosyne_status}) di host ${evalHost}.`
-      });
+      showToast('success', 'Validasi Gateway Server', `Evaluator (${res.evaluator_status}) & Mnemosyne (${res.mnemosyne_status}) di host ${evalHost} ONLINE.`);
     } catch (err: any) {
       setTestingGateway(false);
-      setGatewayTestResult({
-        success: false,
-        message: `Gagal menghubungi Server Gateway (${evalHost}): ${err?.toString() || 'Connection Timeout'}`
-      });
+      showToast('error', 'Gagal Koneksi Gateway', `Gagal menghubungi Server Gateway (${evalHost}): ${err?.toString() || 'Connection Timeout'}`);
     }
-    setTimeout(() => setGatewayTestResult(null), 5000);
   };
 
   const handleTestGitConnection = async () => {
@@ -4600,26 +4621,12 @@ export default function App() {
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const handleSaveSettings = async () => {
-    setErrorMessage('');
     setIsSavingSettings(true);
-    setSettingsNotice(null);
     try {
       await invoke('save_system_config', { cfg: config });
-      setSyncMessage('Pengaturan server gateway, Telegram, dan repositori berhasil disimpan!');
-      setSettingsNotice({
-        success: true,
-        message: '✓ Konfigurasi gateway, telegram bot broadcast, dan endpoint server berhasil disimpan secara permanen ke storage lokal!'
-      });
-      setTimeout(() => {
-        setSyncMessage('');
-        setSettingsNotice(null);
-      }, 4000);
+      showToast('success', 'Pengaturan Disimpan', 'Konfigurasi gateway, telegram bot broadcast, dan endpoint server berhasil disimpan ke storage lokal!');
     } catch (err: any) {
-      setErrorMessage(String(err));
-      setSettingsNotice({
-        success: false,
-        message: `Gagal menyimpan konfigurasi: ${String(err)}`
-      });
+      showToast('error', 'Gagal Menyimpan Pengaturan', String(err));
     } finally {
       setIsSavingSettings(false);
     }
@@ -4975,19 +4982,7 @@ export default function App() {
           </div>
         )}
 
-        {syncMessage && (
-          <div className="flex items-center gap-2.5 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-            <span>{syncMessage}</span>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="flex items-center gap-2.5 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-400 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
+{/* All notifications routed exclusively to global unified toast */}
 
         {/* TAB 1: DASHBOARD (RELEVAN & BERBOBOT TEKNIS) */}
         {activeTab === "dashboard" && (
@@ -5220,7 +5215,11 @@ export default function App() {
                   setGitTestResult(null);
                   setShowAddWsModal(true);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  effectiveTheme === 'dark'
+                    ? 'bg-[#d8ff00] text-[#040d10] hover:bg-[#c2e600] shadow-md shadow-[#d8ff00]/20'
+                    : 'bg-[#040d10] text-[#fbfbf8] hover:bg-[#1e2c2f] border border-[#040d10] shadow-sm'
+                }`}
               >
                 <Plus className="w-3.5 h-3.5" /> Tambah Workspace Baru
               </button>
@@ -5731,7 +5730,9 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+                        <div className={`flex items-center gap-1 p-1 rounded-xl border transition-colors ${
+                          effectiveTheme === 'dark' ? 'bg-[#040d10] border-slate-800' : 'bg-[#f7f7f2] border-slate-200'
+                        }`}>
                           <button
                             onClick={async () => {
                               setWsDetailTab('readiness');
@@ -5742,23 +5743,23 @@ export default function App() {
                                 }
                               } catch (_) {}
                             }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
                               wsDetailTab === 'readiness'
-                                ? 'bg-cyan-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-white'
+                                ? (effectiveTheme === 'dark' ? 'bg-[#0d191c] text-cyan-300 border-cyan-500/50 shadow-sm font-bold' : 'bg-white text-slate-900 border-slate-200 shadow-xs font-bold')
+                                : (effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white border-transparent' : 'text-slate-600 hover:text-slate-900 border-transparent font-medium')
                             }`}
                           >
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Readiness Audit
+                            <CheckCircle2 className="w-3.5 h-3.5 text-cyan-500" /> Readiness Audit
                           </button>
                           <button
                             onClick={() => setWsDetailTab('skills')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
                               wsDetailTab === 'skills'
-                                ? 'bg-cyan-600 text-white shadow-sm'
-                                : 'text-slate-400 hover:text-white'
+                                ? (effectiveTheme === 'dark' ? 'bg-[#0d191c] text-cyan-300 border-cyan-500/50 shadow-sm font-bold' : 'bg-white text-slate-900 border-slate-200 shadow-xs font-bold')
+                                : (effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white border-transparent' : 'text-slate-600 hover:text-slate-900 border-transparent font-medium')
                             }`}
                           >
-                            <Shield className="w-3.5 h-3.5" /> SOP & Skills ({skillsHierarchy.filter(s => s.workspace_id === currentWs.id).length || skillsHierarchy.length})
+                            <Shield className="w-3.5 h-3.5 text-indigo-500" /> SOP & Skills ({skillsHierarchy.filter(s => s.workspace_id === currentWs.id).length || skillsHierarchy.length})
                           </button>
                         </div>
                       </div>
@@ -5781,7 +5782,9 @@ export default function App() {
 
                             return (
                               <div className="space-y-4">
-                                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+                                <div className={`p-4 rounded-xl border flex items-center justify-between transition-colors ${
+                                  effectiveTheme === 'dark' ? 'bg-[#0d191c] border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'
+                                }`}>
                                   <div className="space-y-1">
                                     <div className="flex items-center gap-2">
                                       <span className="text-sm font-bold text-white font-mono">Workspace Readiness Score</span>
@@ -5815,9 +5818,11 @@ export default function App() {
                                         setTimeout(() => setIsRecheckingAudit(false), 500);
                                       }
                                     }}
-                                    className={`px-3 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700/50 text-cyan-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                                      isRecheckingAudit ? 'opacity-60 cursor-not-allowed' : 'active:scale-95'
-                                    }`}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                                      effectiveTheme === 'dark'
+                                        ? 'bg-[#142b4f] hover:bg-[#1c3a6b] text-[#8fbaff] border-[#3b82f6]/60'
+                                        : 'bg-[#f0f9ff] hover:bg-[#e0f2fe] text-[#026aa2] border-[#b9e6fe]'
+                                    } ${isRecheckingAudit ? 'opacity-60 cursor-not-allowed' : 'active:scale-95'}`}
                                   >
                                     <RefreshCw className={`w-3.5 h-3.5 ${isRecheckingAudit ? 'animate-spin' : ''}`} /> 
                                     <span>{isRecheckingAudit ? 'Memeriksa...' : 'Re-check Audit'}</span>
@@ -5826,7 +5831,9 @@ export default function App() {
 
                                 <div className="space-y-2">
                                   {report.checks.map((chk: any) => (
-                                    <div key={chk.key} className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg flex items-center justify-between">
+                                    <div key={chk.key} className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${
+                                      effectiveTheme === 'dark' ? 'bg-[#0d191c]/80 border-slate-800/80' : 'bg-white border-slate-200/80 shadow-xs'
+                                    }`}>
                                       <div className="flex items-center gap-2.5">
                                         {chk.status ? (
                                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -5838,7 +5845,11 @@ export default function App() {
                                           <div className="text-[11px] text-slate-400 font-mono">{chk.message}</div>
                                         </div>
                                       </div>
-                                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${chk.status ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}`}>
+                                      <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                                        chk.status
+                                          ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
+                                          : (effectiveTheme === 'dark' ? 'bg-[#38280f] text-[#f4cf8b] border-[#d9a46c]/60' : 'bg-[#fffaeb] text-[#a05600] border-[#fedf89]')
+                                      }`}>
                                         {chk.status ? 'PASSED' : 'ACTION REQUIRED'}
                                       </span>
                                     </div>
@@ -6185,14 +6196,7 @@ export default function App() {
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${loadingSshAudit ? 'animate-spin' : ''}`} /> Refresh
                     </button>
-                    <button 
-                      type="button"
-                      onClick={handleClearSshAuditLogs}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-semibold shadow-sm transition-all"
-                      title="Bersihkan berkas riwayat log audit di laptop"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Reset Audit
-                    </button>
+
                   </>
                 )}
               </div>
@@ -6625,7 +6629,7 @@ export default function App() {
                             const isSuccess = entry.status === 'SUCCESS';
                             const { timeStr, dateStr } = formatAuditDateTime(entry.timestamp);
                             return (
-                              <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className="hover:bg-slate-800/40 cursor-pointer transition-colors group">
+                              <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className={`cursor-pointer transition-colors group ${effectiveTheme === "dark" ? "hover:bg-slate-800/40" : "hover:bg-slate-50"}`}
                                 <td className="py-2 px-3 whitespace-nowrap">
                                   <div className="font-semibold text-slate-200 text-[11px] font-mono">
                                     {timeStr} <span className="text-[9px] text-slate-400 font-normal">WITA</span>
@@ -6645,21 +6649,21 @@ export default function App() {
                                   {entry.action_summary}
                                 </td>
                                 <td className="py-2 px-3 whitespace-nowrap">
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
                                     entry.mode === 'FULL'
-                                      ? 'bg-amber-950 text-amber-300 border-amber-800'
-                                      : 'bg-slate-900 text-slate-400 border-slate-800'
+                                      ? (effectiveTheme === 'dark' ? 'bg-[#38280f] text-[#f4cf8b] border-[#d9a46c]/60' : 'bg-[#fffaeb] text-[#a05600] border-[#fedf89]')
+                                      : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800' : 'bg-white text-slate-700 border-slate-200 shadow-xs')
                                   }`}>
                                     {entry.mode}
                                   </span>
                                 </td>
                                 <td className="py-2 px-3 whitespace-nowrap">
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
                                     isSuccess
-                                      ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                                      ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
                                       : isBlocked
-                                      ? 'bg-rose-950 text-rose-300 border-rose-800'
-                                      : 'bg-slate-900 text-slate-300 border-slate-700'
+                                      ? (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]')
+                                      : (effectiveTheme === 'dark' ? 'bg-[#38280f] text-[#f4cf8b] border-[#d9a46c]/60' : 'bg-[#fffaeb] text-[#a05600] border-[#fedf89]')
                                   }`}>
                                     {entry.status}
                                   </span>
@@ -6770,18 +6774,28 @@ export default function App() {
                     </h4>
                   </div>
                   {/* Mode Selector Toggle: Raw JSON (IDE) vs Form */}
-                  <div className={`flex items-center p-0.5 rounded-lg border text-[11px] font-mono ${effectiveTheme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-100 border-slate-300"}`}>
+                  <div className={`flex items-center p-1 rounded-xl border text-[11px] font-mono transition-colors ${
+                    effectiveTheme === "dark" ? "bg-[#040d10] border-slate-800" : "bg-[#f7f7f2] border-slate-200"
+                  }`}>
                     <button
                       type="button"
                       onClick={() => setMcpInputMode('raw')}
-                      className={`px-3 py-1 rounded-md transition-all font-semibold ${mcpInputMode === 'raw' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white text-cyan-700 shadow-sm border border-slate-200') : 'text-slate-400 hover:text-slate-200'}`}
+                      className={`px-3 py-1.5 rounded-lg transition-all font-semibold ${
+                        mcpInputMode === 'raw'
+                          ? (effectiveTheme === 'dark' ? 'bg-[#0d191c] text-cyan-300 border border-cyan-500/50 shadow-sm' : 'bg-white text-slate-900 border border-slate-200 shadow-xs font-bold')
+                          : (effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900 font-medium')
+                      }`}
                     >
                       Raw JSON (IDE Format)
                     </button>
                     <button
                       type="button"
                       onClick={() => setMcpInputMode('form')}
-                      className={`px-3 py-1 rounded-md transition-all font-semibold ${mcpInputMode === 'form' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-white text-cyan-700 shadow-sm border border-slate-200') : 'text-slate-400 hover:text-slate-200'}`}
+                      className={`px-3 py-1.5 rounded-lg transition-all font-semibold ${
+                        mcpInputMode === 'form'
+                          ? (effectiveTheme === 'dark' ? 'bg-[#0d191c] text-cyan-300 border border-cyan-500/50 shadow-sm' : 'bg-white text-slate-900 border border-slate-200 shadow-xs font-bold')
+                          : (effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900 font-medium')
+                      }`}
                     >
                       Formulir Field
                     </button>
@@ -6825,14 +6839,16 @@ export default function App() {
                 ) : (
                   <div className="space-y-4">
                     {/* MCP Protocol Type Selector */}
-                    <div className="grid grid-cols-2 gap-3 p-1 rounded-xl border border-slate-800 bg-slate-950/60">
+                    <div className={`grid grid-cols-2 gap-2 p-1 rounded-xl border transition-colors ${
+                      effectiveTheme === 'dark' ? 'bg-[#040d10] border-slate-800' : 'bg-[#f7f7f2] border-slate-200'
+                    }`}>
                       <button
                         type="button"
                         onClick={() => setNewMcpType('stdio')}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border ${
                           newMcpType === 'stdio'
-                            ? (effectiveTheme === 'dark' ? 'bg-cyan-600/30 border border-cyan-500/50 text-cyan-300 shadow-sm' : 'bg-cyan-600 text-white shadow-sm')
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? (effectiveTheme === 'dark' ? 'bg-[#0d191c] text-cyan-300 border-cyan-500/50 shadow-sm font-bold' : 'bg-white text-slate-900 border-slate-200 shadow-xs font-bold')
+                            : (effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white border-transparent' : 'text-slate-600 hover:text-slate-900 border-transparent font-medium')
                         }`}
                       >
                         <Terminal className="w-3.5 h-3.5" />
@@ -6841,10 +6857,10 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setNewMcpType('sse')}
-                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all border ${
                           newMcpType === 'sse'
-                            ? (effectiveTheme === 'dark' ? 'bg-cyan-600/30 border border-cyan-500/50 text-cyan-300 shadow-sm' : 'bg-cyan-600 text-white shadow-sm')
-                            : 'text-slate-400 hover:text-slate-200'
+                            ? (effectiveTheme === 'dark' ? 'bg-[#0d191c] text-cyan-300 border-cyan-500/50 shadow-sm font-bold' : 'bg-white text-slate-900 border-slate-200 shadow-xs font-bold')
+                            : (effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white border-transparent' : 'text-slate-600 hover:text-slate-900 border-transparent font-medium')
                         }`}
                       >
                         <Globe className="w-3.5 h-3.5" />
@@ -7182,9 +7198,13 @@ export default function App() {
                             <div 
                               key={tool.name}
                               className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
-                                tool.enabled 
-                                  ? "bg-slate-950/80 border-slate-800/80 hover:border-cyan-500/30" 
-                                  : "bg-slate-950/30 border-slate-900 opacity-50"
+                                effectiveTheme === 'dark'
+                                  ? tool.enabled
+                                    ? "bg-[#0d191c] border-slate-800/80 hover:border-cyan-500/40"
+                                    : "bg-[#071215]/60 border-slate-800/40 opacity-55"
+                                  : tool.enabled
+                                  ? "bg-white border-slate-200/90 hover:border-cyan-400 shadow-xs"
+                                  : "bg-slate-50/80 border-slate-200 opacity-60"
                               }`}
                             >
                               <div className="space-y-0.5 flex-1 pr-4">
@@ -7201,10 +7221,10 @@ export default function App() {
 
                               <button
                                 onClick={() => handleToggleToolCalling(currentMcp.name, tIdx)}
-                                className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all border ${
-                                  tool.enabled 
-                                    ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-rose-950/40 hover:text-rose-400 hover:border-rose-800/40" 
-                                    : "bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300"
+                                className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider border transition-all ${
+                                  tool.enabled
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60 hover:bg-[#154637]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5] hover:bg-[#d1fadf]')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200')
                                 }`}
                               >
                                 {tool.enabled ? "ENABLED" : "DISABLED"}
@@ -8285,48 +8305,8 @@ export default function App() {
                   </button>
                 </div>
 
-                {gatewayTestResult && (
-                  <div className={`p-3 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-start gap-3 ${
-                    gatewayTestResult.success
-                      ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
-                      : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
-                  }`}>
-                    {gatewayTestResult.success ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-                    )}
-                    <div className="flex-1">
-                      <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
-                        gatewayTestResult.success ? "text-emerald-400" : "text-rose-400"
-                      }`}>
-                        {gatewayTestResult.success ? "Hasil Uji Gateway Server (Online)" : "Hasil Uji Gateway Server (Gagal)"}
-                      </div>
-                      <div className="font-semibold">{gatewayTestResult.message}</div>
-                      {!gatewayTestResult.success && (
-                        <div className="mt-2.5 p-2 bg-slate-900/90 rounded border border-rose-800/60 text-[11px] text-slate-300">
-                          <p className="font-semibold text-rose-300 mb-1">Panduan Server Fresh Install:</p>
-                          <p className="mb-1 text-slate-400">Pastikan Hermes Hub Companion Daemon terpasang di host server dengan menjalankan perintah berikut:</p>
-                          <code className="text-cyan-300 block bg-black/60 p-1.5 rounded select-all font-mono">
-                            curl -fsSL https://raw.githubusercontent.com/agusazis/hermes-hub-gateway/main/server/install.sh | bash
-                          </code>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Gateway test result and settings notice route exclusively to global unified toast */}
               </div>
-
-              {settingsNotice && (
-                <div className={`p-3.5 rounded-xl text-xs font-mono border-2 shadow-lg animate-in fade-in flex items-center gap-3 ${
-                  settingsNotice.success
-                    ? "bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-emerald-950/60"
-                    : "bg-rose-950/80 border-rose-500 text-rose-200 shadow-rose-950/60"
-                }`}>
-                  <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${settingsNotice.success ? "text-emerald-400" : "text-rose-400"}`} />
-                  <span className="font-semibold">{settingsNotice.message}</span>
-                </div>
-              )}
 
               <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
                 <span className="text-[11px] text-slate-400">
@@ -8335,7 +8315,11 @@ export default function App() {
                 <button
                   onClick={handleSaveSettings}
                   disabled={isSavingSettings}
-                  className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 ${
+                    effectiveTheme === 'dark'
+                      ? 'bg-[#d8ff00] text-[#040d10] hover:bg-[#c2e600] shadow-md shadow-[#d8ff00]/20'
+                      : 'bg-[#040d10] text-[#fbfbf8] hover:bg-[#1e2c2f] border border-[#040d10] shadow-sm'
+                  }`}
                 >
                   <Check className={`w-4 h-4 ${isSavingSettings ? 'animate-spin' : ''}`} />
                   <span>{isSavingSettings ? 'Menyimpan Konfigurasi...' : 'Simpan Seluruh Konfigurasi'}</span>
