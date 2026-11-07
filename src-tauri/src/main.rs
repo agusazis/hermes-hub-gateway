@@ -653,9 +653,24 @@ async fn trigger_manual_sync() -> serde_json::Value {
         let _ = workspace::scaffold_new_agents_structure(&target_dir, &ws.name);
     }
 
+    let repo_display = ws.git_target.as_ref()
+        .map(|g| {
+            if !g.repo_url.trim().is_empty() {
+                g.repo_url.trim().to_string()
+            } else if !g.project_id.trim().is_empty() {
+                format!("Project ID #{}", g.project_id.trim())
+            } else {
+                "Git Repository".to_string()
+            }
+        })
+        .unwrap_or_else(|| "Git Repository".to_string());
+
     serde_json::json!({
         "success": true,
-        "message": "Sinkronisasi aturan dan SOP dari Git berhasil, serta AGENTS.md berhasil di-regenerate!"
+        "workspace_name": ws.name,
+        "repo_display": repo_display,
+        "target_path": ws.target_path,
+        "message": format!("Sinkronisasi aturan & SOP dari Git ({}) berhasil, serta AGENTS.md di project \"{}\" berhasil diperbarui!", repo_display, ws.name)
     })
 }
 
