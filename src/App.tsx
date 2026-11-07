@@ -634,7 +634,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.64';
+  const APP_VERSION = 'v0.8.65';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -721,6 +721,34 @@ export default function App() {
   }
 
   const releaseLogs: ReleaseLog[] = [
+    {
+      version: 'v0.8.65',
+      date: '06 November 2026',
+      name: 'Hermes Hub Gateway v0.8.65 (OmniRoute Canvas Palette & Notification Legibility Fix)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penyempurnaan Total Palet Visual OmniRoute: Memperbaiki judul notifikasi toast yang sebelumnya tidak terlihat di mode terang (text-white di atas kartu putih), menghadirkan kanvas Warm Alabaster (#fbfbf8), sidebar Warm Linen (#f7f7f2), serta pembersihan menyeluruh kartu host dan tombol aktif/non-aktif.',
+      features: [
+        'Visible Toast Notification: Judul notifikasi (seperti AUDIT KESIAPAN SELESAI) kini adaptif hitam arang di mode terang dan putih di mode malam.',
+        'OmniRoute Three-Layer Elevation: Sidebar #f7f7f2 lembut, root canvas #fbfbf8 anti-silau, dan kartu konten putih timbul #ffffff.',
+        'Pure White Active Host Cards: Kartu SSH dan MCP aktif kini berlatar putih bersih dengan bingkai aksen emerald halus dan tombol pill kontras tinggi.',
+        'Contrast Button Refactor: Tombol AKTIF, NON-AKTIF, PING, dan READ-ONLY beradaptasi sempurna di kedua mode.'
+      ],
+      fixes: [
+        'Memperbaiki teks judul notifikasi toast yang hilang di mode terang.',
+        'Menghilangkan warna ungu/indigo pada kontainer host di mode terang.'
+      ],
+      architecture: [
+        'Strict 5-point release synchronization and process isolation in Windows updater.'
+      ],
+      downloads: [
+        { name: 'Windows Setup (.exe)', type: 'NSIS Installer', size: '~25 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.65/Hermes.Hub.Gateway_0.8.65_x64-setup.exe' },
+        { name: 'Windows MSI (.msi)', type: 'MSI Package', size: '~28 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.65/Hermes.Hub.Gateway_0.8.65_x64_en-US.msi' },
+        { name: 'Linux AppImage (.AppImage)', type: 'Universal Binary', size: '~88 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.65/hermes-hub-gateway_0.8.65_amd64.AppImage' },
+        { name: 'Debian / Ubuntu (.deb)', type: 'DEB Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.65/hermes-hub-gateway_0.8.65_amd64.deb' },
+        { name: 'RedHat / AlmaLinux (.rpm)', type: 'RPM Package', size: '~15 MB', url: 'https://github.com/agusazis/hermes-hub-gateway/releases/download/v0.8.65/hermes-hub-gateway-0.8.65-1.x86_64.rpm' }
+      ]
+    },
     {
       version: 'v0.8.64',
       date: '06 November 2026',
@@ -4563,16 +4591,16 @@ export default function App() {
   return (
     <div className={`flex h-screen font-sans select-none transition-colors duration-200 ${
       effectiveTheme === 'dark' 
-        ? 'bg-slate-950 text-slate-100' 
-        : 'bg-slate-100 text-slate-900'
+        ? 'bg-[#040d10] text-[#f1f7f7]' 
+        : 'bg-[#fbfbf8] text-[#040d10]'
     }`}>
-      {/* Sidebar (Collapsible) */}
+      {/* Sidebar (Collapsible) — OmniRoute Warm Subtle Tint in Light Mode */}
       <aside className={`${
         isSidebarCollapsed ? 'w-18' : 'w-64'
       } border-r p-3.5 flex flex-col justify-between transition-all duration-300 ${
         effectiveTheme === 'dark' 
-          ? 'border-slate-800 bg-slate-900/60' 
-          : 'border-slate-200 bg-white shadow-sm'
+          ? 'border-slate-800/80 bg-[#071215]' 
+          : 'border-slate-200/90 bg-[#f7f7f2] shadow-xs'
       }`}>
         <div>
           {/* Header Brand & Toggle */}
@@ -4610,7 +4638,7 @@ export default function App() {
               onClick={() => setActiveTab('dashboard')}
               title={isSidebarCollapsed ? "System Dashboard" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'dashboard' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                activeTab === 'dashboard' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'bg-white text-slate-900 border border-slate-300/80 shadow-xs font-bold') : (effectiveTheme === 'dark' ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 font-medium')
               }`}
             >
               <Server className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>System Dashboard</span>}
@@ -4619,7 +4647,7 @@ export default function App() {
               onClick={() => setActiveTab('settings')}
               title={isSidebarCollapsed ? "Profile & Gateway Hub" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                activeTab === 'settings' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'bg-white text-slate-900 border border-slate-300/80 shadow-xs font-bold') : (effectiveTheme === 'dark' ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 font-medium')
               }`}
             >
               <Settings className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Profile & Gateway Hub</span>}
@@ -4628,7 +4656,7 @@ export default function App() {
               onClick={() => setActiveTab('workspaces')}
               title={isSidebarCollapsed ? "Workspaces & Skills" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'workspaces' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                activeTab === 'workspaces' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'bg-white text-slate-900 border border-slate-300/80 shadow-xs font-bold') : (effectiveTheme === 'dark' ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 font-medium')
               }`}
             >
               <FolderKanban className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>Workspaces & Skills</span>}
@@ -4637,7 +4665,7 @@ export default function App() {
               onClick={() => setActiveTab('mcp_hub')}
               title={isSidebarCollapsed ? "MCP Servers Hub" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === 'mcp_hub' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                activeTab === 'mcp_hub' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'bg-white text-slate-900 border border-slate-300/80 shadow-xs font-bold') : (effectiveTheme === 'dark' ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 font-medium')
               }`}
             >
               <Layers className="w-4 h-4 shrink-0" /> {!isSidebarCollapsed && <span>MCP Servers Hub</span>}
@@ -4661,7 +4689,7 @@ export default function App() {
               }}
               title={isSidebarCollapsed ? "Evolution Logs" : undefined}
               className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-lg text-xs font-semibold transition-all relative ${
-                activeTab === 'logs' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                activeTab === 'logs' ? (effectiveTheme === 'dark' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm' : 'bg-white text-slate-900 border border-slate-300/80 shadow-xs font-bold') : (effectiveTheme === 'dark' ? 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200' : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 font-medium')
               }`}
             >
               <Terminal className="w-4 h-4 shrink-0" /> 
@@ -4684,15 +4712,17 @@ export default function App() {
 
         <div className="space-y-2">
           {!isSidebarCollapsed ? (
-            <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+            <div className={`p-3 rounded-xl border space-y-2 transition-all ${
+              effectiveTheme === 'dark' ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200/90 shadow-xs'
+            }`}>
+              <div className={`flex items-center justify-between text-[11px] font-medium ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
                 <span>Evaluator Status</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="text-emerald-400 font-mono text-[10px]">LIVE</span>
+                  <span className={`w-2 h-2 rounded-full animate-pulse ${effectiveTheme === 'dark' ? 'bg-emerald-400' : 'bg-emerald-600'}`}></span>
+                  <span className={`font-mono text-[10px] font-bold ${effectiveTheme === 'dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>LIVE</span>
                 </div>
               </div>
-              <div className="font-mono text-[11px] text-slate-300 truncate">{config.default_hermes_evaluator_url}</div>
+              <div className={`font-mono text-[11px] truncate ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'}`}>{config.default_hermes_evaluator_url}</div>
             </div>
           ) : (
             <div className="flex justify-center p-2 rounded-xl bg-slate-900/80 border border-slate-800" title={`Evaluator LIVE: ${config.default_hermes_evaluator_url}`}>
@@ -4824,26 +4854,32 @@ export default function App() {
         {/* Global Floating Toast Notification */}
         {toastNotification && toastNotification.message && toastNotification.message.trim() !== '' && (
           <div className={`fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-xl border shadow-2xl flex items-start gap-3 animate-in slide-in-from-bottom-4 duration-300 ${
-            toastNotification.type === 'success'
-              ? 'bg-slate-900 border-emerald-500/60 text-emerald-300 shadow-emerald-950/40'
-              : toastNotification.type === 'error'
-                ? 'bg-slate-900 border-rose-500/60 text-rose-300 shadow-rose-950/40'
-                : 'bg-slate-900 border-cyan-500/60 text-cyan-300 shadow-cyan-950/40'
+            effectiveTheme === 'dark'
+              ? toastNotification.type === 'success'
+                ? 'bg-[#0d191c] border-emerald-500/60 text-emerald-300 shadow-emerald-950/40 ring-1 ring-emerald-500/30'
+                : toastNotification.type === 'error'
+                  ? 'bg-[#0d191c] border-rose-500/60 text-rose-300 shadow-rose-950/40 ring-1 ring-rose-500/30'
+                  : 'bg-[#0d191c] border-cyan-500/60 text-cyan-300 shadow-cyan-950/40 ring-1 ring-cyan-500/30'
+              : toastNotification.type === 'success'
+                ? 'bg-white border-emerald-500/50 text-emerald-800 shadow-xl ring-1 ring-emerald-500/20'
+                : toastNotification.type === 'error'
+                  ? 'bg-white border-rose-500/50 text-rose-800 shadow-xl ring-1 ring-rose-500/20'
+                  : 'bg-white border-cyan-500/50 text-cyan-800 shadow-xl ring-1 ring-cyan-500/20'
           }`}>
-            {toastNotification.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />}
-            {toastNotification.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />}
-            {toastNotification.type === 'info' && <RefreshCw className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />}
+            {toastNotification.type === 'success' && <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${effectiveTheme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`} />}
+            {toastNotification.type === 'error' && <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${effectiveTheme === 'dark' ? 'text-rose-400' : 'text-rose-600'}`} />}
+            {toastNotification.type === 'info' && <RefreshCw className={`w-5 h-5 shrink-0 mt-0.5 ${effectiveTheme === 'dark' ? 'text-cyan-400' : 'text-cyan-600'}`} />}
             <div className="flex-1">
-              <div className="text-xs font-bold font-mono uppercase tracking-wider text-white">
+              <div className={`text-xs font-bold font-mono uppercase tracking-wider ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                 {toastNotification.title}
               </div>
-              <div className="text-xs text-slate-300 mt-0.5 leading-snug">
+              <div className={`text-xs mt-0.5 leading-snug ${effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                 {toastNotification.message}
               </div>
             </div>
             <button
               onClick={() => setToastNotification(null)}
-              className="text-slate-400 hover:text-white text-xs font-mono p-1"
+              className={`text-xs font-mono p-1 transition-colors ${effectiveTheme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-900'}`}
             >
               ✕
             </button>
@@ -6254,7 +6290,7 @@ export default function App() {
             {mcpHubSection === 'ssh' && (
               <div className="space-y-4">
                 {/* Panel Remote SSH Managed Hosts */}
-                <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-slate-900/60 border-indigo-500/30' : 'bg-indigo-50/50 border-indigo-200'}`}>
+                <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-[#0d191c] border-indigo-500/30 shadow-md' : 'bg-white border-slate-200/90 shadow-xs'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Terminal className="w-4 h-4 text-indigo-400" />
