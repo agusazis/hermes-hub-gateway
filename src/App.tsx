@@ -767,7 +767,7 @@ export default function App() {
       version: 'v0.8.69',
       date: '07 November 2026',
       name: 'Hermes Hub Gateway v0.8.69 (Runtime Exception Fix & Top-Level Version Scoping)',
-      type: 'HOTFIX',
+      type: 'PATCH',
       status: 'LATEST',
       highlights: 'Perbaikan Kritis Runtime Exception: Mengeliminasi ReferenceError Temporal Dead Zone (TDZ) pada inisialisasi state changelog dengan mengangkat deklarasi APP_VERSION ke top-level module scope, menjamin aplikasi terbuka dengan mulus tanpa crash layar putih.',
       features: [
