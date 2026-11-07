@@ -675,7 +675,7 @@ export default function App() {
   const [releaseSearchQuery, setReleaseSearchQuery] = useState<string>('');
 
   // Auto-Update & Update Notification State
-  const APP_VERSION = 'v0.8.67';
+  const APP_VERSION = 'v0.8.68';
   const [updateInfo, setUpdateInfo] = useState<{
     has_update: boolean;
     latest_version: string;
@@ -763,11 +763,40 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.68',
+      date: '07 November 2026',
+      name: 'Hermes Hub Gateway v0.8.68 (Unified Rules Sync, MCP Auto-Discovery, OS Log Explorer & OmniRoute Palette)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Penyatuan Alur Sinkronisasi Template & Rules, Auto-Discovery & Caching MCP Tools, Buka Folder Log Fisik (Windows/Linux), dan Penguncian Baku Palet Desain OmniRoute: Tombol Sync Rules Now kini otomatis menarik template AGENTS.md terbaru dari repo GitHub sekaligus menimpa berkas AGENTS.md di project tujuan dalam satu kali klik, kartu MCP server otomatis memindai tools calling di latar belakang secara persisten, dan tombol Buka Folder Log fisik memudahkan inspeksi audit forensik.',
+      features: [
+        'One-Click Combined Sync: Tombol "Sync Rules Now" otomatis menarik template AGENTS.md terbaru dari repositori GitHub sekaligus menimpa berkas AGENTS.md di project tujuan dalam satu operasi.',
+        'Auto-Discovery MCP Tools on Select: Klik kartu server MCP otomatis memindai tools calling di latar belakang dan menyimpannya secara persisten ke cache lokal (0 ms delay pada pembukaan berikutnya).',
+        'Buka Folder Log Fisik Lintas OS: Tombol Buka Folder Log di header audit forensik meluncurkan Windows Explorer (Windows) atau xdg-open (Linux) langsung ke direktori fisik ~/.hermes-hub/logs.',
+        'Dynamic GitHub Tag Navigation: Tombol GitHub Tag di modal Changelogs secara dinamis selalu menunjuk ke rilis versi aplikasi yang sedang aktif.'
+      ],
+      fixes: [
+        'Menghapus tombol redundan Pull AGENTS.md karena fungsinya telah terintegrasi penuh ke dalam Sync Rules Now.',
+        'Menghapus tombol berbahaya Reset Audit untuk menjaga integritas mutlak rekaman log forensik SSH.',
+        'Memperbaiki respon interaktivitas dan animasi tombol Refresh pada log audit SSH.',
+        'Memperbaiki kontras teks pada seluruh tab dan segmen non-aktif di mode Terang dan Gelap.',
+        'Mengunci preferensi tema default secara murni ke Sistem laptop (OS preferences).',
+        'Menghilangkan seluruh banner lokal inline dan mengarahkan 100% notifikasi ke satu floating Toast terpadu.'
+      ],
+      architecture: [
+        'Unified Single-Button Sync Architecture',
+        'Persistent Multi-Tier MCP Toolset Cache',
+        'Cross-Platform OS Native Shell Bridge',
+        'Strict Immutable Forensic Log Governance'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.67',
       date: '06 November 2026',
       name: 'Hermes Hub Gateway v0.8.67 (Universal Locked Grid Button & Badges Palette)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penguncian Baku Pallet Pattern Tombol Grid, Tombol Buka Folder Log Fisik (Windows/Linux), & Eliminasi Total Seluruh Varian Toast: Menyediakan tombol eksplorasi folder log audit fisik (~/.hermes-hub/logs), menghapus tombol berbahaya Reset Audit agar integritas forensik SSH terjaga, memperbaiki kontras tab non-aktif, serta mengunci keseragaman tombol grid dan satu sistem toast floating tunggal.',
       features: [
         'Locked Status Toggle Buttons: Tombol AKTIF/NON-AKTIF, ENABLED/DISABLED, dan PASSED/ACTION REQUIRED terkunci seragam dengan pill status ber-dot indikator pulsing.',
@@ -3719,23 +3748,10 @@ export default function App() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      // 1. Cek & tarik template AGENTS.md mutakhir dari repositori GitHub
-      let templateUpdated = false;
-      let templateMsg = "";
-      try {
-        const tplRes: any = await invoke('update_agents_template_from_github');
-        if (tplRes && tplRes.success) {
-          templateUpdated = true;
-          templateMsg = tplRes.message || 'Template AGENTS.md terbaru berhasil ditarik dari repositori.';
-        }
-      } catch (e) {
-        console.warn("Update template AGENTS.md GitHub offline/lewati:", e);
-      }
-
-      // 2. Sinkronkan aturan rules & timpa berkas AGENTS.md di project tujuan
       const res: any = await invoke('trigger_manual_sync');
+      setSyncMessage(res.message);
 
-      // 3. Muat ulang daftar skill & reference nyata hasil sinkronisasi git
+      // Muat ulang daftar skill & reference nyata hasil sinkronisasi git
       try {
         const dynamicSkills: any = await invoke('get_skills_hierarchy', { workspaceId: config.active_workspace_id });
         if (dynamicSkills && dynamicSkills.length > 0) {
@@ -3743,7 +3759,7 @@ export default function App() {
         }
       } catch (_) {}
 
-      // 4. Otomatis refresh audit readiness score setelah sync selesai
+      // Otomatis refresh audit readiness score setelah sync selesai
       try {
         const activeWs = config.workspaces.find(w => w.id === config.active_workspace_id);
         if (activeWs?.target_path) {
@@ -3754,15 +3770,8 @@ export default function App() {
         }
       } catch (_) {}
 
-      const successTitle = templateUpdated ? 'Template & Rules Berhasil Disinkronkan' : 'Sinkronisasi Rules & AGENTS.md Selesai';
-      const successDetail = templateUpdated
-        ? `✓ Template AGENTS.md terbaru berhasil ditarik dari repo.
-✓ Berkas AGENTS.md di project tujuan berhasil diperbarui.
-✓ ${res.message || 'Aturan & SOP sinkron.'}`
-        : `✓ Berkas AGENTS.md di project tujuan berhasil diperbarui.
-✓ ${res.message || 'Aturan & SOP sinkron dengan repository.'}`;
-
-      showToast('success', successTitle, successDetail);
+      showToast('success', 'Sinkronisasi Rules Selesai', res.message || 'Aturan & SOP berhasil diperbarui dari GitLab.');
+      setTimeout(() => setSyncMessage(''), 4000);
     } catch (err: any) {
       showToast('error', 'Gagal Sinkronisasi Rules', err?.toString() || 'Koneksi ke repositori Git terputus');
     } finally {
@@ -5938,18 +5947,19 @@ export default function App() {
                               />
                             </div>
 <button
-                              type="button"
+                                onClick={handleUpdateDirectivesFromGithub}
+                                disabled={updatingDirectives || syncing}
+                                title="Tarik pembaruan master template AGENTS.md langsung dari GitHub tanpa perlu re-build aplikasi"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-600/30 rounded-lg text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                              >
+                                <Sparkles className={`w-3.5 h-3.5 ${updatingDirectives ? "animate-spin" : ""}`} /> Pull AGENTS.md
+                              </button>
+                            <button
                               onClick={handleSync}
                               disabled={syncing}
-                              title="Tarik template AGENTS.md terbaru dari repositori sekaligus perbarui file AGENTS.md di project tujuan secara otomatis"
-                              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
-                                effectiveTheme === 'dark'
-                                  ? 'bg-[#d8ff00] text-[#040d10] hover:bg-[#c2e600] shadow-md shadow-[#d8ff00]/20'
-                                  : 'bg-[#040d10] text-[#fbfbf8] hover:bg-[#1e2c2f] border border-[#040d10] shadow-sm'
-                              }`}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
                             >
-                              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-                              <span>{syncing ? "Menyinkronkan Rules & Template..." : "Sync Rules Now"}</span>
+                              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} /> Sync Rules Now
                             </button>
                           </div>
 
