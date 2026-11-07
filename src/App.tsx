@@ -3748,10 +3748,23 @@ export default function App() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const res: any = await invoke('trigger_manual_sync');
-      setSyncMessage(res.message);
+      // 1. Cek & tarik template AGENTS.md mutakhir dari repositori GitHub
+      let templateUpdated = false;
+      let templateMsg = "";
+      try {
+        const tplRes: any = await invoke('update_agents_template_from_github');
+        if (tplRes && tplRes.success) {
+          templateUpdated = true;
+          templateMsg = tplRes.message || 'Template AGENTS.md terbaru berhasil ditarik dari repo.';
+        }
+      } catch (e) {
+        console.warn("Update template AGENTS.md GitHub offline/lewati:", e);
+      }
 
-      // Muat ulang daftar skill & reference nyata hasil sinkronisasi git
+      // 2. Sinkronkan aturan rules & timpa berkas AGENTS.md di project tujuan
+      const res: any = await invoke('trigger_manual_sync');
+
+      // 3. Muat ulang daftar skill & reference nyata hasil sinkronisasi git
       try {
         const dynamicSkills: any = await invoke('get_skills_hierarchy', { workspaceId: config.active_workspace_id });
         if (dynamicSkills && dynamicSkills.length > 0) {
@@ -3759,7 +3772,7 @@ export default function App() {
         }
       } catch (_) {}
 
-      // Otomatis refresh audit readiness score setelah sync selesai
+      // 4. Otomatis refresh audit readiness score setelah sync selesai
       try {
         const activeWs = config.workspaces.find(w => w.id === config.active_workspace_id);
         if (activeWs?.target_path) {
@@ -3770,8 +3783,22 @@ export default function App() {
         }
       } catch (_) {}
 
-      showToast('success', 'Sinkronisasi Rules Selesai', res.message || 'Aturan & SOP berhasil diperbarui dari GitLab.');
-      setTimeout(() => setSyncMessage(''), 4000);
+      // Resolusi nama sumber Git project dan workspace aktif secara dinamis (tanpa hardcode)
+      const currentWs = config.workspaces.find(w => w.id === config.active_workspace_id) || config.workspaces[0];
+      const gitSourceDisplay = res?.repo_display || (currentWs?.git_target?.repo_url?.trim()
+        ? currentWs.git_target.repo_url.trim().replace(/^https?:\/\/[^@]+@/, 'https://')
+        : currentWs?.git_target?.project_id?.trim()
+        ? `${currentWs.git_target.provider || 'Git'} Project #${currentWs.git_target.project_id.trim()}`
+        : (currentWs?.name ? `Git Source Workspace "${currentWs.name}"` : 'Git AI-Agents'));
+      const wsTargetName = currentWs?.name ? `"${currentWs.name}"` : 'project tujuan';
+      const branchName = currentWs?.git_target?.target_branch || 'main';
+
+      const successTitle = `Sinkronisasi Rules: ${currentWs?.name || 'Workspace'}`;
+      const successDetail = templateUpdated
+        ? `✓ Template master AGENTS.md terbaru berhasil ditarik dari repo.\n✓ Sumber Git AI-Agents: ${gitSourceDisplay} (branch: ${branchName})\n✓ Berkas AGENTS.md di project ${wsTargetName} berhasil diperbarui.`
+        : `✓ Sumber Git AI-Agents: ${gitSourceDisplay} (branch: ${branchName})\n✓ Berkas AGENTS.md di project ${wsTargetName} berhasil diperbarui & disinkronkan.`;
+
+      showToast('success', successTitle, successDetail);
     } catch (err: any) {
       showToast('error', 'Gagal Sinkronisasi Rules', err?.toString() || 'Koneksi ke repositori Git terputus');
     } finally {
@@ -5947,19 +5974,18 @@ export default function App() {
                               />
                             </div>
 <button
-                                onClick={handleUpdateDirectivesFromGithub}
-                                disabled={updatingDirectives || syncing}
-                                title="Tarik pembaruan master template AGENTS.md langsung dari GitHub tanpa perlu re-build aplikasi"
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-600/30 rounded-lg text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
-                              >
-                                <Sparkles className={`w-3.5 h-3.5 ${updatingDirectives ? "animate-spin" : ""}`} /> Pull AGENTS.md
-                              </button>
-                            <button
+                              type="button"
                               onClick={handleSync}
                               disabled={syncing}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                              title="Tarik template AGENTS.md terbaru dari repositori sekaligus perbarui file AGENTS.md di project tujuan secara otomatis"
+                              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer ${
+                                effectiveTheme === 'dark'
+                                  ? 'bg-[#d8ff00] text-[#040d10] hover:bg-[#c2e600] shadow-md shadow-[#d8ff00]/20'
+                                  : 'bg-[#040d10] text-[#fbfbf8] hover:bg-[#1e2c2f] border border-[#040d10] shadow-sm'
+                              }`}
                             >
-                              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} /> Sync Rules Now
+                              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+                              <span>{syncing ? 'Menyinkronkan Rules & Template...' : 'Sync Rules Now'}</span>
                             </button>
                           </div>
 
