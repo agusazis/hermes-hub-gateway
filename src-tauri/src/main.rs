@@ -11,6 +11,7 @@ mod vault;
 mod config;
 mod workspace;
 pub mod ssh_vault;
+pub mod mikrotik_vault;
 
 #[tauri::command]
 fn get_system_config() -> config::GlobalConfig {
@@ -1016,7 +1017,12 @@ async fn main() {
             ssh_vault::toggle_ssh_host_permission,
             ssh_vault::toggle_ssh_host_enabled,
             ssh_vault::get_ssh_audit_logs,
-            ssh_vault::clear_ssh_audit_logs
+            ssh_vault::clear_ssh_audit_logs,
+            mikrotik_vault::list_mikrotik_routers,
+            mikrotik_vault::save_mikrotik_router,
+            mikrotik_vault::remove_mikrotik_router,
+            mikrotik_vault::toggle_mikrotik_router_enabled,
+            mikrotik_vault::test_mikrotik_connection
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hermes Hub Gateway application");

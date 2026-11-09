@@ -6,7 +6,7 @@ import {
   Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
   BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen, Edit3, Trash2, Bell, Send, MessageSquare,
-  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders, ShieldCheck, Zap
+  GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders, ShieldCheck, Zap, Router
 } from 'lucide-react';
 
 interface GitTarget {
@@ -23,6 +23,29 @@ interface TelegramTarget {
   chat_id: string;
   topic_id?: string;
   enabled: boolean;
+}
+
+interface MikrotikRouterConfig {
+  id: string;
+  alias: string;
+  host: string;
+  port: number;
+  user: string;
+  password?: string;
+  tier: 'production' | 'development';
+  enabled: boolean;
+  description?: string;
+  created_at: string;
+}
+
+interface MikrotikTestResult {
+  success: boolean;
+  message: string;
+  latency_ms: number;
+  model?: string;
+  version?: string;
+  cpu_load?: string;
+  uptime?: string;
 }
 
 interface McpServerEntry {
@@ -92,7 +115,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.70';
+export const APP_VERSION = 'v0.8.71';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -300,7 +323,7 @@ export default function App() {
   
   // MCP Testing & Tool Calling Discovery state
   const [selectedMcpName, setSelectedMcpName] = useState<string>('');
-  const [mcpHubSection, setMcpHubSection] = useState<'servers' | 'ssh' | 'ssh_audit'>('servers');
+  const [mcpHubSection, setMcpHubSection] = useState<'servers' | 'ssh' | 'mikrotik' | 'ssh_audit'>('servers');
   const [sshAuditLogs, setSshAuditLogs] = useState<SshAuditLogEntry[]>([]);
   const [loadingSshAudit, setLoadingSshAudit] = useState<boolean>(false);
   const [sshAuditFilter, setSshAuditFilter] = useState<string>('');
@@ -636,6 +659,23 @@ export default function App() {
   const [sshTestResult, setSshTestResult] = useState<{ success: boolean; message: string; latency_ms: number; uname?: string } | null>(null);
   const [hostPingStatus, setHostPingStatus] = useState<Record<string, { testing?: boolean; success?: boolean; latency_ms?: number; message?: string; checked_at?: number }>>({});
   const [isPingingAll, setIsPingingAll] = useState<boolean>(false);
+
+  // MikroTik RouterOS Gateway State
+  const [mikrotikRouters, setMikrotikRouters] = useState<MikrotikRouterConfig[]>([]);
+  const [showAddMikrotikModal, setShowAddMikrotikModal] = useState<boolean>(false);
+  const [editingMikrotikRouter, setEditingMikrotikRouter] = useState<MikrotikRouterConfig | null>(null);
+  const [mtkAlias, setMtkAlias] = useState<string>('');
+  const [mtkHost, setMtkHost] = useState<string>('');
+  const [mtkPort, setMtkPort] = useState<number>(8728);
+  const [mtkUser, setMtkUser] = useState<string>('admin');
+  const [mtkPassword, setMtkPassword] = useState<string>('');
+  const [mtkTier, setMtkTier] = useState<'production' | 'development'>('production');
+  const [mtkDesc, setMtkDesc] = useState<string>('');
+  const [isSavingMikrotik, setIsSavingMikrotik] = useState<boolean>(false);
+  const [isTestingMikrotik, setIsTestingMikrotik] = useState<boolean>(false);
+  const [mikrotikTestResult, setMikrotikTestResult] = useState<MikrotikTestResult | null>(null);
+  const [routerPingStatus, setRouterPingStatus] = useState<Record<string, { testing?: boolean; success?: boolean; latency_ms?: number; message?: string; checked_at?: number }>>({});
+  const [isPingingAllRouters, setIsPingingAllRouters] = useState<boolean>(false);
   const [newMcpCmd, setNewMcpCmd] = useState('');
   const [newMcpArgs, setNewMcpArgs] = useState('');
   const [newMcpDesc, setNewMcpDesc] = useState('');
@@ -764,11 +804,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.71',
+      date: '09 November 2026',
+      name: 'Hermes Hub Gateway v0.8.71 (Discrete Multi-Router MikroTik MCP Gateway)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'MikroTik RouterOS MCP Gateway Terpadu: Menghubungkan seluruh router MikroTik melalui 1 entry MCP di IDE (Antigravity/Cursor/Claude) dengan performa socket native Node.js tanpa dependensi Python eksternal.',
+      features: [
+        'Discrete Multi-Router Gateway: Cukup 1 konfigurasi MCP di IDE (--server=mikrotik) untuk mengelola banyak router MikroTik sekaligus melalui RouterOS Vault HHG.',
+        'Zero-Dependency Native RouterOS Socket: Eksekusi command RouterOS API (port 8728) langsung melalui TCP socket bawaan Node.js tanpa membutuhkan Python, pip, atau fastmcp di laptop klien.',
+        'MikroTik Router Vault UI: Kelola router MikroTik dengan dukungan multi-router (mtk-chr, mtk-core, dll), pengujian socket langsung, ekstraksi resource, dan manajemen kredensial terisolasi.',
+        '9 Canonical RouterOS Tools: Menyediakan tools lengkap untuk inspeksi resource sistem, monitor traffic real-time (bps & pps), daftar interface, IP address, tabel routing aktif, tabel ARP, ping diagnostik, dan raw sentence command.'
+      ],
+      fixes: [
+        'Mengeliminasi error "python.exe: cannot open file mikrotik_mcp.py: No such file or directory" pada IDE Antigravity.',
+        'Mengamankan kredensial router MikroTik agar tidak lagi ditulis mentah di berkas mcp_config.json IDE.'
+      ],
+      architecture: [
+        'Discrete Multi-Router Gateway Pattern',
+        'Native Vanilla Node.js RouterOS TCP Socket Bridge',
+        'RouterOS Vault & Hot-Reload Dispatcher'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.70',
       date: '07 November 2026',
       name: 'Hermes Hub Gateway v0.8.70 (Structured Vertical List Toast & UI Polish)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyempurnaan Tampilan Notifikasi Toast: Seluruh notifikasi multi-baris kini diformat secara otomatis menjadi daftar poin vertikal yang rapi dengan indikator ikon per butir dan kanvas yang lebih lega.',
       features: [
         'Structured Vertical List Toast: Notifikasi Toast otomatis memecah pesan multi-baris menjadi daftar poin vertikal yang rapi dengan badge ceklis emerald terpisah.',
@@ -3626,6 +3690,7 @@ export default function App() {
         if (res && res.workspaces) {
           setConfig(res);
           loadSshHostsList();
+          loadMikrotikRoutersList();
           // Auto-fetch dynamic skills hierarchy from disk/git
           invoke<SkillHierarchyItem[]>('get_skills_hierarchy', { workspaceId: res.active_workspace_id })
             .then((skills) => {
@@ -4399,6 +4464,193 @@ export default function App() {
       if (res) setSshHosts(res);
     } catch (e) {
       console.warn("Gagal memuat ssh hosts:", e);
+    }
+  };
+
+  const loadMikrotikRoutersList = async () => {
+    try {
+      const res = await invoke<MikrotikRouterConfig[]>('list_mikrotik_routers');
+      if (res) setMikrotikRouters(res);
+    } catch (e) {
+      console.warn("Gagal memuat mikrotik routers:", e);
+    }
+  };
+
+  const handleOpenNewMikrotik = () => {
+    setMikrotikTestResult(null);
+    setEditingMikrotikRouter(null);
+    setMtkAlias('');
+    setMtkHost('');
+    setMtkPort(8728);
+    setMtkUser('admin');
+    setMtkPassword('');
+    setMtkTier('production');
+    setMtkDesc('');
+    setShowAddMikrotikModal(true);
+  };
+
+  const handleOpenEditMikrotik = (r: MikrotikRouterConfig) => {
+    setMikrotikTestResult(null);
+    setEditingMikrotikRouter(r);
+    setMtkAlias(r.alias);
+    setMtkHost(r.host);
+    setMtkPort(r.port || 8728);
+    setMtkUser(r.user);
+    setMtkPassword(r.password || '••••••••');
+    setMtkTier(r.tier as 'production' | 'development');
+    setMtkDesc(r.description || '');
+    setShowAddMikrotikModal(true);
+  };
+
+  const handleTestMikrotikModal = async () => {
+    if (!mtkHost.trim() || !mtkUser.trim()) {
+      showToast('error', 'Validasi Gagal', 'Harap isi Host/IP dan Username MikroTik sebelum pengujian.');
+      return;
+    }
+    setIsTestingMikrotik(true);
+    setMikrotikTestResult(null);
+    try {
+      const res = await invoke<MikrotikTestResult>('test_mikrotik_connection', {
+        id: editingMikrotikRouter ? editingMikrotikRouter.id : null,
+        host: mtkHost.trim(),
+        port: mtkPort || 8728,
+        user: mtkUser.trim(),
+        password: mtkPassword ? mtkPassword : null,
+      });
+      setMikrotikTestResult(res);
+      if (res.success) {
+        showToast('success', 'Koneksi RouterOS Teruji', res.message);
+      } else {
+        showToast('error', 'Koneksi RouterOS Gagal', res.message);
+      }
+    } catch (err: any) {
+      const errMsg = err?.toString() || 'Koneksi ke port API MikroTik gagal';
+      setMikrotikTestResult({
+        success: false,
+        message: errMsg,
+        latency_ms: 0
+      });
+      showToast('error', 'Uji Koneksi Gagal', errMsg);
+    } finally {
+      setIsTestingMikrotik(false);
+    }
+  };
+
+  const handlePingRouterCard = async (router: MikrotikRouterConfig) => {
+    setRouterPingStatus(prev => ({
+      ...prev,
+      [router.id]: { testing: true, message: 'Menguji socket RouterOS...' }
+    }));
+    try {
+      const res = await invoke<MikrotikTestResult>('test_mikrotik_connection', {
+        id: router.id,
+        host: router.host,
+        port: router.port || 8728,
+        user: router.user,
+        password: null
+      });
+      setRouterPingStatus(prev => ({
+        ...prev,
+        [router.id]: {
+          testing: false,
+          success: res.success,
+          latency_ms: res.latency_ms,
+          message: res.message,
+          checked_at: Date.now()
+        }
+      }));
+      setTimeout(() => {
+        setRouterPingStatus(prev => {
+          const next = { ...prev };
+          delete next[router.id];
+          return next;
+        });
+      }, 8000);
+    } catch (err: any) {
+      setRouterPingStatus(prev => ({
+        ...prev,
+        [router.id]: {
+          testing: false,
+          success: false,
+          latency_ms: 0,
+          message: err?.toString() || 'Gagal koneksi'
+        }
+      }));
+      setTimeout(() => {
+        setRouterPingStatus(prev => {
+          const next = { ...prev };
+          delete next[router.id];
+          return next;
+        });
+      }, 8000);
+    }
+  };
+
+  const handlePingAllRouters = async () => {
+    const active = mikrotikRouters.filter(r => r.enabled !== false);
+    if (active.length === 0) return;
+    setIsPingingAllRouters(true);
+    try {
+      await Promise.all(active.map(r => handlePingRouterCard(r)));
+      showToast('info', 'Uji Selesai', `Status koneksi ${active.length} router MikroTik berhasil diuji.`);
+    } finally {
+      setIsPingingAllRouters(false);
+    }
+  };
+
+  const handleSaveMikrotikRouter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mtkAlias.trim() || !mtkHost.trim() || !mtkUser.trim()) {
+      showToast('error', 'Validasi Gagal', 'Harap isi Alias, Host/IP, dan Username MikroTik.');
+      return;
+    }
+    setIsSavingMikrotik(true);
+    try {
+      const routerConfig: MikrotikRouterConfig = {
+        id: editingMikrotikRouter ? editingMikrotikRouter.id : '',
+        alias: mtkAlias.trim(),
+        host: mtkHost.trim(),
+        port: mtkPort || 8728,
+        user: mtkUser.trim(),
+        password: mtkPassword ? mtkPassword : null as any,
+        tier: mtkTier,
+        enabled: editingMikrotikRouter ? editingMikrotikRouter.enabled : true,
+        description: mtkDesc.trim() || undefined,
+        created_at: editingMikrotikRouter ? editingMikrotikRouter.created_at : ''
+      };
+      const updated = await invoke<MikrotikRouterConfig[]>('save_mikrotik_router', { router: routerConfig });
+      setMikrotikRouters(updated);
+      setShowAddMikrotikModal(false);
+      setEditingMikrotikRouter(null);
+      showToast('success', editingMikrotikRouter ? 'Router Diperbarui' : 'Router MikroTik Terdaftar', `Router '${mtkAlias}' (${mtkHost}) berhasil disimpan ke RouterOS Vault.`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Simpan Router', err?.toString() || 'Gagal menyimpan router.');
+    } finally {
+      setIsSavingMikrotik(false);
+    }
+  };
+
+  const handleRemoveMikrotikRouter = async (id: string, alias: string) => {
+    if (!confirm(`Hapus router MikroTik '${alias}' dari gateway HHG?`)) return;
+    try {
+      const updated = await invoke<MikrotikRouterConfig[]>('remove_mikrotik_router', { id });
+      setMikrotikRouters(updated);
+      showToast('info', 'Router Dihapus', `Router '${alias}' telah dihapus dari RouterOS Vault.`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Hapus Router', err?.toString() || 'Gagal menghapus router.');
+    }
+  };
+
+  const handleToggleMikrotikEnabled = async (id: string, currentVal: boolean) => {
+    try {
+      const updated = await invoke<MikrotikRouterConfig[]>('toggle_mikrotik_router_enabled', {
+        id,
+        enabled: !currentVal
+      });
+      setMikrotikRouters(updated);
+      showToast('info', 'Status Router Diubah', `Router MikroTik berhasil di-${!currentVal ? 'AKTIFKAN' : 'NONAKTIFKAN'}.`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Ubah Status', err?.toString() || 'Gagal mengubah status router.');
     }
   };
 
@@ -6205,6 +6457,10 @@ export default function App() {
                         "remote-ssh": {
                           command: nodePath,
                           args: [runnerPath, "--server=remote-ssh"]
+                        },
+                        "mikrotik": {
+                          command: nodePath,
+                          args: [runnerPath, "--server=mikrotik"]
                         }
                       };
 
@@ -6212,6 +6468,7 @@ export default function App() {
                         const sRaw = (s.name || s.id || "server").toLowerCase();
                         if (sRaw === "mnemosyne" || sRaw.includes("mnemo")) return; // Mnemosyne dihandle otomatis
                         if (sRaw === "remote-ssh" || sRaw === "ssh" || sRaw.includes("remote_ssh")) return; // Remote SSH dihandle otomatis
+                        if (sRaw === "mikrotik" || sRaw.includes("mikrotik")) return; // MikroTik dihandle otomatis via RouterOS Vault
 
                         const sName = sRaw.replace(/[^a-z0-9_-]/g, "_");
                         serversObj[sName] = {
@@ -6290,6 +6547,18 @@ export default function App() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setMcpHubSection('mikrotik')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    mcpHubSection === 'mikrotik'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Router className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Router MikroTik ({mikrotikRouters.length})</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     setMcpHubSection('ssh_audit');
                     loadSshAuditLogsList(false);
@@ -6341,6 +6610,15 @@ export default function App() {
                     title="Daftarkan host remote SSH baru dengan pasangan kunci terisolasi"
                   >
                     <Plus className="w-3.5 h-3.5" /> Tambah Remote SSH Host
+                  </button>
+                )}
+                {mcpHubSection === 'mikrotik' && (
+                  <button 
+                    onClick={handleOpenNewMikrotik}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                    title="Daftarkan router MikroTik baru ke RouterOS Vault"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Tambah Router MikroTik
                   </button>
                 )}
                 {mcpHubSection === 'ssh_audit' && (
@@ -6703,6 +6981,320 @@ export default function App() {
                             >
                               {h.allow_elevated ? '⚡ FULL' : '🔒 READ-ONLY'}
                             </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* KONTEN SUB-SECTION: ROUTER MIKROTIK VAULT */}
+            {mcpHubSection === 'mikrotik' && (
+              <div className="space-y-4">
+                {/* Modal Tambah/Edit Router MikroTik */}
+                {showAddMikrotikModal && (
+                  <form onSubmit={handleSaveMikrotikRouter} className={`p-5 rounded-2xl space-y-4 border transition-colors ${effectiveTheme === "dark" ? "bg-slate-900 border-amber-500/40 shadow-2xl" : "bg-white border-slate-200 shadow-xl"}`}>
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <Router className="w-5 h-5 text-amber-400" />
+                        <div>
+                          <h4 className={`text-sm font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-amber-400" : "text-amber-700"}`}>
+                            {editingMikrotikRouter ? `Edit Router MikroTik: ${editingMikrotikRouter.alias}` : 'Daftarkan Router MikroTik Baru (RouterOS Vault)'}
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Koneksi TCP socket native ke RouterOS API (port 8728) tanpa ketergantungan Python di laptop.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddMikrotikModal(false)}
+                        className="p-1 text-slate-400 hover:text-slate-200"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Router Alias / Tag *</label>
+                        <input
+                          type="text"
+                          value={mtkAlias}
+                          onChange={(e) => setMtkAlias(e.target.value)}
+                          placeholder="misal: mtk-chr atau mtk-core"
+                          className="w-full px-3 py-2 bg-slate-950/50 border border-slate-700 rounded-lg text-xs text-slate-200 font-mono focus:border-amber-500 focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Host IP Router *</label>
+                        <input
+                          type="text"
+                          value={mtkHost}
+                          onChange={(e) => setMtkHost(e.target.value)}
+                          placeholder="misal: 10.10.1.4"
+                          className="w-full px-3 py-2 bg-slate-950/50 border border-slate-700 rounded-lg text-xs text-slate-200 font-mono focus:border-amber-500 focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Port API (Binary Socket)</label>
+                        <input
+                          type="number"
+                          value={mtkPort}
+                          onChange={(e) => setMtkPort(parseInt(e.target.value, 10) || 8728)}
+                          placeholder="8728"
+                          className="w-full px-3 py-2 bg-slate-950/50 border border-slate-700 rounded-lg text-xs text-slate-200 font-mono focus:border-amber-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Username RouterOS *</label>
+                        <input
+                          type="text"
+                          value={mtkUser}
+                          onChange={(e) => setMtkUser(e.target.value)}
+                          placeholder="admin"
+                          className="w-full px-3 py-2 bg-slate-950/50 border border-slate-700 rounded-lg text-xs text-slate-200 font-mono focus:border-amber-500 focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                          Password {editingMikrotikRouter ? '(Kosongkan jika tidak diubah)' : '*'}
+                        </label>
+                        <input
+                          type="password"
+                          value={mtkPassword}
+                          onChange={(e) => setMtkPassword(e.target.value)}
+                          placeholder={editingMikrotikRouter ? "••••••••" : "Password Router"}
+                          className="w-full px-3 py-2 bg-slate-950/50 border border-slate-700 rounded-lg text-xs text-slate-200 font-mono focus:border-amber-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Klasifikasi Tier</label>
+                        <select
+                          value={mtkTier}
+                          onChange={(e) => setMtkTier(e.target.value as any)}
+                          className="w-full px-3 py-2 bg-slate-950/50 border border-slate-700 rounded-lg text-xs text-slate-200 focus:border-amber-500 focus:outline-none"
+                        >
+                          <option value="production">PRODUCTION (Core/CHR)</option>
+                          <option value="development">DEVELOPMENT (Lab/Simulasi)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-400 mb-1">Keterangan / Catatan Router</label>
+                      <input
+                        type="text"
+                        value={mtkDesc}
+                        onChange={(e) => setMtkDesc(e.target.value)}
+                        placeholder="misal: MikroTik CHR Gateway & Traffic Monitor RSUD"
+                        className="w-full px-3 py-2 bg-slate-950/50 border border-slate-700 rounded-lg text-xs text-slate-200 focus:border-amber-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Banner Hasil Uji Koneksi */}
+                    {mikrotikTestResult && (
+                      <div className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
+                        mikrotikTestResult.success
+                          ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
+                          : 'bg-rose-950/40 border-rose-500/50 text-rose-300'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          {mikrotikTestResult.success ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
+                          <div>
+                            <span className="font-bold">{mikrotikTestResult.message}</span>
+                            {mikrotikTestResult.cpu_load && (
+                              <span className="ml-2 opacity-80 font-mono">CPU: {mikrotikTestResult.cpu_load} | Uptime: {mikrotikTestResult.uptime || '-'}</span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono opacity-80">{mikrotikTestResult.latency_ms}ms</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={handleTestMikrotikModal}
+                        disabled={isTestingMikrotik || !mtkHost.trim()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 disabled:opacity-50 text-slate-200 rounded-lg text-xs font-semibold shadow-sm transition-all"
+                      >
+                        {isTestingMikrotik ? <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                        {isTestingMikrotik ? 'Menguji Socket RouterOS...' : 'Uji Koneksi RouterOS'}
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowAddMikrotikModal(false)}
+                          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSavingMikrotik}
+                          className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
+                        >
+                          {isSavingMikrotik && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                          {editingMikrotikRouter ? 'Perbarui Router' : 'Simpan Router MikroTik'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
+
+                {/* Panel Router MikroTik Managed Grid */}
+                <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-[#0d191c] border-amber-500/30 shadow-md' : 'bg-white border-slate-200/90 shadow-xs'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Router className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                        MikroTik RouterOS Gateway ({mikrotikRouters.length} Router Terhubung)
+                      </span>
+                      <button
+                        onClick={handlePingAllRouters}
+                        disabled={isPingingAllRouters || mikrotikRouters.length === 0}
+                        className="ml-2 flex items-center gap-1 px-2.5 py-1 bg-amber-950/60 hover:bg-amber-900 border border-amber-500/30 hover:border-amber-400 disabled:opacity-50 text-amber-300 rounded-lg text-[10px] font-semibold transition-all shadow-sm"
+                        title="Ping dan uji koneksi seluruh router MikroTik secara serentak"
+                      >
+                        {isPingingAllRouters ? (
+                          <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                        ) : (
+                          <Zap className="w-3 h-3 text-amber-400" />
+                        )}
+                        {isPingingAllRouters ? 'Menguji Semua Router...' : 'Uji Semua Router'}
+                      </button>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-400">
+                      Akses via MCP: <code className="text-amber-300 font-bold">mikrotik</code> (Discrete Multi-Router)
+                    </span>
+                  </div>
+
+                  {mikrotikRouters.length === 0 ? (
+                    <div className="p-8 text-center border border-dashed border-amber-500/30 rounded-xl space-y-3">
+                      <Router className="w-8 h-8 text-amber-400 mx-auto opacity-60" />
+                      <p className="text-xs text-slate-400">Belum ada router MikroTik yang didaftarkan ke RouterOS Vault.</p>
+                      <button
+                        onClick={handleOpenNewMikrotik}
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold shadow-sm"
+                      >
+                        + Tambah Router MikroTik Sekarang
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {mikrotikRouters.map((r) => (
+                        <div
+                          key={r.id}
+                          className={`p-3.5 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
+                            effectiveTheme === 'dark'
+                              ? r.enabled !== false
+                                ? 'bg-[#0d191c] border-amber-500/50 hover:border-amber-400 shadow-[0_4px_16px_-4px_rgba(245,158,11,0.22)] ring-1 ring-amber-500/20'
+                                : 'bg-[#071215]/60 border-dashed border-slate-800/80 opacity-60 hover:opacity-90'
+                              : r.enabled !== false
+                              ? 'bg-white border-amber-500/50 hover:border-amber-500 shadow-[0_2px_8px_rgba(245,158,11,0.12)] ring-1 ring-amber-400/20'
+                              : 'bg-white/80 border-dashed border-slate-300 opacity-65 hover:opacity-95 shadow-xs'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
+                                  r.enabled !== false
+                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-400'
+                                    : 'bg-slate-800 border-slate-700 text-slate-500'
+                                }`}>
+                                  <Router className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <h5 className="text-xs font-bold font-mono truncate text-slate-200">{r.alias}</h5>
+                                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                                      r.tier === 'production'
+                                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                        : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                                    }`}>
+                                      {r.tier || 'prod'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] font-mono text-slate-400 truncate">{r.user}@{r.host}:{r.port || 8728}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleMikrotikEnabled(r.id, r.enabled !== false)}
+                                  className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition-all ${
+                                    r.enabled !== false
+                                      ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30'
+                                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+                                  }`}
+                                  title="Klik untuk Toggle Aktif/Nonaktifkan Router"
+                                >
+                                  {r.enabled !== false ? 'AKTIF' : 'OFF'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditMikrotik(r)}
+                                  className="p-1 text-slate-400 hover:text-slate-200 rounded"
+                                  title="Edit Konfigurasi Router"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveMikrotikRouter(r.id, r.alias)}
+                                  className="p-1 text-rose-400 hover:text-rose-300 rounded"
+                                  title="Hapus Router dari Vault"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {r.description && (
+                              <p className="text-[11px] text-slate-400 mb-2 line-clamp-1">{r.description}</p>
+                            )}
+
+                            {/* Banner Status Hasil Ping Card */}
+                            {routerPingStatus[r.id] && (
+                              <div className={`p-1.5 rounded-lg border text-[10px] mb-2 font-mono flex items-center justify-between ${
+                                routerPingStatus[r.id].testing
+                                  ? 'bg-amber-950/30 border-amber-800/40 text-amber-300'
+                                  : routerPingStatus[r.id].success
+                                  ? 'bg-emerald-950/30 border-emerald-800/40 text-emerald-300'
+                                  : 'bg-rose-950/30 border-rose-800/40 text-rose-300'
+                              }`}>
+                                <span className="truncate">{routerPingStatus[r.id].message}</span>
+                                {routerPingStatus[r.id].latency_ms !== undefined && (
+                                  <span className="shrink-0 font-bold ml-1">{routerPingStatus[r.id].latency_ms}ms</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => handlePingRouterCard(r)}
+                              disabled={routerPingStatus[r.id]?.testing}
+                              className="flex items-center gap-1 text-slate-400 hover:text-amber-400 transition-colors"
+                              title="Uji socket TCP port 8728 ke RouterOS"
+                            >
+                              <Zap className="w-3 h-3 text-amber-400" />
+                              <span>{routerPingStatus[r.id]?.testing ? 'Menguji...' : 'Uji Koneksi'}</span>
+                            </button>
+                            <span className="text-slate-500 font-mono">9 Tools Ready</span>
                           </div>
                         </div>
                       ))}

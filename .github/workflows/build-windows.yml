@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.70
-          releaseName: "Hermes Hub Gateway v0.8.70"
-          releaseBody: "Release v0.8.70: Structured Vertical List Toast & UI Polish."
+          tagName: v0.8.71
+          releaseName: "Hermes Hub Gateway v0.8.71"
+          releaseBody: "Release v0.8.71: Discrete Multi-Router MikroTik MCP Gateway & Native RouterOS Socket."
           releaseDraft: false
           prerelease: false
