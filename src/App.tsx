@@ -115,7 +115,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.71';
+export const APP_VERSION = 'v0.8.72';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -804,11 +804,32 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.72',
+      date: '09 November 2026',
+      name: 'Hermes Hub Gateway v0.8.72 (Card Design Unification & Single Toast Protocol)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penyelarasan Desain Kartu & Disiplin Notifikasi Tunggal: Menyelaraskan kartu router MikroTik 100% identik dengan kartu SSH Hosts dan mengeliminasi notifikasi ganda / banner bertumpuk.',
+      features: [
+        'Unified Card Architecture: Tata letak kartu router MikroTik kini 100% konsisten dengan Remote SSH Host (avatar router, badge tier, endpoint pill, status badge pulsing, dan tombol Test Ping).',
+        'Single Toast Notification Protocol: Mengeliminasi alert banner merah/hijau inline di modal, seluruh feedback pengujian koneksi RouterOS dialirkan rapi via Single-Channel Toast terpadu.'
+      ],
+      fixes: [
+        'Memperbaiki inkonsistensi layout visual antara kartu SSH dan kartu MikroTik.',
+        'Mencegah kemunculan dua notifikasi sekaligus saat menguji koneksi RouterOS.'
+      ],
+      architecture: [
+        'Unified Host Card Design Pattern',
+        'Single-Channel Notification Gate'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.71',
       date: '09 November 2026',
       name: 'Hermes Hub Gateway v0.8.71 (Discrete Multi-Router MikroTik MCP Gateway)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'MikroTik RouterOS MCP Gateway Terpadu: Menghubungkan seluruh router MikroTik melalui 1 entry MCP di IDE (Antigravity/Cursor/Claude) dengan performa socket native Node.js tanpa dependensi Python eksternal.',
       features: [
         'Discrete Multi-Router Gateway: Cukup 1 konfigurasi MCP di IDE (--server=mikrotik) untuk mengelola banyak router MikroTik sekaligus melalui RouterOS Vault HHG.',
@@ -7100,25 +7121,7 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Banner Hasil Uji Koneksi */}
-                    {mikrotikTestResult && (
-                      <div className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
-                        mikrotikTestResult.success
-                          ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
-                          : 'bg-rose-950/40 border-rose-500/50 text-rose-300'
-                      }`}>
-                        <div className="flex items-center gap-2">
-                          {mikrotikTestResult.success ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4 text-rose-400" />}
-                          <div>
-                            <span className="font-bold">{mikrotikTestResult.message}</span>
-                            {mikrotikTestResult.cpu_load && (
-                              <span className="ml-2 opacity-80 font-mono">CPU: {mikrotikTestResult.cpu_load} | Uptime: {mikrotikTestResult.uptime || '-'}</span>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-mono opacity-80">{mikrotikTestResult.latency_ms}ms</span>
-                      </div>
-                    )}
+                    {/* Notification Toast Standard: hasil uji koneksi disampaikan via Toast resmi, tanpa banner ganda */}
 
                     <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
                       <button
@@ -7198,10 +7201,10 @@ export default function App() {
                           className={`p-3.5 rounded-xl border transition-all duration-200 flex flex-col justify-between ${
                             effectiveTheme === 'dark'
                               ? r.enabled !== false
-                                ? 'bg-[#0d191c] border-amber-500/50 hover:border-amber-400 shadow-[0_4px_16px_-4px_rgba(245,158,11,0.22)] ring-1 ring-amber-500/20'
+                                ? 'bg-[#0d191c] border-emerald-500/50 hover:border-emerald-400 shadow-[0_4px_16px_-4px_rgba(34,197,94,0.22)] ring-1 ring-emerald-500/20'
                                 : 'bg-[#071215]/60 border-dashed border-slate-800/80 opacity-60 hover:opacity-90'
                               : r.enabled !== false
-                              ? 'bg-white border-amber-500/50 hover:border-amber-500 shadow-[0_2px_8px_rgba(245,158,11,0.12)] ring-1 ring-amber-400/20'
+                              ? 'bg-white border-emerald-500/50 hover:border-emerald-500 shadow-[0_2px_8px_rgba(16,185,129,0.12)] ring-1 ring-emerald-400/20'
                               : 'bg-white/80 border-dashed border-slate-300 opacity-65 hover:opacity-95 shadow-xs'
                           }`}
                         >
@@ -7210,51 +7213,33 @@ export default function App() {
                               <div className="flex items-center gap-2 min-w-0">
                                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
                                   r.enabled !== false
-                                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-400'
-                                    : 'bg-slate-800 border-slate-700 text-slate-500'
+                                    ? (effectiveTheme === 'dark' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-amber-50 text-amber-600 border-amber-200')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-800/50 text-slate-500 border-slate-700/50' : 'bg-slate-100 text-slate-400 border-slate-200')
                                 }`}>
                                   <Router className="w-3.5 h-3.5" />
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <h5 className="text-xs font-bold font-mono truncate text-slate-200">{r.alias}</h5>
-                                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
-                                      r.tier === 'production'
-                                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                        : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                                    }`}>
-                                      {r.tier || 'prod'}
-                                    </span>
-                                  </div>
-                                  <p className="text-[10px] font-mono text-slate-400 truncate">{r.user}@{r.host}:{r.port || 8728}</p>
-                                </div>
+                                <span className={`font-mono text-xs font-bold truncate ${effectiveTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
+                                  {r.alias}
+                                </span>
                               </div>
-
                               <div className="flex items-center gap-1 shrink-0">
+                                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
+                                  r.tier === 'production'
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]')
+                                    : (effectiveTheme === 'dark' ? 'bg-[#142b4f] text-[#8fbaff] border-[#3b82f6]/60' : 'bg-[#f0f9ff] text-[#026aa2] border-[#b9e6fe]')
+                                }`}>
+                                  {r.tier}
+                                </span>
                                 <button
-                                  type="button"
-                                  onClick={() => handleToggleMikrotikEnabled(r.id, r.enabled !== false)}
-                                  className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition-all ${
-                                    r.enabled !== false
-                                      ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30'
-                                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
-                                  }`}
-                                  title="Klik untuk Toggle Aktif/Nonaktifkan Router"
-                                >
-                                  {r.enabled !== false ? 'AKTIF' : 'OFF'}
-                                </button>
-                                <button
-                                  type="button"
                                   onClick={() => handleOpenEditMikrotik(r)}
-                                  className="p-1 text-slate-400 hover:text-slate-200 rounded"
-                                  title="Edit Konfigurasi Router"
+                                  className={`p-1 rounded transition-colors ${effectiveTheme === 'dark' ? 'text-slate-500 hover:text-cyan-400' : 'text-slate-400 hover:text-slate-700'}`}
+                                  title="Edit / Perbarui Router MikroTik"
                                 >
                                   <Edit3 className="w-3 h-3" />
                                 </button>
                                 <button
-                                  type="button"
                                   onClick={() => handleRemoveMikrotikRouter(r.id, r.alias)}
-                                  className="p-1 text-rose-400 hover:text-rose-300 rounded"
+                                  className={`p-1 rounded transition-colors ${effectiveTheme === 'dark' ? 'text-slate-500 hover:text-rose-400' : 'text-slate-400 hover:text-rose-600'}`}
                                   title="Hapus Router dari Vault"
                                 >
                                   <Trash2 className="w-3 h-3" />
@@ -7262,39 +7247,74 @@ export default function App() {
                               </div>
                             </div>
 
-                            {r.description && (
-                              <p className="text-[11px] text-slate-400 mb-2 line-clamp-1">{r.description}</p>
-                            )}
-
-                            {/* Banner Status Hasil Ping Card */}
-                            {routerPingStatus[r.id] && (
-                              <div className={`p-1.5 rounded-lg border text-[10px] mb-2 font-mono flex items-center justify-between ${
-                                routerPingStatus[r.id].testing
-                                  ? 'bg-amber-950/30 border-amber-800/40 text-amber-300'
-                                  : routerPingStatus[r.id].success
-                                  ? 'bg-emerald-950/30 border-emerald-800/40 text-emerald-300'
-                                  : 'bg-rose-950/30 border-rose-800/40 text-rose-300'
+                            <div className="mb-2">
+                              <span className={`px-2 py-0.5 rounded text-[11px] font-mono border inline-block truncate max-w-full ${
+                                effectiveTheme === 'dark'
+                                  ? 'bg-[#040d10] text-slate-300 border-slate-800/80'
+                                  : 'bg-slate-50 text-slate-700 border-slate-200'
                               }`}>
-                                <span className="truncate">{routerPingStatus[r.id].message}</span>
-                                {routerPingStatus[r.id].latency_ms !== undefined && (
-                                  <span className="shrink-0 font-bold ml-1">{routerPingStatus[r.id].latency_ms}ms</span>
-                                )}
+                                {r.user}@{r.host}:{r.port || 8728}
+                              </span>
+                            </div>
+
+                            {r.description && (
+                              <div className={`text-[10px] line-clamp-1 mb-2 ${effectiveTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                                {r.description}
                               </div>
                             )}
                           </div>
 
-                          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+                          <div className={`pt-2.5 mt-auto border-t flex items-center justify-between gap-1.5 ${effectiveTheme === 'dark' ? 'border-slate-800/60' : 'border-slate-100'}`}>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleToggleMikrotikEnabled(r.id, r.enabled !== false)}
+                                className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider border transition-all flex items-center gap-1.5 ${
+                                  r.enabled !== false
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60 hover:bg-[#154637]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5] hover:bg-[#d1fadf]')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200')
+                                }`}
+                                title="Klik untuk mengaktifkan / menonaktifkan router ini"
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${r.enabled !== false ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                                {r.enabled !== false ? 'AKTIF' : 'NON-AKTIF'}
+                              </button>
+                              <button
+                                onClick={() => handlePingRouterCard(r)}
+                                disabled={routerPingStatus[r.id]?.testing || r.enabled === false}
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-mono border transition-all flex items-center gap-1 disabled:opacity-40 ${
+                                  routerPingStatus[r.id]?.testing
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#142b4f] text-[#8fbaff] border-[#3b82f6]/60' : 'bg-[#f0f9ff] text-[#026aa2] border-[#b9e6fe]')
+                                    : routerPingStatus[r.id]?.success === true
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
+                                    : routerPingStatus[r.id]?.success === false
+                                    ? (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]')
+                                    : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
+                                }`}
+                                title={routerPingStatus[r.id]?.message || "Klik untuk uji socket TCP port 8728 ke RouterOS"}
+                              >
+                                {routerPingStatus[r.id]?.testing ? (
+                                  <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                                ) : (
+                                  <Zap className="w-2.5 h-2.5 text-amber-500" />
+                                )}
+                                {routerPingStatus[r.id]?.testing
+                                  ? 'PROBING...'
+                                  : routerPingStatus[r.id]?.success === true
+                                  ? `${routerPingStatus[r.id]?.latency_ms}ms ✓`
+                                  : routerPingStatus[r.id]?.success === false
+                                  ? 'GAGAL ✕'
+                                  : 'TEST PING'}
+                              </button>
+                            </div>
                             <button
                               type="button"
-                              onClick={() => handlePingRouterCard(r)}
-                              disabled={routerPingStatus[r.id]?.testing}
-                              className="flex items-center gap-1 text-slate-400 hover:text-amber-400 transition-colors"
-                              title="Uji socket TCP port 8728 ke RouterOS"
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all ${
+                                effectiveTheme === 'dark' ? 'bg-slate-900 text-amber-400 border-amber-500/40' : 'bg-amber-50 text-amber-800 border-amber-200'
+                              }`}
+                              title="9 Tools RouterOS aktif"
                             >
-                              <Zap className="w-3 h-3 text-amber-400" />
-                              <span>{routerPingStatus[r.id]?.testing ? 'Menguji...' : 'Uji Koneksi'}</span>
+                              ⚡ 9 TOOLS
                             </button>
-                            <span className="text-slate-500 font-mono">9 Tools Ready</span>
                           </div>
                         </div>
                       ))}
