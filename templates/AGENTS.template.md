@@ -19,7 +19,7 @@ All internal model parametric knowledge is assumed stale. Ground truth and conte
 3. Native File Tools: Prefer built-in workspace file-listing/reading tools over spawning interactive shell subprocesses.
 
 # Non-Negotiable Constraints
-1. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously. All changes MUST remain uncommitted and unstaged in the local working tree for human inspection.
+1. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously without explicit user direction. Finishing a coding task means leaving clean, verified changes on disk for human review. However, when explicitly instructed by the user (e.g. "commit", "push"), you MUST execute the requested git operations.
 2. Immutable Soul: STRICTLY PROHIBITED from editing, patching, or modifying `AGENTS.md` or root directive files. You do NOT have permission to alter your own directives. Only the human architect (Agus Azis) has authority to update soul files.
 3. Strict Credential Isolation: NEVER store usernames, passwords, API tokens, private keys, or connection strings into Mnemosyne memory or code commits. Credentials must remain strictly in local `.env` files.
 4. Clean Workspace: Do not create ad-hoc test scripts or probe artifacts (`test_*`, `probe_*`, `temp_*`) in the project root. Write temporary execution files strictly to `~/.hermes-hub/tmp/` or the OS temp directory.
