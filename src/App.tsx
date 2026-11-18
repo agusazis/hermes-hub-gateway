@@ -331,6 +331,7 @@ export default function App() {
   const [sshAuditFilter, setSshAuditFilter] = useState<string>('');
   const [mcpAuditServerFilter, setMcpAuditServerFilter] = useState<'all' | 'ssh' | 'tabularis' | 'mikrotik' | 'system'>('all');
   const [mcpAuditStatusFilter, setMcpAuditStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
+  const [mcpAuditLimit, setMcpAuditLimit] = useState<number>(100);
   const [selectedAuditEntry, setSelectedAuditEntry] = useState<SshAuditLogEntry | null>(null);
 
   const handleOpenAuditLogsFolder = async () => {
@@ -4703,10 +4704,13 @@ export default function App() {
     }
   };
 
-  const loadSshAuditLogsList = async (silent: boolean = false) => {
+  const loadSshAuditLogsList = async (silent: boolean = false, limitOverride?: number) => {
     if (!silent) setLoadingSshAudit(true);
     try {
-      const res = await invoke<SshAuditLogEntry[]>('get_ssh_audit_logs', { limit: 100 });
+      const activeLimit = typeof limitOverride === 'number' ? limitOverride : mcpAuditLimit;
+      const res = await invoke<SshAuditLogEntry[]>('get_ssh_audit_logs', {
+        limit: activeLimit === 0 ? null : activeLimit
+      });
       if (res) setSshAuditLogs(res);
     } catch (e) {
       console.warn("Gagal memuat ssh audit logs:", e);
@@ -7391,6 +7395,26 @@ export default function App() {
                       <Download className="w-3.5 h-3.5" />
                       <span>Ekspor JSON</span>
                     </button>
+                    <select
+                      value={mcpAuditLimit}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setMcpAuditLimit(val);
+                        loadSshAuditLogsList(false, val);
+                      }}
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold border focus:outline-none transition-colors ${
+                        effectiveTheme === "dark"
+                          ? "bg-[#0d191c] text-slate-200 border-slate-700"
+                          : "bg-white text-slate-700 border-slate-200 shadow-xs"
+                      }`}
+                      title="Jumlah baris audit yang dimuat dari berkas fisik"
+                    >
+                      <option value={100}>100 Baris</option>
+                      <option value={250}>250 Baris</option>
+                      <option value={500}>500 Baris</option>
+                      <option value={1000}>1.000 Baris</option>
+                      <option value={0}>Semua (Unlimited)</option>
+                    </select>
                     <div className="relative">
                       <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2" />
                       <input
