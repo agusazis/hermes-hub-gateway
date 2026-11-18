@@ -500,14 +500,61 @@ function loadSshHosts() {
   return [];
 }
 
+function appendMcpAuditLog(entry) {
+  try {
+    const logDir = path.join(homeDir, ".hermes-hub", "logs");
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    const logFile = path.join(logDir, "mcp_audit.log");
+
+    // Size-based log rotation: 10 MB limit
+    if (fs.existsSync(logFile)) {
+      const stats = fs.statSync(logFile);
+      if (stats.size > 10 * 1024 * 1024) {
+        const backupFile = path.join(logDir, "mcp_audit.1.log");
+        try {
+          if (fs.existsSync(backupFile)) fs.unlinkSync(backupFile);
+          fs.renameSync(logFile, backupFile);
+        } catch (_) {}
+      }
+    }
+
+    const payload = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      client: "IDE",
+      server_type: entry.server_type || "system",
+      server_id: entry.server_id || entry.target || "unknown",
+      tool: entry.tool || "unknown",
+      target: entry.target || "local",
+      target_ip: entry.target_ip || "unknown",
+      mode: entry.mode || "FULL",
+      action_summary: (entry.action_summary || "").slice(0, 500),
+      status: entry.status || "UNKNOWN",
+      duration_ms: entry.duration_ms || 0,
+      output_preview: (entry.output_preview || "").slice(0, 300),
+      exit_code: typeof entry.exit_code === "number" ? entry.exit_code : null
+    }) + "\n";
+
+    fs.appendFile(logFile, payload, () => {});
+  } catch (_) {}
+}
+
 function appendSshAuditLog(entry) {
+  // Mirrored into unified MCP audit log
+  appendMcpAuditLog({
+    ...entry,
+    server_type: "ssh",
+    server_id: entry.target || "ssh-host"
+  });
+
   try {
     const logDir = path.join(homeDir, ".hermes-hub", "logs");
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
     const logFile = path.join(logDir, "ssh_audit.log");
-    
+
     // Size-based log rotation: 10 MB limit
     if (fs.existsSync(logFile)) {
       const stats = fs.statSync(logFile);
@@ -523,6 +570,8 @@ function appendSshAuditLog(entry) {
     const payload = JSON.stringify({
       timestamp: new Date().toISOString(),
       client: "IDE",
+      server_type: "ssh",
+      server_id: entry.target || "ssh-host",
       tool: entry.tool || "ssh_unknown",
       target: entry.target || "unknown",
       target_ip: entry.target_ip || "unknown",
@@ -1609,6 +1658,7 @@ rl.on("line", async (line) => {
             }
           };
 
+          const startTime = Date.now();
           let subResp;
           if (targetServer.serverUrl || targetServer.url) {
             const targetUrl = targetServer.serverUrl || targetServer.url;
@@ -1617,6 +1667,54 @@ rl.on("line", async (line) => {
             subResp = await callSubprocessRpc(targetServer.command, targetServer.args, targetServer.env, downstreamReq, 25000);
           }
           sendResponse(subResp);
+
+          // RECORD MCP AUDIT LOG FOR DOWNSTREAM TOOL
+          try {
+            const durationMs = Date.now() - startTime;
+            const isError = Boolean(subResp.error || (subResp.result && subResp.result.isError));
+            let sType = "mcp";
+            const sNameLower = (targetServer.name || targetServer.id || "").toLowerCase();
+            const toolLower = (origName || "").toLowerCase();
+            if (sNameLower.includes("tabularis") || toolLower.includes("query") || toolLower.includes("table")) {
+              sType = "tabularis";
+            } else if (sNameLower.includes("mikrotik") || toolLower.includes("mikrotik") || toolLower.includes("router")) {
+              sType = "mikrotik";
+            } else if (sNameLower.includes("ssh")) {
+              sType = "ssh";
+            }
+
+            let summary = "";
+            if (toolArgs.query || toolArgs.sql) {
+              summary = toolArgs.query || toolArgs.sql;
+            } else if (toolArgs.command) {
+              summary = toolArgs.command;
+            } else if (toolArgs.table_name || toolArgs.table) {
+              summary = `table: ${toolArgs.table_name || toolArgs.table}`;
+            } else {
+              summary = JSON.stringify(toolArgs);
+            }
+
+            let preview = "";
+            if (subResp.error) {
+              preview = subResp.error.message || JSON.stringify(subResp.error);
+            } else if (subResp.result && Array.isArray(subResp.result.content)) {
+              preview = subResp.result.content.map(c => c.text || "").join(" ").trim();
+            }
+
+            appendMcpAuditLog({
+              server_type: sType,
+              server_id: targetServer.id || targetServer.name || "mcp-server",
+              tool: origName || toolName,
+              target: targetServer.name || "mcp",
+              target_ip: targetServer.serverUrl || "local",
+              mode: "FULL",
+              action_summary: summary,
+              status: isError ? "FAILED" : "SUCCESS",
+              duration_ms: durationMs,
+              output_preview: preview,
+              exit_code: isError ? 1 : 0
+            });
+          } catch (_) {}
 
           // SINKRONISASI REALTIME KE TELEGRAM & EVOLUTION LOGS
           // Jika IDE memanggil tool mutasi memori (mnemosyne_remember, mnemosyne_remember_canonical, mnemosyne_update, mnemosyne_batch)

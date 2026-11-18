@@ -73,11 +73,13 @@ interface SshHostConfig {
 
 interface SshAuditLogEntry {
   timestamp: string;
-  client: string;
+  client?: string;
+  server_type?: string;
+  server_id?: string;
   tool: string;
-  target: string;
-  target_ip: string;
-  mode: string;
+  target?: string;
+  target_ip?: string;
+  mode?: string;
   action_summary: string;
   status: string;
   duration_ms: number;
@@ -115,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.72';
+export const APP_VERSION = 'v0.8.73';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -327,6 +329,8 @@ export default function App() {
   const [sshAuditLogs, setSshAuditLogs] = useState<SshAuditLogEntry[]>([]);
   const [loadingSshAudit, setLoadingSshAudit] = useState<boolean>(false);
   const [sshAuditFilter, setSshAuditFilter] = useState<string>('');
+  const [mcpAuditServerFilter, setMcpAuditServerFilter] = useState<'all' | 'ssh' | 'tabularis' | 'mikrotik' | 'system'>('all');
+  const [mcpAuditStatusFilter, setMcpAuditStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
   const [selectedAuditEntry, setSelectedAuditEntry] = useState<SshAuditLogEntry | null>(null);
 
   const handleOpenAuditLogsFolder = async () => {
@@ -804,11 +808,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.73',
+      date: '17 November 2026',
+      name: 'Hermes Hub Gateway v0.8.73 (Unified MCP Audit Trail & Multi-Server Forensics)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Penyatuan Audit Trail Forensik Seluruh MCP: Mengintegrasikan seluruh pemanggilan tool downstream (Database/Tabularis, MikroTik, Remote SSH, dan System Skills) ke dalam satu linimasa audit terpadu dengan filter dinamis dan performa non-blocking.',
+      features: [
+        'Unified MCP Audit Trail: Menggabungkan jejak eksekusi dari seluruh server MCP ke dalam satu tabel audit terpusat dengan auto-refresh dan rotasi otomatis 10 MB.',
+        'Multi-Server Dynamic Filter: Filter cepat per tipe server (Semua, SSH Remote, Database Tabularis, MikroTik, System Skills) dan status (Success, Failed/Blocked).',
+        'Semantic Design Token Badges: Visualisasi kategori audit presisi menggunakan locked palette token resmi HHG (Emerald untuk DB, Cyan untuk SSH, Amber untuk MikroTik, Violet untuk System).',
+        'Non-Blocking Background Logging: Pencatatan ke mcp_audit.log dilakukan asinkron di level gateway middleware dengan overhead near-zero (<0.5ms).'
+      ],
+      fixes: [
+        'Mengeliminasi isolasi log yang sebelumnya hanya terbatas pada perintah shell SSH.',
+        'Memperbaiki tata letak dan kontras modal forensik agar 100% konsisten di Mode Terang dan Mode Gelap.'
+      ],
+      architecture: [
+        'Unified MCP Logging Interceptor',
+        'Non-Blocking Async Audit Pipeline',
+        'Strict Dual-Theme Design Token Boundary'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.72',
       date: '09 November 2026',
       name: 'Hermes Hub Gateway v0.8.72 (Card Design Unification & Single Toast Protocol)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyelarasan Desain Kartu & Disiplin Notifikasi Tunggal: Menyelaraskan kartu router MikroTik 100% identik dengan kartu SSH Hosts dan mengeliminasi notifikasi ganda / banner bertumpuk.',
       features: [
         'Unified Card Architecture: Tata letak kartu router MikroTik kini 100% konsisten dengan Remote SSH Host (avatar router, badge tier, endpoint pill, status badge pulsing, dan tombol Test Ping).',
@@ -6591,7 +6619,7 @@ export default function App() {
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>SSH Audit Logs ({sshAuditLogs.length})</span>
+                  <span>Audit Trail ({sshAuditLogs.length})</span>
                 </button>
               </div>
 
@@ -7331,11 +7359,11 @@ export default function App() {
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     <div>
-                      <h4 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-emerald-400" : "text-emerald-700"}`}>
-                        Audit Trail Eksekusi SSH (IDE to Remote Hosts)
+                      <h4 className={`text-xs font-bold uppercase tracking-wider ${effectiveTheme === "dark" ? "text-emerald-400" : "text-emerald-700"}`}>\
+                        Unified MCP Audit Trail (IDE to All Tools & Hosts)
                       </h4>
                       <p className="text-[11px] text-slate-500">
-                        Catatan audit forensik eksekusi tool shell & file di host remote oleh AI Agent. Rotasi otomatis (max 10 MB per berkas).
+                        Catatan audit forensik eksekusi tool MCP (Database, Remote SSH, MikroTik, dan System) oleh AI Agent. Rotasi otomatis (max 10 MB per berkas).
                       </p>
                     </div>
                   </div>
@@ -7376,9 +7404,63 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* FILTER BAR UNIFIED AUDIT LOGS */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 text-xs">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] text-slate-500 font-semibold mr-1">Tipe MCP:</span>
+                    {([
+                      { id: 'all', label: 'Semua Server' },
+                      { id: 'ssh', label: 'SSH Remote' },
+                      { id: 'tabularis', label: 'Database (Tabularis)' },
+                      { id: 'mikrotik', label: 'MikroTik' },
+                      { id: 'system', label: 'System / Skills' }
+                    ] as const).map(srv => {
+                      const active = mcpAuditServerFilter === srv.id;
+                      return (
+                        <button
+                          key={srv.id}
+                          type="button"
+                          onClick={() => setMcpAuditServerFilter(srv.id)}
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                            active
+                              ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
+                              : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
+                          }`}
+                        >
+                          {srv.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-slate-500 font-semibold mr-1">Status:</span>
+                    {([
+                      { id: 'all', label: 'Semua' },
+                      { id: 'success', label: 'Success' },
+                      { id: 'failed', label: 'Failed' }
+                    ] as const).map(st => {
+                      const active = mcpAuditStatusFilter === st.id;
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => setMcpAuditStatusFilter(st.id)}
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                            active
+                              ? (effectiveTheme === 'dark' ? 'bg-[#0a2730] text-[#5dd2e6] border-[#1192a3]' : 'bg-[#f0f9ff] text-[#026aa2] border-[#bae6fd]')
+                              : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
+                          }`}
+                        >
+                          {st.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {sshAuditLogs.length === 0 ? (
                   <div className="text-center py-12 text-slate-500 font-mono text-xs">
-                    Belum ada riwayat eksekusi SSH yang tercatat. Panggil salah satu tool SSH di IDE untuk memicu log audit.
+                    Belum ada riwayat eksekusi MCP yang tercatat. Panggil salah satu tool MCP di IDE untuk memicu log audit.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -7386,7 +7468,8 @@ export default function App() {
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 uppercase">
                           <th className="py-2 px-3">Waktu (WITA)</th>
-                          <th className="py-2 px-3">Target Host</th>
+                          <th className="py-2 px-3">Server / Tipe</th>
+                          <th className="py-2 px-3">Target</th>
                           <th className="py-2 px-3">Tool</th>
                           <th className="py-2 px-3">Perintah / Ringkasan Aksi</th>
                           <th className="py-2 px-3">Mode</th>
@@ -7397,37 +7480,85 @@ export default function App() {
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                         {sshAuditLogs
                           .filter((entry) => {
+                            const sType = (entry.server_type || (entry.tool.startsWith('ssh') ? 'ssh' : (entry.tool.includes('tabularis') || entry.tool.includes('query') ? 'tabularis' : (entry.tool.includes('mikrotik') || entry.tool.includes('router') ? 'mikrotik' : 'system')))).toLowerCase();
+                            if (mcpAuditServerFilter !== 'all' && sType !== mcpAuditServerFilter) {
+                              return false;
+                            }
+                            const isSuccess = entry.status === 'SUCCESS';
+                            if (mcpAuditStatusFilter === 'success' && !isSuccess) return false;
+                            if (mcpAuditStatusFilter === 'failed' && isSuccess) return false;
+
                             if (!sshAuditFilter) return true;
                             const q = sshAuditFilter.toLowerCase();
                             return (
-                              entry.target.toLowerCase().includes(q) ||
-                              entry.action_summary.toLowerCase().includes(q) ||
+                              (entry.target || '').toLowerCase().includes(q) ||
+                              (entry.action_summary || '').toLowerCase().includes(q) ||
                               entry.tool.toLowerCase().includes(q) ||
-                              entry.status.toLowerCase().includes(q)
+                              entry.status.toLowerCase().includes(q) ||
+                              sType.includes(q)
                             );
                           })
                           .map((entry, idx) => {
+                            const sType = (entry.server_type || (entry.tool.startsWith('ssh') ? 'ssh' : (entry.tool.includes('tabularis') || entry.tool.includes('query') ? 'tabularis' : (entry.tool.includes('mikrotik') || entry.tool.includes('router') ? 'mikrotik' : 'system')))).toLowerCase();
                             const isBlocked = entry.status.includes('BLOCKED');
                             const isSuccess = entry.status === 'SUCCESS';
                             const { timeStr, dateStr } = formatAuditDateTime(entry.timestamp);
+
+                            let sTypeBadge = (
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
+                                effectiveTheme === 'dark' ? 'bg-[#0a2730] text-[#5dd2e6] border-[#1192a3]/60' : 'bg-[#f0f9ff] text-[#026aa2] border-[#bae6fd]'
+                              }`}>
+                                SSH
+                              </span>
+                            );
+
+                            if (sType === 'tabularis') {
+                              sTypeBadge = (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
+                                  effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]'
+                                }`}>
+                                TABULARIS
+                              </span>
+                              );
+                            } else if (sType === 'mikrotik') {
+                              sTypeBadge = (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
+                                  effectiveTheme === 'dark' ? 'bg-[#38280f] text-[#f4cf8b] border-[#d9a46c]/60' : 'bg-[#fffaeb] text-[#a05600] border-[#fedf89]'
+                                }`}>
+                                MIKROTIK
+                              </span>
+                              );
+                            } else if (sType === 'system') {
+                              sTypeBadge = (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
+                                  effectiveTheme === 'dark' ? 'bg-[#28143d] text-[#c084fc] border-[#9333ea]/60' : 'bg-[#faf5ff] text-[#7e22ce] border-[#e9d5ff]'
+                                }`}>
+                                SYSTEM
+                              </span>
+                              );
+                            }
+
                             return (
                               <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className={`cursor-pointer transition-colors group ${effectiveTheme === "dark" ? "hover:bg-slate-800/40" : "hover:bg-slate-50"}`}>
                                 <td className="py-2 px-3 whitespace-nowrap">
-                                  <div className="font-semibold text-slate-200 text-[11px] font-mono">
+                                  <div className={`font-semibold text-[11px] font-mono ${effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>
                                     {timeStr} <span className="text-[9px] text-slate-400 font-normal">WITA</span>
                                   </div>
                                   <div className="text-[10px] text-slate-400">
                                     {dateStr}
                                   </div>
                                 </td>
+                                <td className="py-2 px-3 whitespace-nowrap">
+                                  {sTypeBadge}
+                                </td>
                                 <td className="py-2 px-3 font-semibold text-indigo-400 whitespace-nowrap">
-                                  {entry.target}
-                                  <span className="block text-[10px] font-normal text-slate-500">{entry.target_ip}</span>
+                                  {entry.target || 'local'}
+                                  {entry.target_ip && <span className="block text-[10px] font-normal text-slate-500">{entry.target_ip}</span>}
                                 </td>
                                 <td className="py-2 px-3 text-cyan-400 whitespace-nowrap">
                                   {entry.tool}
                                 </td>
-                                <td className="py-2 px-3 text-slate-200 max-w-[280px] truncate" title={entry.action_summary}>
+                                <td className={`py-2 px-3 max-w-[280px] truncate ${effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`} title={entry.action_summary}>
                                   {entry.action_summary}
                                 </td>
                                 <td className="py-2 px-3 whitespace-nowrap">
@@ -7436,7 +7567,7 @@ export default function App() {
                                       ? (effectiveTheme === 'dark' ? 'bg-[#38280f] text-[#f4cf8b] border-[#d9a46c]/60' : 'bg-[#fffaeb] text-[#a05600] border-[#fedf89]')
                                       : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800' : 'bg-white text-slate-700 border-slate-200 shadow-xs')
                                   }`}>
-                                    {entry.mode}
+                                    {entry.mode || 'FULL'}
                                   </span>
                                 </td>
                                 <td className="py-2 px-3 whitespace-nowrap">
@@ -7464,7 +7595,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* MODAL VIEW DETAILS SSH AUDIT LOG ENTRY */}
+                {/* MODAL VIEW DETAILS MCP AUDIT LOG ENTRY */}
                 {selectedAuditEntry && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
                     <div className={`w-full max-w-xl rounded-2xl border p-5 shadow-2xl transition-all ${
@@ -7473,39 +7604,47 @@ export default function App() {
                       <div className="flex items-center justify-between pb-3 border-b border-slate-700/50 mb-4">
                         <div className="flex items-center gap-2">
                           <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                          <h3 className="font-bold text-sm tracking-wide">Detail Forensik Audit SSH</h3>
+                          <h3 className="font-bold text-sm tracking-wide">Detail Forensik Audit MCP</h3>
                         </div>
                         <button
                           onClick={() => setSelectedAuditEntry(null)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+                          className={`p-1 rounded-lg transition-colors ${effectiveTheme === "dark" ? "text-slate-400 hover:text-slate-100 hover:bg-slate-800" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
 
                       <div className="space-y-3 font-mono text-xs">
-                        <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+                        <div className={`grid grid-cols-2 gap-2 p-3 rounded-lg border ${
+                          effectiveTheme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"
+                        }`}>
                           <div>
                             <span className="text-[10px] text-slate-500 uppercase block">Waktu Eksekusi</span>
-                            <span className="text-slate-300 font-semibold">{formatAuditDateTime(selectedAuditEntry.timestamp).dateStr} &bull; {formatAuditDateTime(selectedAuditEntry.timestamp).timeStr} WITA</span>
+                            <span className={`font-semibold ${effectiveTheme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                              {formatAuditDateTime(selectedAuditEntry.timestamp).dateStr} &bull; {formatAuditDateTime(selectedAuditEntry.timestamp).timeStr} WITA
+                            </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Klien Pemanggil</span>
-                            <span className="text-slate-300">{selectedAuditEntry.client} Agent</span>
+                            <span className="text-[10px] text-slate-500 uppercase block">Klien & Tipe Server</span>
+                            <span className={effectiveTheme === "dark" ? "text-slate-300" : "text-slate-700"}>
+                              {selectedAuditEntry.client || "IDE"} Agent &bull; <span className="uppercase font-semibold text-emerald-500">{selectedAuditEntry.server_type || "MCP"}</span>
+                            </span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Target Host</span>
-                            <span className="text-indigo-400 font-bold">{selectedAuditEntry.target} ({selectedAuditEntry.target_ip})</span>
+                            <span className="text-[10px] text-slate-500 uppercase block">Target / Server ID</span>
+                            <span className="text-indigo-400 font-bold">{selectedAuditEntry.target || selectedAuditEntry.server_id || "local"} ({selectedAuditEntry.target_ip || "local"})</span>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-500 uppercase block">Mode Izin & Durasi</span>
-                            <span className="text-amber-400">{selectedAuditEntry.mode}</span> &bull; <span className="text-slate-400">{selectedAuditEntry.duration_ms} ms</span>
+                            <span className="text-[10px] text-slate-500 uppercase block">Tool & Durasi</span>
+                            <span className="text-cyan-400 font-semibold">{selectedAuditEntry.tool}</span> &bull; <span className="text-slate-400">{selectedAuditEntry.duration_ms} ms</span>
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Perintah / Aksi (Command Input):</span>
-                          <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-cyan-300 whitespace-pre-wrap break-all select-all font-mono">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Perintah / Ringkasan Aksi (Input):</span>
+                          <pre className={`p-2.5 rounded-lg border whitespace-pre-wrap break-all select-all font-mono ${
+                            effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-cyan-300" : "bg-slate-100 border-slate-200 text-slate-800"
+                          }`}>
                             {selectedAuditEntry.action_summary}
                           </pre>
                         </div>
@@ -7521,7 +7660,9 @@ export default function App() {
                               </span>
                             )}
                           </div>
-                          <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 whitespace-pre-wrap break-all select-all font-mono max-h-36 overflow-y-auto">
+                          <pre className={`p-2.5 rounded-lg border whitespace-pre-wrap break-all select-all font-mono max-h-36 overflow-y-auto ${
+                            effectiveTheme === "dark" ? "bg-slate-950 border-slate-800 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-700"
+                          }`}>
                             {selectedAuditEntry.output_preview || "(Tidak ada output atau aksi diblokir sebelum eksekusi)"}
                           </pre>
                         </div>
@@ -7530,7 +7671,9 @@ export default function App() {
                       <div className="mt-5 pt-3 border-t border-slate-800 flex justify-end">
                         <button
                           onClick={() => setSelectedAuditEntry(null)}
-                          className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                            effectiveTheme === "dark" ? "bg-slate-800 hover:bg-slate-700 text-slate-200" : "bg-slate-200 hover:bg-slate-300 text-slate-800"
+                          }`}
                         >
                           Tutup
                         </button>

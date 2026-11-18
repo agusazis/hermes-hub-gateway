@@ -42,13 +42,28 @@ pub fn get_ssh_audit_log_file() -> PathBuf {
     log_dir.join("ssh_audit.log")
 }
 
+pub fn get_mcp_audit_log_file() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    let log_dir = home.join(".hermes-hub").join("logs");
+    let _ = fs::create_dir_all(&log_dir);
+    log_dir.join("mcp_audit.log")
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SshAuditLogEntry {
     pub timestamp: String,
+    #[serde(default = "default_client")]
     pub client: String,
+    #[serde(default)]
+    pub server_type: Option<String>,
+    #[serde(default)]
+    pub server_id: Option<String>,
     pub tool: String,
+    #[serde(default)]
     pub target: String,
+    #[serde(default)]
     pub target_ip: String,
+    #[serde(default)]
     pub mode: String,
     pub action_summary: String,
     pub status: String,
@@ -59,35 +74,70 @@ pub struct SshAuditLogEntry {
     pub exit_code: Option<i32>,
 }
 
+fn default_client() -> String {
+    "IDE".to_string()
+}
+
 #[tauri::command]
 pub fn get_ssh_audit_logs(limit: Option<usize>) -> Result<Vec<SshAuditLogEntry>, String> {
-    let file = get_ssh_audit_log_file();
-    if !file.exists() {
-        return Ok(Vec::new());
-    }
-    let content = fs::read_to_string(&file).map_err(|e| e.to_string())?;
+    let mcp_file = get_mcp_audit_log_file();
+    let ssh_file = get_ssh_audit_log_file();
+
     let mut entries: Vec<SshAuditLogEntry> = Vec::new();
-    for line in content.lines().rev() {
-        if line.trim().is_empty() {
-            continue;
-        }
-        if let Ok(entry) = serde_json::from_str::<SshAuditLogEntry>(line) {
-            entries.push(entry);
-            if let Some(max) = limit {
-                if entries.len() >= max {
-                    break;
+
+    // Prefer mcp_audit.log if it exists and has content
+    if mcp_file.exists() {
+        if let Ok(content) = fs::read_to_string(&mcp_file) {
+            for line in content.lines().rev() {
+                if line.trim().is_empty() {
+                    continue;
+                }
+                if let Ok(entry) = serde_json::from_str::<SshAuditLogEntry>(line) {
+                    entries.push(entry);
+                    if let Some(max) = limit {
+                        if entries.len() >= max {
+                            break;
+                        }
+                    }
                 }
             }
         }
     }
+
+    // If mcp_audit.log is empty or missing, fallback to legacy ssh_audit.log
+    if entries.is_empty() && ssh_file.exists() {
+        if let Ok(content) = fs::read_to_string(&ssh_file) {
+            for line in content.lines().rev() {
+                if line.trim().is_empty() {
+                    continue;
+                }
+                if let Ok(mut entry) = serde_json::from_str::<SshAuditLogEntry>(line) {
+                    if entry.server_type.is_none() {
+                        entry.server_type = Some("ssh".to_string());
+                    }
+                    entries.push(entry);
+                    if let Some(max) = limit {
+                        if entries.len() >= max {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Ok(entries)
 }
 
 #[tauri::command]
 pub fn clear_ssh_audit_logs() -> Result<(), String> {
-    let file = get_ssh_audit_log_file();
-    if file.exists() {
-        let _ = fs::write(&file, "");
+    let mcp_file = get_mcp_audit_log_file();
+    if mcp_file.exists() {
+        let _ = fs::write(&mcp_file, "");
+    }
+    let ssh_file = get_ssh_audit_log_file();
+    if ssh_file.exists() {
+        let _ = fs::write(&ssh_file, "");
     }
     Ok(())
 }
