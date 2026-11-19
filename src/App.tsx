@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { 
   Shield, Server, FolderKanban, Terminal, RefreshCw, CheckCircle2, 
-  Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight,
+  Plus, Settings, Database, Cpu, Check, AlertCircle, ArrowUpRight, Info,
   GitBranch, Folder, Network, HardDrive, Activity, Power, Layers,
   BookOpen, User, Calendar, ExternalLink, X, FileText, ChevronRight, ChevronLeft, PanelLeftClose, PanelLeftOpen, Edit3, Trash2, Bell, Send, MessageSquare,
   GitFork, Key, Globe, FolderTree, Play, CheckCircle, Search, Copy, History, Tag, Sparkles, Download, Upload, Archive, Sun, Moon, Laptop, Sliders, ShieldCheck, Zap, Router
@@ -6702,6 +6702,13 @@ export default function App() {
                     effectiveTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
                   }`}>
                     Konfigurasi MCP IDE kini di-generate secara <b>dinamis per server</b> dari katalog aktif HHG. Setiap server terisolasi ke proses child (&lt;30 tools per server) untuk <b>mencegah drop schema akibat batas payload IDE</b>. Kredensial sensitif tetap aman di brankas HHG.
+                    <span className="inline-flex items-center ml-1.5 relative group align-middle cursor-pointer">
+                      <Info className="w-3.5 h-3.5 text-cyan-500 hover:text-cyan-400 transition-colors" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-72 p-2.5 rounded-lg shadow-xl text-[11px] leading-relaxed z-50 pointer-events-none border border-slate-700/60 bg-slate-900 text-slate-200">
+                        <strong className="block text-amber-300 font-semibold mb-1">💡 Sinkronisasi Konfigurasi IDE</strong>
+                        Setiap kali Anda menambah, mengubah, atau menghapus server MCP di HHG, salin ulang konfigurasi ini lalu tempelkan ke menu <em>Manage MCP Servers</em> di IDE agar perubahan langsung aktif.
+                      </span>
+                    </span>
                   </p>
                 </div>
 
@@ -6805,19 +6812,6 @@ export default function App() {
                       </>
                     )}
                   </button>
-                </div>
-              </div>
-
-              {/* Callout Penegasan Wajib Salin Ulang */}
-              <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-center gap-2.5 ${
-                effectiveTheme === 'dark' ? 'bg-amber-950/30 border-amber-800/40 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'
-              }`}>
-                <span className="text-base shrink-0">⚠️</span>
-                <div>
-                  <b>PENTING: SINKRONISASI KONFIGURASI IDE</b>
-                  <p className="opacity-90">
-                    Setiap kali Anda <b>menambah, mengubah, atau menghapus server MCP</b> di HHG, Anda wajib mengklik tombol <b>"Salin Konfigurasi IDE"</b> di atas lalu menempelkan (paste) ke pengaturan MCP IDE Anda (menu <i>Manage MCP Servers</i>) agar server baru langsung terbaca dan aktif.
-                  </p>
                 </div>
               </div>
             </div>
