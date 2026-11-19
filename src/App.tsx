@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { 
@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.74';
+export const APP_VERSION = 'v0.8.75';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -329,7 +329,7 @@ export default function App() {
   const [sshAuditLogs, setSshAuditLogs] = useState<SshAuditLogEntry[]>([]);
   const [loadingSshAudit, setLoadingSshAudit] = useState<boolean>(false);
   const [sshAuditFilter, setSshAuditFilter] = useState<string>('');
-  const [mcpAuditServerFilter, setMcpAuditServerFilter] = useState<'all' | 'ssh' | 'tabularis' | 'mikrotik' | 'system'>('all');
+  const [mcpAuditTargetFilter, setMcpAuditTargetFilter] = useState<string>('all');
   const [mcpAuditStatusFilter, setMcpAuditStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
   const [mcpAuditLimit, setMcpAuditLimit] = useState<number>(100);
   const [selectedAuditEntry, setSelectedAuditEntry] = useState<SshAuditLogEntry | null>(null);
@@ -809,11 +809,35 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.75',
+      date: '18 November 2026',
+      name: 'Hermes Hub Gateway v0.8.75 (Dynamic Target Filters & 500MB Audit Retention)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Dynamic Target Filters, 500MB Retention, & Hermetic MCP Logging: Penyempurnaan Unified MCP Audit Trail dengan filter dinamis berbasis nama target riil, penghapusan kolom Server/Tipe yang redundan, peningkatan batas rotasi berkas ke 500 MB, serta logging otomatis untuk tool internal hermes-gateway.',
+      features: [
+        'Dynamic Filter by Target: Opsi filter audit langsung mengelompokkan log berdasarkan nama target riil (hermes-gateway, tabularis, mikrotik, mnemosyne, grafana, gitlab, dan remote hosts).',
+        'Streamlined Audit Table: Menghilangkan kolom Server/Tipe yang redundan untuk memberikan ruang lebih lebar bagi kolom target, tool, dan ringkasan perintah.',
+        '500MB High-Retention Logging: Batas rotasi log dinaikkan menjadi 500 MB per berkas tanpa overhead performa bagi AI Agent.',
+        'Hermes-Gateway Core Audit: Seluruh eksekusi tool internal hermes-gateway kini otomatis tercatat lengkap di audit trail.'
+      ],
+      fixes: [
+        'Menyelaraskan nama target audit agar tidak ter-fallback ke label generik SSH.',
+        'Memperbaiki parsing socket RouterOS agar aman dari timeout pada subnet tertentu.'
+      ],
+      architecture: [
+        'Dynamic Target Collector & Filter Dispatcher',
+        'High-Throughput 500MB Log Rotation Pipeline',
+        'Hermetic Core Gateway Interception'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.74',
       date: '18 November 2026',
       name: 'Hermes Hub Gateway v0.8.74 (Dynamic Row Limit Selector & Multi-MCP Forensics)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Dynamic Row Limit Selector & Real-Time MCP Audit: Menambahkan pemilih limit baris dinamis (100, 250, 500, 1.000, Unlimited) dan mengaktifkan audit forensik menyeluruh untuk seluruh tool downstream MCP.',
       features: [
         'Dynamic Row Limit Selector: Pemilih jumlah baris audit di UI (100, 250, 500, 1.000, dan Semua/Unlimited) dengan sinkronisasi ke berkas fisik.',
@@ -4763,6 +4787,38 @@ export default function App() {
     }
   };
 
+  const dynamicAuditTargets = useMemo(() => {
+    const list: string[] = [];
+    const seen = new Set<string>();
+
+    const addTarget = (t: string) => {
+      const clean = (t || '').trim();
+      if (!clean || seen.has(clean.toLowerCase())) return;
+      seen.add(clean.toLowerCase());
+      list.push(clean);
+    };
+
+    // Default HHG Core MCPs
+    ['hermes-gateway', 'tabularis', 'mikrotik', 'mnemosyne', 'grafana', 'gitlabJSK', 'gitlabsimpel', 'simrs-slowlogs'].forEach(addTarget);
+
+    // From SSH Hosts
+    sshHosts.forEach(h => {
+      if (h.alias) addTarget(h.alias);
+    });
+
+    // From MikroTik Routers
+    mikrotikRouters.forEach(r => {
+      if (r.alias) addTarget(r.alias);
+    });
+
+    // Any other distinct target from logs
+    sshAuditLogs.forEach(l => {
+      if (l.target && l.target !== 'local') addTarget(l.target);
+    });
+
+    return list;
+  }, [sshHosts, mikrotikRouters, sshAuditLogs]);
+
   const handleOpenEditSsh = (host: SshHostConfig) => {
     setSshTestResult(null);
     setEditingSshHost(host);
@@ -7390,7 +7446,7 @@ export default function App() {
                         Unified MCP Audit Trail (IDE to All Tools & Hosts)
                       </h4>
                       <p className="text-[11px] text-slate-500">
-                        Catatan audit forensik eksekusi tool MCP (Database, Remote SSH, MikroTik, dan System) oleh AI Agent. Rotasi otomatis (max 10 MB per berkas).
+                        Catatan audit forensik eksekusi tool MCP (Database, Remote SSH, MikroTik, dan System) oleh AI Agent. Rotasi otomatis (max 500 MB per berkas).
                       </p>
                     </div>
                   </div>
@@ -7451,35 +7507,40 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* FILTER BAR UNIFIED AUDIT LOGS */}
+                {/* FILTER BAR UNIFIED AUDIT LOGS BY DYNAMIC TARGET */}
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 text-xs">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] text-slate-500 font-semibold mr-1">Tipe MCP:</span>
-                    {([
-                      { id: 'all', label: 'Semua Server' },
-                      { id: 'ssh', label: 'SSH Remote' },
-                      { id: 'tabularis', label: 'Database (Tabularis)' },
-                      { id: 'mikrotik', label: 'MikroTik' },
-                      { id: 'system', label: 'System / Skills' }
-                    ] as const).map(srv => {
-                      const active = mcpAuditServerFilter === srv.id;
+                  <div className="flex flex-wrap items-center gap-1.5 max-w-full md:max-w-[75%]">
+                    <span className="text-[11px] text-slate-500 font-semibold mr-1 shrink-0">Target / Server:</span>
+                    <button
+                      type="button"
+                      onClick={() => setMcpAuditTargetFilter('all')}
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all shrink-0 ${
+                        mcpAuditTargetFilter === 'all'
+                          ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
+                          : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
+                      }`}
+                    >
+                      Semua Target
+                    </button>
+                    {dynamicAuditTargets.map(tgt => {
+                      const active = mcpAuditTargetFilter.toLowerCase() === tgt.toLowerCase();
                       return (
                         <button
-                          key={srv.id}
+                          key={tgt}
                           type="button"
-                          onClick={() => setMcpAuditServerFilter(srv.id)}
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                          onClick={() => setMcpAuditTargetFilter(tgt)}
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all shrink-0 ${
                             active
                               ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
                               : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
                           }`}
                         >
-                          {srv.label}
+                          {tgt}
                         </button>
                       );
                     })}
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-[11px] text-slate-500 font-semibold mr-1">Status:</span>
                     {([
                       { id: 'all', label: 'Semua' },
@@ -7515,7 +7576,6 @@ export default function App() {
                       <thead>
                         <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 uppercase">
                           <th className="py-2 px-3">Waktu (WITA)</th>
-                          <th className="py-2 px-3">Server / Tipe</th>
                           <th className="py-2 px-3">Target</th>
                           <th className="py-2 px-3">Tool</th>
                           <th className="py-2 px-3">Perintah / Ringkasan Aksi</th>
@@ -7527,9 +7587,11 @@ export default function App() {
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                         {sshAuditLogs
                           .filter((entry) => {
-                            const sType = (entry.server_type || (entry.tool.startsWith('ssh') ? 'ssh' : (entry.tool.includes('tabularis') || entry.tool.includes('query') ? 'tabularis' : (entry.tool.includes('mikrotik') || entry.tool.includes('router') ? 'mikrotik' : 'system')))).toLowerCase();
-                            if (mcpAuditServerFilter !== 'all' && sType !== mcpAuditServerFilter) {
-                              return false;
+                            if (mcpAuditTargetFilter !== 'all') {
+                              const t = (entry.target || '').toLowerCase();
+                              const sid = (entry.server_id || '').toLowerCase();
+                              const qTarget = mcpAuditTargetFilter.toLowerCase();
+                              if (t !== qTarget && sid !== qTarget && !t.includes(qTarget)) return false;
                             }
                             const isSuccess = entry.status === 'SUCCESS';
                             if (mcpAuditStatusFilter === 'success' && !isSuccess) return false;
@@ -7541,49 +7603,13 @@ export default function App() {
                               (entry.target || '').toLowerCase().includes(q) ||
                               (entry.action_summary || '').toLowerCase().includes(q) ||
                               entry.tool.toLowerCase().includes(q) ||
-                              entry.status.toLowerCase().includes(q) ||
-                              sType.includes(q)
+                              entry.status.toLowerCase().includes(q)
                             );
                           })
                           .map((entry, idx) => {
-                            const sType = (entry.server_type || (entry.tool.startsWith('ssh') ? 'ssh' : (entry.tool.includes('tabularis') || entry.tool.includes('query') ? 'tabularis' : (entry.tool.includes('mikrotik') || entry.tool.includes('router') ? 'mikrotik' : 'system')))).toLowerCase();
                             const isBlocked = entry.status.includes('BLOCKED');
                             const isSuccess = entry.status === 'SUCCESS';
                             const { timeStr, dateStr } = formatAuditDateTime(entry.timestamp);
-
-                            let sTypeBadge = (
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
-                                effectiveTheme === 'dark' ? 'bg-[#0a2730] text-[#5dd2e6] border-[#1192a3]/60' : 'bg-[#f0f9ff] text-[#026aa2] border-[#bae6fd]'
-                              }`}>
-                                SSH
-                              </span>
-                            );
-
-                            if (sType === 'tabularis') {
-                              sTypeBadge = (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
-                                  effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]'
-                                }`}>
-                                TABULARIS
-                              </span>
-                              );
-                            } else if (sType === 'mikrotik') {
-                              sTypeBadge = (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
-                                  effectiveTheme === 'dark' ? 'bg-[#38280f] text-[#f4cf8b] border-[#d9a46c]/60' : 'bg-[#fffaeb] text-[#a05600] border-[#fedf89]'
-                                }`}>
-                                MIKROTIK
-                              </span>
-                              );
-                            } else if (sType === 'system') {
-                              sTypeBadge = (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono border ${
-                                  effectiveTheme === 'dark' ? 'bg-[#28143d] text-[#c084fc] border-[#9333ea]/60' : 'bg-[#faf5ff] text-[#7e22ce] border-[#e9d5ff]'
-                                }`}>
-                                SYSTEM
-                              </span>
-                              );
-                            }
 
                             return (
                               <tr key={idx} onClick={() => setSelectedAuditEntry(entry)} className={`cursor-pointer transition-colors group ${effectiveTheme === "dark" ? "hover:bg-slate-800/40" : "hover:bg-slate-50"}`}>
@@ -7595,14 +7621,13 @@ export default function App() {
                                     {dateStr}
                                   </div>
                                 </td>
-                                <td className="py-2 px-3 whitespace-nowrap">
-                                  {sTypeBadge}
-                                </td>
                                 <td className="py-2 px-3 font-semibold text-indigo-400 whitespace-nowrap">
                                   {entry.target || 'local'}
-                                  {entry.target_ip && <span className="block text-[10px] font-normal text-slate-500">{entry.target_ip}</span>}
+                                  {entry.target_ip && entry.target_ip !== 'local' && entry.target_ip !== 'unknown' && (
+                                    <span className="block text-[10px] font-normal text-slate-500">{entry.target_ip}</span>
+                                  )}
                                 </td>
-                                <td className="py-2 px-3 text-cyan-400 whitespace-nowrap">
+                                <td className="py-2 px-3 text-cyan-400 whitespace-nowrap font-bold">
                                   {entry.tool}
                                 </td>
                                 <td className={`py-2 px-3 max-w-[280px] truncate ${effectiveTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`} title={entry.action_summary}>

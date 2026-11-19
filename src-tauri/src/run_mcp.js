@@ -508,10 +508,10 @@ function appendMcpAuditLog(entry) {
     }
     const logFile = path.join(logDir, "mcp_audit.log");
 
-    // Size-based log rotation: 10 MB limit
+    // Size-based log rotation: 500 MB limit (high throughput, zero performance impact)
     if (fs.existsSync(logFile)) {
       const stats = fs.statSync(logFile);
-      if (stats.size > 10 * 1024 * 1024) {
+      if (stats.size > 500 * 1024 * 1024) {
         const backupFile = path.join(logDir, "mcp_audit.1.log");
         try {
           if (fs.existsSync(backupFile)) fs.unlinkSync(backupFile);
@@ -555,10 +555,10 @@ function appendSshAuditLog(entry) {
     }
     const logFile = path.join(logDir, "ssh_audit.log");
 
-    // Size-based log rotation: 10 MB limit
+    // Size-based log rotation: 500 MB limit (high throughput, zero performance impact)
     if (fs.existsSync(logFile)) {
       const stats = fs.statSync(logFile);
-      if (stats.size > 10 * 1024 * 1024) {
+      if (stats.size > 500 * 1024 * 1024) {
         const backupFile = path.join(logDir, "ssh_audit.1.log");
         try {
           if (fs.existsSync(backupFile)) fs.unlinkSync(backupFile);
@@ -853,6 +853,35 @@ rl.on("line", async (line) => {
     } else if (method === "tools/call") {
       const toolName = req.params?.name;
       const toolArgs = req.params?.arguments || {};
+      const callStartTime = Date.now();
+      const rawSendResponse = sendResponse;
+      const sendResponse = (resp) => {
+        try {
+          const durationMs = Date.now() - callStartTime;
+          const isError = Boolean(resp.error || (resp.result && resp.result.isError));
+          let outPreview = "";
+          if (resp.result && resp.result.content && Array.isArray(resp.result.content)) {
+            outPreview = resp.result.content.map(c => c.text || "").join("\n").slice(0, 300);
+          } else if (resp.error) {
+            outPreview = (resp.error.message || JSON.stringify(resp.error)).slice(0, 300);
+          }
+          const targetName = TARGET_SERVER === "hermes" ? "hermes-gateway" : (TARGET_SERVER || "system");
+          appendMcpAuditLog({
+            server_type: "system",
+            server_id: targetName,
+            tool: toolName,
+            target: targetName,
+            target_ip: "local",
+            mode: "FULL",
+            action_summary: JSON.stringify(toolArgs || {}).slice(0, 500),
+            status: isError ? "FAILED" : "SUCCESS",
+            duration_ms: durationMs,
+            output_preview: outPreview,
+            exit_code: isError ? 1 : 0
+          });
+        } catch (_) {}
+        rawSendResponse(resp);
+      };
 
       const currentCached = getCachedData();
       if (currentCached.disabled) {
