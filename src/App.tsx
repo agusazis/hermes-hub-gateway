@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.73';
+export const APP_VERSION = 'v0.8.74';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -809,11 +809,34 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.74',
+      date: '18 November 2026',
+      name: 'Hermes Hub Gateway v0.8.74 (Dynamic Row Limit Selector & Multi-MCP Forensics)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Dynamic Row Limit Selector & Real-Time MCP Audit: Menambahkan pemilih limit baris dinamis (100, 250, 500, 1.000, Unlimited) dan mengaktifkan audit forensik menyeluruh untuk seluruh tool downstream MCP.',
+      features: [
+        'Dynamic Row Limit Selector: Pemilih jumlah baris audit di UI (100, 250, 500, 1.000, dan Semua/Unlimited) dengan sinkronisasi ke berkas fisik.',
+        'Unified Downstream MCP Auditing: Pencatatan otomatis pemanggilan tool Tabularis/Database, MikroTik, dan System ke mcp_audit.log.',
+        'Seamless In-App Update Trigger: Memastikan klien desktop mendeteksi versi rilis terbaru secara otomatis.'
+      ],
+      fixes: [
+        'Memperbaiki deteksi auto-updater Tauri agar langsung membaca pembaruan versi v0.8.74.',
+        'Menyelaraskan tata letak dropdown filter audit dengan tombol ekspor JSON.'
+      ],
+      architecture: [
+        'Dynamic Windowing & Limit Dispatcher',
+        'Unified MCP Logging Interceptor',
+        'Strict Dual-Theme Design Token Boundary'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.73',
       date: '17 November 2026',
       name: 'Hermes Hub Gateway v0.8.73 (Unified MCP Audit Trail & Multi-Server Forensics)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyatuan Audit Trail Forensik Seluruh MCP: Mengintegrasikan seluruh pemanggilan tool downstream (Database/Tabularis, MikroTik, Remote SSH, dan System Skills) ke dalam satu linimasa audit terpadu dengan filter dinamis dan performa non-blocking.',
       features: [
         'Unified MCP Audit Trail: Menggabungkan jejak eksekusi dari seluruh server MCP ke dalam satu tabel audit terpusat dengan auto-refresh dan rotasi otomatis 10 MB.',
