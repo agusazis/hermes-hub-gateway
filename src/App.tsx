@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.75';
+export const APP_VERSION = 'v0.8.76';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -809,11 +809,34 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.76',
+      date: '18 November 2026',
+      name: 'Hermes Hub Gateway v0.8.76 (Dynamic Local MCP Server Filters & Unified Hub Synchronization)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Sinkronisasi Filter Audit Trail dengan Tab Server MCP Lokal: Filter audit kini 100% dinamis mengikuti daftar server yang terdaftar di tab Server MCP Lokal (config.mcp_servers) ditambah MCP inti bawaan HHG (hermes-gateway, remote-ssh, mikrotik).',
+      features: [
+        'Dynamic Local MCP Filters: Tombol filter audit log otomatis mengambil daftar server dari Server MCP Lokal (tabularis, gitlabJSK, synologyJSK, mikrotikrouter-server, dsb.) + MCP bawaan HHG.',
+        'Unified Action Matching: Pemfilteran cerdas yang mencocokkan server_id, target, tool prefix, dan metadata eksekusi.',
+        '500MB High Retention: Kapasitas rotasi berkas log 500 MB per file untuk investigasi jangka panjang.'
+      ],
+      fixes: [
+        'Memastikan filter MCP selalu sinkron saat user menambah, mengedit, atau menghapus Server MCP Lokal di dashboard HHG.',
+        'Menghapus kolom redundan Server/Tipe untuk memaksimalkan visibilitas nama tool dan payload perintah.'
+      ],
+      architecture: [
+        'Config MCP Servers Dynamic Binding',
+        'Multi-Source Audit Resolver',
+        'Strict Dual-Theme Design Token Boundary'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.75',
       date: '18 November 2026',
       name: 'Hermes Hub Gateway v0.8.75 (Dynamic Target Filters & 500MB Audit Retention)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Dynamic Target Filters, 500MB Retention, & Hermetic MCP Logging: Penyempurnaan Unified MCP Audit Trail dengan filter dinamis berbasis nama target riil, penghapusan kolom Server/Tipe yang redundan, peningkatan batas rotasi berkas ke 500 MB, serta logging otomatis untuk tool internal hermes-gateway.',
       features: [
         'Dynamic Filter by Target: Opsi filter audit langsung mengelompokkan log berdasarkan nama target riil (hermes-gateway, tabularis, mikrotik, mnemosyne, grafana, gitlab, dan remote hosts).',
@@ -4787,37 +4810,41 @@ export default function App() {
     }
   };
 
-  const dynamicAuditTargets = useMemo(() => {
+  const dynamicMcpFilters = useMemo(() => {
     const list: string[] = [];
     const seen = new Set<string>();
 
-    const addTarget = (t: string) => {
-      const clean = (t || '').trim();
-      if (!clean || seen.has(clean.toLowerCase())) return;
-      seen.add(clean.toLowerCase());
+    const addMcp = (name: string) => {
+      const clean = (name || '').trim();
+      if (!clean) return;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
       list.push(clean);
     };
 
-    // Default HHG Core MCPs
-    ['hermes-gateway', 'tabularis', 'mikrotik', 'mnemosyne', 'grafana', 'gitlabJSK', 'gitlabsimpel', 'simrs-slowlogs'].forEach(addTarget);
+    // 1. Built-in HHG Core MCPs
+    addMcp('hermes-gateway');
+    addMcp('remote-ssh');
+    addMcp('mikrotik');
 
-    // From SSH Hosts
-    sshHosts.forEach(h => {
-      if (h.alias) addTarget(h.alias);
+    // 2. Daftar Server MCP Lokal yang terdaftar di HHG (config.mcp_servers)
+    (config.mcp_servers || []).forEach((mcp: any) => {
+      if (mcp && mcp.name) {
+        addMcp(mcp.name);
+      }
     });
 
-    // From MikroTik Routers
-    mikrotikRouters.forEach(r => {
-      if (r.alias) addTarget(r.alias);
-    });
-
-    // Any other distinct target from logs
-    sshAuditLogs.forEach(l => {
-      if (l.target && l.target !== 'local') addTarget(l.target);
+    // 3. Target tambahan yang tercatat di berkas audit log
+    sshAuditLogs.forEach((l) => {
+      const candidate = l.server_id || l.target;
+      if (candidate && candidate !== 'local' && candidate !== 'unknown') {
+        addMcp(candidate);
+      }
     });
 
     return list;
-  }, [sshHosts, mikrotikRouters, sshAuditLogs]);
+  }, [config.mcp_servers, sshAuditLogs]);
 
   const handleOpenEditSsh = (host: SshHostConfig) => {
     setSshTestResult(null);
@@ -7507,10 +7534,10 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* FILTER BAR UNIFIED AUDIT LOGS BY DYNAMIC TARGET */}
+                {/* FILTER BAR UNIFIED AUDIT LOGS BY MCP SERVER */}
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 text-xs">
                   <div className="flex flex-wrap items-center gap-1.5 max-w-full md:max-w-[75%]">
-                    <span className="text-[11px] text-slate-500 font-semibold mr-1 shrink-0">Target / Server:</span>
+                    <span className="text-[11px] text-slate-500 font-semibold mr-1 shrink-0">Filter MCP:</span>
                     <button
                       type="button"
                       onClick={() => setMcpAuditTargetFilter('all')}
@@ -7520,22 +7547,22 @@ export default function App() {
                           : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
                       }`}
                     >
-                      Semua Target
+                      Semua MCP
                     </button>
-                    {dynamicAuditTargets.map(tgt => {
-                      const active = mcpAuditTargetFilter.toLowerCase() === tgt.toLowerCase();
+                    {dynamicMcpFilters.map(mcpName => {
+                      const active = mcpAuditTargetFilter.toLowerCase() === mcpName.toLowerCase();
                       return (
                         <button
-                          key={tgt}
+                          key={mcpName}
                           type="button"
-                          onClick={() => setMcpAuditTargetFilter(tgt)}
+                          onClick={() => setMcpAuditTargetFilter(mcpName)}
                           className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all shrink-0 ${
                             active
                               ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
                               : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
                           }`}
                         >
-                          {tgt}
+                          {mcpName}
                         </button>
                       );
                     })}
@@ -7588,10 +7615,23 @@ export default function App() {
                         {sshAuditLogs
                           .filter((entry) => {
                             if (mcpAuditTargetFilter !== 'all') {
-                              const t = (entry.target || '').toLowerCase();
+                              const q = mcpAuditTargetFilter.toLowerCase();
                               const sid = (entry.server_id || '').toLowerCase();
-                              const qTarget = mcpAuditTargetFilter.toLowerCase();
-                              if (t !== qTarget && sid !== qTarget && !t.includes(qTarget)) return false;
+                              const tgt = (entry.target || '').toLowerCase();
+                              const stype = (entry.server_type || '').toLowerCase();
+                              const tool = (entry.tool || '').toLowerCase();
+
+                              let matches = false;
+                              if (q === 'remote-ssh') {
+                                matches = stype === 'ssh' || tool.startsWith('ssh') || sid.includes('ssh') || tgt.includes('ssh');
+                              } else if (q === 'mikrotik') {
+                                matches = stype === 'mikrotik' || tool.startsWith('mikrotik') || sid.includes('mikrotik') || tgt.includes('mikrotik');
+                              } else if (q === 'hermes-gateway') {
+                                matches = sid === 'hermes-gateway' || tgt === 'hermes-gateway' || tool.startsWith('hermes');
+                              } else {
+                                matches = sid === q || tgt === q || sid.includes(q) || tgt.includes(q) || tool.includes(q);
+                              }
+                              if (!matches) return false;
                             }
                             const isSuccess = entry.status === 'SUCCESS';
                             if (mcpAuditStatusFilter === 'success' && !isSuccess) return false;
