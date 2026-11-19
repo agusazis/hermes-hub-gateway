@@ -20,7 +20,44 @@ const MAX_TOOL_NAME_LEN = 40;
 
 const rl = readline.createInterface({ input: process.stdin, terminal: false });
 
+let currentToolAudit = null;
+
 function sendResponse(obj) {
+  if (currentToolAudit) {
+    const audit = currentToolAudit;
+    currentToolAudit = null;
+    if (!audit.isDedicated && typeof appendMcpAuditLog === "function") {
+      try {
+        const durationMs = Date.now() - audit.startTime;
+        const isError = Boolean(obj && (obj.error || (obj.result && obj.result.isError)));
+        let outPreview = "";
+        if (obj && obj.result && obj.result.content && Array.isArray(obj.result.content)) {
+          outPreview = obj.result.content.map(c => c.text || "").join("\n").slice(0, 300);
+        } else if (obj && obj.error) {
+          outPreview = (obj.error.message || JSON.stringify(obj.error)).slice(0, 300);
+        }
+        let targetName = TARGET_SERVER === "hermes" ? "hermes-gateway" : (TARGET_SERVER || "system");
+        if (typeof audit.toolName === "string" && audit.toolName.startsWith("mikrotik")) {
+          targetName = (audit.toolArgs && (audit.toolArgs.router || audit.toolArgs.target)) || "mikrotik";
+        } else if (typeof audit.toolName === "string" && audit.toolName.startsWith("ssh")) {
+          targetName = "remote-ssh";
+        }
+        appendMcpAuditLog({
+          server_type: TARGET_SERVER || "system",
+          server_id: targetName,
+          tool: audit.toolName,
+          target: targetName,
+          target_ip: "local",
+          mode: "FULL",
+          action_summary: JSON.stringify(audit.toolArgs || {}).slice(0, 500),
+          status: isError ? "FAILED" : "SUCCESS",
+          duration_ms: durationMs,
+          output_preview: outPreview,
+          exit_code: isError ? 1 : 0
+        });
+      } catch (_) {}
+    }
+  }
   process.stdout.write(JSON.stringify(obj) + "\n");
 }
 
@@ -867,46 +904,16 @@ rl.on("line", async (line) => {
       const toolName = req.params?.name;
       const toolArgs = req.params?.arguments || {};
       const callStartTime = Date.now();
-      const rawSendResponse = sendResponse;
-      let alreadyAudited = false;
-      let currentRoute = null;
-      const sendResponse = (resp) => {
-        if (!alreadyAudited) {
-          alreadyAudited = true;
-          const isDedicatedLogged = (typeof toolName === "string" && toolName.startsWith("ssh_")) || Boolean(currentRoute && currentRoute.server);
-          if (!isDedicatedLogged) {
-            try {
-              const durationMs = Date.now() - callStartTime;
-              const isError = Boolean(resp.error || (resp.result && resp.result.isError));
-              let outPreview = "";
-              if (resp.result && resp.result.content && Array.isArray(resp.result.content)) {
-                outPreview = resp.result.content.map(c => c.text || "").join("\n").slice(0, 300);
-              } else if (resp.error) {
-                outPreview = (resp.error.message || JSON.stringify(resp.error)).slice(0, 300);
-              }
-              let targetName = TARGET_SERVER === "hermes" ? "hermes-gateway" : (TARGET_SERVER || "system");
-              if (toolName.startsWith("mikrotik") || TARGET_SERVER === "mikrotik") {
-                targetName = (toolArgs && (toolArgs.router || toolArgs.target)) || "mikrotik";
-              } else if (toolName.startsWith("ssh") || TARGET_SERVER === "remote-ssh") {
-                targetName = "remote-ssh";
-              }
-              appendMcpAuditLog({
-                server_type: TARGET_SERVER || "system",
-                server_id: targetName,
-                tool: toolName,
-                target: targetName,
-                target_ip: "local",
-                mode: "FULL",
-                action_summary: JSON.stringify(toolArgs || {}).slice(0, 500),
-                status: isError ? "FAILED" : "SUCCESS",
-                duration_ms: durationMs,
-                output_preview: outPreview,
-                exit_code: isError ? 1 : 0
-              });
-            } catch (_) {}
-          }
-        }
-        rawSendResponse(resp);
+      const isDedicated = typeof toolName === "string" && (
+        toolName.startsWith("ssh_run_command") ||
+        toolName.startsWith("ssh_read_file") ||
+        toolName.startsWith("ssh_write_file")
+      );
+      currentToolAudit = {
+        toolName: toolName || "unknown",
+        toolArgs,
+        startTime: callStartTime,
+        isDedicated
       };
 
       const currentCached = getCachedData();
@@ -1695,6 +1702,7 @@ rl.on("line", async (line) => {
           };
         }
         if (route && route.server) {
+          if (currentToolAudit) currentToolAudit.isDedicated = true;
           const targetServer = route.server;
           const origName = route.originalToolName || toolName;
 

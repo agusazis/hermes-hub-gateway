@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.80';
+export const APP_VERSION = 'v0.8.81';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -809,11 +809,32 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.81',
+      date: '19 November 2026',
+      name: 'Hermes Hub Gateway v0.8.81 (Eradicate Temporal Dead Zone & Restore MCP Stability)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Pemulihan Stabilitas Penuh MCP Bridge: Menghilangkan shadowing variabel sendResponse yang memicu Temporal Dead Zone di JavaScript runtime, memulihkan koneksi tools/call pada seluruh 9 server MCP di Antigravity IDE.',
+      features: [
+        'Single-Origin Response Pipeline: Mengembalikan sendResponse sebagai fungsi global murni tanpa re-deklarasi lokal.',
+        'Deterministic Tool Auditing: Logging otomatis terpasang langsung pada handler pusat dengan verifikasi eksekusi bebas error.'
+      ],
+      fixes: [
+        'Memperbaiki error fatal Cannot access sendResponse before initialization pada seluruh 9 server MCP.',
+        'Menguji langsung pemanggilan tools/call dan tools/list dengan exit code 0 tanpa exception.'
+      ],
+      architecture: [
+        'Pure Global Response Dispatcher',
+        'Fail-Safe Audit Interceptor'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.80',
       date: '19 November 2026',
       name: 'Hermes Hub Gateway v0.8.80 (Fix MCP Bridge Scope & EOF Resolution)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Resolusi EOF Bridge MCP IDE: Memperbaiki ReferenceError pada variabel route dan req di run_mcp.js yang sebelumnya memicu penghentian proses Node.js secara mendadak saat IDE memanggil tools/call.',
       features: [
         'Robust Scope Guard: Mendeklarasikan currentRoute dan req secara aman pada outer scope runner MCP.',

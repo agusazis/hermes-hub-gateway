@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.80
-          releaseName: "Hermes Hub Gateway v0.8.80"
-          releaseBody: "Release v0.8.80: Fix MCP Bridge Scope & EOF Resolution."
+          tagName: v0.8.81
+          releaseName: "Hermes Hub Gateway v0.8.81"
+          releaseBody: "Release v0.8.81: Eradicate Temporal Dead Zone & Restore MCP Stability."
           releaseDraft: false
           prerelease: false
