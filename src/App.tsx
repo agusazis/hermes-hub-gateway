@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.76';
+export const APP_VERSION = 'v0.8.77';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -809,11 +809,32 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.77',
+      date: '19 November 2026',
+      name: 'Hermes Hub Gateway v0.8.77 (Process Taskkill Invariant & Clean Update Pipeline)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Penyempurnaan Skrip Auto-Updater Windows: Menyelaraskan nama binary taskkill (hermes-hub-gateway.exe dan Hermes Hub Gateway.exe) untuk mencegah file lock dan white-screen saat pembaruan otomatis berlangsung.',
+      features: [
+        'Atomic Process Termination: Memastikan proses hermes-hub-gateway.exe di-kill bersih sebelum NSIS installer mengekstrak file rilis baru.',
+        'Zero-White-Screen Guarantee: Menjamin WebView2 runtime tidak terjebak dalam kondisi berkas terkunci (in-use) saat restart.'
+      ],
+      fixes: [
+        'Memperbaiki kegagalan taskkill pada skrip hhg_update_restart.bat yang sebelumnya memicu white screen setelah update.',
+        'Menambahkan delay 2 detik untuk memastikan pelepasan socket file secara penuh sebelum aplikasi dimulai ulang.'
+      ],
+      architecture: [
+        'Atomic Process Termination Invariant',
+        'Clean-Slate NSIS Pipeline'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.76',
       date: '18 November 2026',
       name: 'Hermes Hub Gateway v0.8.76 (Dynamic Local MCP Server Filters & Unified Hub Synchronization)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Sinkronisasi Filter Audit Trail dengan Tab Server MCP Lokal: Filter audit kini 100% dinamis mengikuti daftar server yang terdaftar di tab Server MCP Lokal (config.mcp_servers) ditambah MCP inti bawaan HHG (hermes-gateway, remote-ssh, mikrotik).',
       features: [
         'Dynamic Local MCP Filters: Tombol filter audit log otomatis mengambil daftar server dari Server MCP Lokal (tabularis, gitlabJSK, synologyJSK, mikrotikrouter-server, dsb.) + MCP bawaan HHG.',
