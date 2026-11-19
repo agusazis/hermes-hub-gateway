@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.77';
+export const APP_VERSION = 'v0.8.78';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -809,11 +809,34 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.78',
+      date: '19 November 2026',
+      name: 'Hermes Hub Gateway v0.8.78 (Dropdown Select Filters & Scalable MCP Forensics)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Transformasi Filter Audit Menjadi Dropdown Select Terpadu: Mengganti tombol pill horizontal dengan dropdown <select> dinamis (Filter MCP dan Status) untuk tata letak UI yang rapi, padat, dan anti-banjir tombol meskipun terdapat 100+ server MCP.',
+      features: [
+        'Scalable Dropdown Filter: Dropdown select dinamis yang memuat seluruh server MCP (lokal & bawaan) tanpa membanjiri antarmuka pengguna.',
+        'Compact Status Selector: Pilihan status eksekusi (Semua, Success, Failed/Blocked) dalam bentuk select box melingkar yang selaras.',
+        'Live Match Counter: Indikator jumlah log yang cocok secara real-time (Menampilkan X dari Y log).'
+      ],
+      fixes: [
+        'Mencegah tombol pill filter meluap memenuhi layar ketika puluhan atau ratusan server MCP terdaftar.',
+        'Memperbaiki tata letak filter bar menjadi 1 baris yang rapi dan konsisten di seluruh resolusi layar.'
+      ],
+      architecture: [
+        'Scalable Dropdown Architecture',
+        'Direct Filtered Memoization',
+        'Strict Dual-Theme Design Tokens'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.77',
       date: '19 November 2026',
       name: 'Hermes Hub Gateway v0.8.77 (Process Taskkill Invariant & Clean Update Pipeline)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Penyempurnaan Skrip Auto-Updater Windows: Menyelaraskan nama binary taskkill (hermes-hub-gateway.exe dan Hermes Hub Gateway.exe) untuk mencegah file lock dan white-screen saat pembaruan otomatis berlangsung.',
       features: [
         'Atomic Process Termination: Memastikan proses hermes-hub-gateway.exe di-kill bersih sebelum NSIS installer mengekstrak file rilis baru.',
@@ -4867,6 +4890,42 @@ export default function App() {
     return list;
   }, [config.mcp_servers, sshAuditLogs]);
 
+  const filteredAuditLogs = useMemo(() => {
+    return sshAuditLogs.filter((entry) => {
+      if (mcpAuditTargetFilter !== 'all') {
+        const q = mcpAuditTargetFilter.toLowerCase();
+        const sid = (entry.server_id || '').toLowerCase();
+        const tgt = (entry.target || '').toLowerCase();
+        const stype = (entry.server_type || '').toLowerCase();
+        const tool = (entry.tool || '').toLowerCase();
+
+        let matches = false;
+        if (q === 'remote-ssh') {
+          matches = stype === 'ssh' || tool.startsWith('ssh') || sid.includes('ssh') || tgt.includes('ssh');
+        } else if (q === 'mikrotik') {
+          matches = stype === 'mikrotik' || tool.startsWith('mikrotik') || sid.includes('mikrotik') || tgt.includes('mikrotik');
+        } else if (q === 'hermes-gateway') {
+          matches = sid === 'hermes-gateway' || tgt === 'hermes-gateway' || tool.startsWith('hermes');
+        } else {
+          matches = sid === q || tgt === q || sid.includes(q) || tgt.includes(q) || tool.includes(q);
+        }
+        if (!matches) return false;
+      }
+      const isSuccess = entry.status === 'SUCCESS';
+      if (mcpAuditStatusFilter === 'success' && !isSuccess) return false;
+      if (mcpAuditStatusFilter === 'failed' && isSuccess) return false;
+
+      if (!sshAuditFilter) return true;
+      const q = sshAuditFilter.toLowerCase();
+      return (
+        (entry.target || '').toLowerCase().includes(q) ||
+        (entry.action_summary || '').toLowerCase().includes(q) ||
+        entry.tool.toLowerCase().includes(q) ||
+        entry.status.toLowerCase().includes(q)
+      );
+    });
+  }, [sshAuditLogs, mcpAuditTargetFilter, mcpAuditStatusFilter, sshAuditFilter]);
+
   const handleOpenEditSsh = (host: SshHostConfig) => {
     setSshTestResult(null);
     setEditingSshHost(host);
@@ -7556,67 +7615,58 @@ export default function App() {
                 </div>
 
                 {/* FILTER BAR UNIFIED AUDIT LOGS BY MCP SERVER */}
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 text-xs">
-                  <div className="flex flex-wrap items-center gap-1.5 max-w-full md:max-w-[75%]">
-                    <span className="text-[11px] text-slate-500 font-semibold mr-1 shrink-0">Filter MCP:</span>
-                    <button
-                      type="button"
-                      onClick={() => setMcpAuditTargetFilter('all')}
-                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all shrink-0 ${
-                        mcpAuditTargetFilter === 'all'
-                          ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
-                          : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
-                      }`}
-                    >
-                      Semua MCP
-                    </button>
-                    {dynamicMcpFilters.map(mcpName => {
-                      const active = mcpAuditTargetFilter.toLowerCase() === mcpName.toLowerCase();
-                      return (
-                        <button
-                          key={mcpName}
-                          type="button"
-                          onClick={() => setMcpAuditTargetFilter(mcpName)}
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all shrink-0 ${
-                            active
-                              ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5]')
-                              : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
-                          }`}
-                        >
-                          {mcpName}
-                        </button>
-                      );
-                    })}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 text-xs">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-500 font-semibold shrink-0">Filter MCP:</span>
+                      <select
+                        value={mcpAuditTargetFilter}
+                        onChange={(e) => setMcpAuditTargetFilter(e.target.value)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border focus:outline-none transition-colors cursor-pointer ${
+                          effectiveTheme === "dark"
+                            ? "bg-[#0d191c] text-slate-200 border-slate-700 hover:border-slate-600"
+                            : "bg-white text-slate-700 border-slate-200 shadow-xs hover:border-slate-300"
+                        }`}
+                        title="Filter riwayat forensik berdasarkan Server MCP"
+                      >
+                        <option value="all">Semua MCP ({dynamicMcpFilters.length} Server)</option>
+                        {dynamicMcpFilters.map((mcpName) => (
+                          <option key={mcpName} value={mcpName}>
+                            {mcpName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-500 font-semibold shrink-0">Status:</span>
+                      <select
+                        value={mcpAuditStatusFilter}
+                        onChange={(e) => setMcpAuditStatusFilter(e.target.value as any)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border focus:outline-none transition-colors cursor-pointer ${
+                          effectiveTheme === "dark"
+                            ? "bg-[#0d191c] text-slate-200 border-slate-700 hover:border-slate-600"
+                            : "bg-white text-slate-700 border-slate-200 shadow-xs hover:border-slate-300"
+                        }`}
+                        title="Filter riwayat berdasarkan status eksekusi"
+                      >
+                        <option value="all">Semua Status</option>
+                        <option value="success">Success</option>
+                        <option value="failed">Failed / Blocked</option>
+                      </select>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[11px] text-slate-500 font-semibold mr-1">Status:</span>
-                    {([
-                      { id: 'all', label: 'Semua' },
-                      { id: 'success', label: 'Success' },
-                      { id: 'failed', label: 'Failed' }
-                    ] as const).map(st => {
-                      const active = mcpAuditStatusFilter === st.id;
-                      return (
-                        <button
-                          key={st.id}
-                          type="button"
-                          onClick={() => setMcpAuditStatusFilter(st.id)}
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
-                            active
-                              ? (effectiveTheme === 'dark' ? 'bg-[#0a2730] text-[#5dd2e6] border-[#1192a3]' : 'bg-[#f0f9ff] text-[#026aa2] border-[#bae6fd]')
-                              : (effectiveTheme === 'dark' ? 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100')
-                          }`}
-                        >
-                          {st.label}
-                        </button>
-                      );
-                    })}
+
+                  <div className="text-[11px] font-mono text-slate-500">
+                    Menampilkan <span className="font-semibold text-emerald-500">{filteredAuditLogs.length}</span> dari <span className="font-semibold">{sshAuditLogs.length}</span> log
                   </div>
                 </div>
 
-                {sshAuditLogs.length === 0 ? (
+                {filteredAuditLogs.length === 0 ? (
                   <div className="text-center py-12 text-slate-500 font-mono text-xs">
-                    Belum ada riwayat eksekusi MCP yang tercatat. Panggil salah satu tool MCP di IDE untuk memicu log audit.
+                    {sshAuditLogs.length === 0
+                      ? 'Belum ada riwayat eksekusi MCP yang tercatat. Panggil salah satu tool MCP di IDE untuk memicu log audit.'
+                      : 'Tidak ada log yang cocok dengan filter yang dipilih.'}
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -7633,41 +7683,7 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
-                        {sshAuditLogs
-                          .filter((entry) => {
-                            if (mcpAuditTargetFilter !== 'all') {
-                              const q = mcpAuditTargetFilter.toLowerCase();
-                              const sid = (entry.server_id || '').toLowerCase();
-                              const tgt = (entry.target || '').toLowerCase();
-                              const stype = (entry.server_type || '').toLowerCase();
-                              const tool = (entry.tool || '').toLowerCase();
-
-                              let matches = false;
-                              if (q === 'remote-ssh') {
-                                matches = stype === 'ssh' || tool.startsWith('ssh') || sid.includes('ssh') || tgt.includes('ssh');
-                              } else if (q === 'mikrotik') {
-                                matches = stype === 'mikrotik' || tool.startsWith('mikrotik') || sid.includes('mikrotik') || tgt.includes('mikrotik');
-                              } else if (q === 'hermes-gateway') {
-                                matches = sid === 'hermes-gateway' || tgt === 'hermes-gateway' || tool.startsWith('hermes');
-                              } else {
-                                matches = sid === q || tgt === q || sid.includes(q) || tgt.includes(q) || tool.includes(q);
-                              }
-                              if (!matches) return false;
-                            }
-                            const isSuccess = entry.status === 'SUCCESS';
-                            if (mcpAuditStatusFilter === 'success' && !isSuccess) return false;
-                            if (mcpAuditStatusFilter === 'failed' && isSuccess) return false;
-
-                            if (!sshAuditFilter) return true;
-                            const q = sshAuditFilter.toLowerCase();
-                            return (
-                              (entry.target || '').toLowerCase().includes(q) ||
-                              (entry.action_summary || '').toLowerCase().includes(q) ||
-                              entry.tool.toLowerCase().includes(q) ||
-                              entry.status.toLowerCase().includes(q)
-                            );
-                          })
-                          .map((entry, idx) => {
+                        {filteredAuditLogs.map((entry, idx) => {
                             const isBlocked = entry.status.includes('BLOCKED');
                             const isSuccess = entry.status === 'SUCCESS';
                             const { timeStr, dateStr } = formatAuditDateTime(entry.timestamp);
