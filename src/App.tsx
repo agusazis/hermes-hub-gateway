@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.79';
+export const APP_VERSION = 'v0.8.80';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -809,11 +809,32 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.80',
+      date: '19 November 2026',
+      name: 'Hermes Hub Gateway v0.8.80 (Fix MCP Bridge Scope & EOF Resolution)',
+      type: 'PATCH',
+      status: 'LATEST',
+      highlights: 'Resolusi EOF Bridge MCP IDE: Memperbaiki ReferenceError pada variabel route dan req di run_mcp.js yang sebelumnya memicu penghentian proses Node.js secara mendadak saat IDE memanggil tools/call.',
+      features: [
+        'Robust Scope Guard: Mendeklarasikan currentRoute dan req secara aman pada outer scope runner MCP.',
+        'Zero-Crash Fail-Safe: Menjamin unhandled exception tidak memutus komunikasi stdio JSON-RPC ke Antigravity IDE.'
+      ],
+      fixes: [
+        'Memperbaiki error calling tools/call: EOF yang dialami seluruh 9 server MCP di Antigravity IDE.',
+        'Mengembalikan konektivitas penuh seluruh tool eksekusi ke IDE.'
+      ],
+      architecture: [
+        'Safe Scope Variable Binding',
+        'Fail-Safe RPC Exception Boundary'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.79',
       date: '19 November 2026',
       name: 'Hermes Hub Gateway v0.8.79 (Comprehensive Multi-Server Audit & Explicit Forensics UI)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Audit Lengkap 18 Tool MCP & UI Forensik Transparan: Menutup seluruh celah audit sehingga pemanggilan hermes-gateway, ssh_list_hosts, mikrotik_list_routers, dan operasi timeout tercatat 100% tanpa duplikasi, serta menyajikan lencana Detail permanen di setiap baris audit.',
       features: [
         'Hermetic Audit Coverage (18/18 Calls): Menjamin setiap aksi internal, discovery list, dan tool downstream terekam lengkap.',

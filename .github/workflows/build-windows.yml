@@ -68,8 +68,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SKIP_DEPS_CHECK: "true"
         with:
-          tagName: v0.8.79
-          releaseName: "Hermes Hub Gateway v0.8.79"
-          releaseBody: "Release v0.8.79: Comprehensive Multi-Server Audit & Explicit Forensics UI."
+          tagName: v0.8.80
+          releaseName: "Hermes Hub Gateway v0.8.80"
+          releaseBody: "Release v0.8.80: Fix MCP Bridge Scope & EOF Resolution."
           releaseDraft: false
           prerelease: false

@@ -834,8 +834,9 @@ rl.on("line", async (line) => {
   const trimmed = line.trim();
   if (!trimmed) return;
 
+  let req = null;
   try {
-    const req = JSON.parse(trimmed);
+    req = JSON.parse(trimmed);
     const id = req.id;
     const method = req.method;
 
@@ -868,10 +869,11 @@ rl.on("line", async (line) => {
       const callStartTime = Date.now();
       const rawSendResponse = sendResponse;
       let alreadyAudited = false;
+      let currentRoute = null;
       const sendResponse = (resp) => {
         if (!alreadyAudited) {
           alreadyAudited = true;
-          const isDedicatedLogged = toolName.includes("ssh_run_command") || Boolean(route && route.server);
+          const isDedicatedLogged = (typeof toolName === "string" && toolName.startsWith("ssh_")) || Boolean(currentRoute && currentRoute.server);
           if (!isDedicatedLogged) {
             try {
               const durationMs = Date.now() - callStartTime;
@@ -1671,7 +1673,8 @@ rl.on("line", async (line) => {
         }
       } else {
         let data = getCachedData();
-        let route = (data.routing || {})[toolName];
+        currentRoute = (data.routing || {})[toolName];
+        let route = currentRoute;
         if (!route && (!data.tools || data.tools.length === 0 || !fs.existsSync(cacheFile))) {
           data = await buildAndSaveCache();
           route = (data.routing || {})[toolName];
@@ -1832,6 +1835,10 @@ rl.on("line", async (line) => {
       }
     }
   } catch (err) {
-    sendResponse({ jsonrpc: "2.0", id: req?.id, error: { code: -32603, message: err.message } });
+    if (typeof sendResponse === "function") {
+      try {
+        sendResponse({ jsonrpc: "2.0", id: req ? req.id : null, error: { code: -32603, message: err.message } });
+      } catch (_) {}
+    }
   }
 });
