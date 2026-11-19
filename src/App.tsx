@@ -117,7 +117,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.78';
+export const APP_VERSION = 'v0.8.79';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -809,11 +809,34 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.79',
+      date: '19 November 2026',
+      name: 'Hermes Hub Gateway v0.8.79 (Comprehensive Multi-Server Audit & Explicit Forensics UI)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Audit Lengkap 18 Tool MCP & UI Forensik Transparan: Menutup seluruh celah audit sehingga pemanggilan hermes-gateway, ssh_list_hosts, mikrotik_list_routers, dan operasi timeout tercatat 100% tanpa duplikasi, serta menyajikan lencana Detail permanen di setiap baris audit.',
+      features: [
+        'Hermetic Audit Coverage (18/18 Calls): Menjamin setiap aksi internal, discovery list, dan tool downstream terekam lengkap.',
+        'Anti-Hang Socket Timeout: Timer koneksi TCP 8 detik untuk RouterOS mencegah IDE menggantung saat terjadi firewall drop.',
+        'Permanent Detail Badges: Tombol Detail forensik tampil permanen di seluruh baris tabel untuk kemudahan klik tanpa harus hover.'
+      ],
+      fixes: [
+        'Memperbaiki celah di mana hermes-gateway dan tool discovery list sebelumnya tidak memicu penulisan mcp_audit.log.',
+        'Mencegah duplikasi entri audit antara wrapper internal dan dedicated runner logger.'
+      ],
+      architecture: [
+        'Hermetic Audit Dispatch Pipeline',
+        'Fail-Safe Socket Timeout Guard',
+        'Transparent Forensics Table UI'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.78',
       date: '19 November 2026',
       name: 'Hermes Hub Gateway v0.8.78 (Dropdown Select Filters & Scalable MCP Forensics)',
       type: 'FEATURE',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Transformasi Filter Audit Menjadi Dropdown Select Terpadu: Mengganti tombol pill horizontal dengan dropdown <select> dinamis (Filter MCP dan Status) untuk tata letak UI yang rapi, padat, dan anti-banjir tombol meskipun terdapat 100+ server MCP.',
       features: [
         'Scalable Dropdown Filter: Dropdown select dinamis yang memuat seluruh server MCP (lokal & bawaan) tanpa membanjiri antarmuka pengguna.',
@@ -7731,9 +7754,11 @@ export default function App() {
                                   </span>
                                 </td>
                                 <td className="py-2 px-3 text-right text-slate-400 whitespace-nowrap">
-                                  <div className="flex items-center justify-end gap-1.5">
+                                  <div className="flex items-center justify-end gap-2">
                                     <span>{entry.duration_ms} ms</span>
-                                    <span className="text-[10px] text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">Detail &rarr;</span>
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold font-mono border bg-slate-100 dark:bg-slate-800 text-indigo-400 border-slate-300 dark:border-slate-700 group-hover:border-indigo-500 transition-colors">
+                                      Detail &rarr;
+                                    </span>
                                   </div>
                                 </td>
                               </tr>

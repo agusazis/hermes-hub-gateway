@@ -239,25 +239,37 @@ function executeMikrotikApi(router, cmdWords, timeoutMs = 8000) {
 
     const net = require('net');
     let sock;
+    let done = false;
+    let timer = null;
+
+    const cleanup = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (!done) {
+        done = true;
+        try { sock.destroy(); } catch (_) {}
+      }
+    };
+
+    timer = setTimeout(() => {
+      cleanup();
+      resolve({ error: `Timeout koneksi (${timeoutMs}ms) ke RouterOS ${host}:${port}. Pastikan port 8728 terbuka dan IP diizinkan di /ip service.` });
+    }, timeoutMs);
+
     try {
-      sock = net.createConnection({ host, port, timeout: timeoutMs }, () => {
+      sock = net.createConnection({ host, port }, () => {
         sendMikrotikSentence(sock, ['/login', '=name=' + user, '=password=' + pass]);
       });
     } catch (err) {
+      cleanup();
       return resolve({ error: `Gagal inisialisasi socket TCP ke ${host}:${port}: ${err.message}` });
     }
 
     let buf = Buffer.alloc(0);
     let stage = 'login';
     let results = [];
-    let done = false;
-
-    const cleanup = () => {
-      if (!done) {
-        done = true;
-        try { sock.destroy(); } catch (_) {}
-      }
-    };
 
     sock.on('data', chunk => {
       buf = Buffer.concat([buf, chunk]);
@@ -855,31 +867,43 @@ rl.on("line", async (line) => {
       const toolArgs = req.params?.arguments || {};
       const callStartTime = Date.now();
       const rawSendResponse = sendResponse;
+      let alreadyAudited = false;
       const sendResponse = (resp) => {
-        try {
-          const durationMs = Date.now() - callStartTime;
-          const isError = Boolean(resp.error || (resp.result && resp.result.isError));
-          let outPreview = "";
-          if (resp.result && resp.result.content && Array.isArray(resp.result.content)) {
-            outPreview = resp.result.content.map(c => c.text || "").join("\n").slice(0, 300);
-          } else if (resp.error) {
-            outPreview = (resp.error.message || JSON.stringify(resp.error)).slice(0, 300);
+        if (!alreadyAudited) {
+          alreadyAudited = true;
+          const isDedicatedLogged = toolName.includes("ssh_run_command") || Boolean(route && route.server);
+          if (!isDedicatedLogged) {
+            try {
+              const durationMs = Date.now() - callStartTime;
+              const isError = Boolean(resp.error || (resp.result && resp.result.isError));
+              let outPreview = "";
+              if (resp.result && resp.result.content && Array.isArray(resp.result.content)) {
+                outPreview = resp.result.content.map(c => c.text || "").join("\n").slice(0, 300);
+              } else if (resp.error) {
+                outPreview = (resp.error.message || JSON.stringify(resp.error)).slice(0, 300);
+              }
+              let targetName = TARGET_SERVER === "hermes" ? "hermes-gateway" : (TARGET_SERVER || "system");
+              if (toolName.startsWith("mikrotik") || TARGET_SERVER === "mikrotik") {
+                targetName = (toolArgs && (toolArgs.router || toolArgs.target)) || "mikrotik";
+              } else if (toolName.startsWith("ssh") || TARGET_SERVER === "remote-ssh") {
+                targetName = "remote-ssh";
+              }
+              appendMcpAuditLog({
+                server_type: TARGET_SERVER || "system",
+                server_id: targetName,
+                tool: toolName,
+                target: targetName,
+                target_ip: "local",
+                mode: "FULL",
+                action_summary: JSON.stringify(toolArgs || {}).slice(0, 500),
+                status: isError ? "FAILED" : "SUCCESS",
+                duration_ms: durationMs,
+                output_preview: outPreview,
+                exit_code: isError ? 1 : 0
+              });
+            } catch (_) {}
           }
-          const targetName = TARGET_SERVER === "hermes" ? "hermes-gateway" : (TARGET_SERVER || "system");
-          appendMcpAuditLog({
-            server_type: "system",
-            server_id: targetName,
-            tool: toolName,
-            target: targetName,
-            target_ip: "local",
-            mode: "FULL",
-            action_summary: JSON.stringify(toolArgs || {}).slice(0, 500),
-            status: isError ? "FAILED" : "SUCCESS",
-            duration_ms: durationMs,
-            output_preview: outPreview,
-            exit_code: isError ? 1 : 0
-          });
-        } catch (_) {}
+        }
         rawSendResponse(resp);
       };
 
