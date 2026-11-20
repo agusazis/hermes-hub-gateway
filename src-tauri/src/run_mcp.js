@@ -3,6 +3,7 @@ const readline = require("readline");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const crypto = require("crypto");
 const { spawn } = require("child_process");
 
 const homeDir = process.env.HOME || process.env.USERPROFILE || (typeof os.homedir === "function" ? os.homedir() : "/home/user");
@@ -724,6 +725,41 @@ function getBuiltinSkillsTools() {
   ];
 }
 
+function computeServerSignature(cfg) {
+  try {
+    const servers = (cfg.mcp_servers || []).filter(s => s.enabled);
+    let scoped = servers;
+    if (TARGET_SERVER) {
+      const normTarget = TARGET_SERVER.replace(/[_-]/g, "");
+      scoped = servers.filter(s => {
+        const sName = (s.name || s.id || "").toLowerCase().replace(/[_-]/g, "");
+        return sName === normTarget;
+      });
+    }
+    const payload = JSON.stringify({
+      target: TARGET_SERVER || "all",
+      mnemo: cfg.default_mnemosyne_url || "",
+      servers: scoped.map(s => {
+        const sortedEnv = {};
+        for (const k of Object.keys(s.env || {}).sort()) {
+          sortedEnv[k] = s.env[k];
+        }
+        return {
+          name: s.name || s.id || "",
+          command: s.command || "",
+          args: s.args || [],
+          env: sortedEnv,
+          serverUrl: s.serverUrl || "",
+          enabled: Boolean(s.enabled)
+        };
+      })
+    });
+    return crypto.createHash("sha256").update(payload).digest("hex");
+  } catch (_) {
+    return "";
+  }
+}
+
 async function buildAndSaveCache() {
   const cfg = loadConfig();
   let allActiveServers = [...(cfg.mcp_servers || []).filter(s => s.enabled)];
@@ -830,11 +866,12 @@ async function buildAndSaveCache() {
     }
   }
 
+  const configSignature = computeServerSignature(cfg);
   try {
-    fs.writeFileSync(cacheFile, JSON.stringify({ tools: aggregated, routing }, null, 2), "utf-8");
+    fs.writeFileSync(cacheFile, JSON.stringify({ configSignature, tools: aggregated, routing }, null, 2), "utf-8");
   } catch (e) {}
 
-  return { tools: aggregated, routing };
+  return { configSignature, tools: aggregated, routing };
 }
 
 function getCachedData() {
@@ -854,12 +891,16 @@ function getCachedData() {
   }
 
   const builtin = TARGET_SERVER && TARGET_SERVER !== "hermes" && TARGET_SERVER !== "core" && TARGET_SERVER !== "hermes-gateway" ? [] : getBuiltinSkillsTools();
+  const currentSig = computeServerSignature(cfg);
 
   try {
     if (fs.existsSync(cacheFile)) {
       const cached = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
       if (cached && Array.isArray(cached.tools) && cached.tools.length > 0) {
-        return cached;
+        if (cached.configSignature && cached.configSignature === currentSig) {
+          return cached;
+        }
+        return { tools: builtin, routing: {}, stale: true };
       }
     }
   } catch (e) {}
@@ -892,7 +933,7 @@ rl.on("line", async (line) => {
       // client notification, no response required
     } else if (method === "tools/list") {
       let data = getCachedData();
-      if (!data.disabled && (!data || !data.tools || data.tools.length === 0)) {
+      if (!data.disabled && (data.stale || !data || !data.tools || data.tools.length === 0)) {
         data = await buildAndSaveCache();
       }
       sendResponse({
@@ -1682,7 +1723,7 @@ rl.on("line", async (line) => {
         let data = getCachedData();
         currentRoute = (data.routing || {})[toolName];
         let route = currentRoute;
-        if (!route && (!data.tools || data.tools.length === 0 || !fs.existsSync(cacheFile))) {
+        if (!route && (data.stale || !data.tools || data.tools.length === 0 || !fs.existsSync(cacheFile))) {
           data = await buildAndSaveCache();
           route = (data.routing || {})[toolName];
         }

@@ -140,7 +140,25 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
         ));
     }
 
+    let old_cfg = config::load_config();
+    let mcp_changed = old_cfg.mcp_servers != cfg.mcp_servers;
+
     config::save_config(&cfg);
+
+    if mcp_changed {
+        if let Some(home) = dirs::home_dir() {
+            let hub_dir = home.join(".hermes-hub");
+            if let Ok(entries) = std::fs::read_dir(&hub_dir) {
+                for entry in entries.flatten() {
+                    if let Some(fname) = entry.file_name().to_str() {
+                        if fname.starts_with("mcp_tools_cache") && fname.ends_with(".json") {
+                            let _ = std::fs::remove_file(entry.path());
+                        }
+                    }
+                }
+            }
+        }
+    }
     Ok(())
 }
 

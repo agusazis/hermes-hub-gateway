@@ -12,7 +12,7 @@ pub struct GitTarget {
     pub auth_token: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct McpServerEntry {
     pub name: String,
     pub command: String,
