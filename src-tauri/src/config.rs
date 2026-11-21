@@ -33,6 +33,10 @@ pub struct Workspace {
     pub git_target: Option<GitTarget>,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GlobalConfig {
     pub active_profile: String,
@@ -41,6 +45,10 @@ pub struct GlobalConfig {
     pub active_workspace_id: String,
     pub workspaces: Vec<Workspace>,
     pub mcp_servers: Vec<McpServerEntry>,
+    #[serde(default = "default_true")]
+    pub mikrotik_mcp_enabled: bool,
+    #[serde(default = "default_true")]
+    pub remote_ssh_mcp_enabled: bool,
 }
 
 impl Default for GlobalConfig {
@@ -52,6 +60,8 @@ impl Default for GlobalConfig {
             active_workspace_id: "".to_string(),
             workspaces: Vec::new(),
             mcp_servers: Vec::new(),
+            mikrotik_mcp_enabled: true,
+            remote_ssh_mcp_enabled: true,
         }
     }
 }

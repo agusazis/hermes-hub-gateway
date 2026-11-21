@@ -105,6 +105,8 @@ interface GlobalConfig {
   telegram_target?: TelegramTarget;
   workspaces: Workspace[];
   mcp_servers: McpServerEntry[];
+  mikrotik_mcp_enabled?: boolean;
+  remote_ssh_mcp_enabled?: boolean;
 }
 
 interface SkillHierarchyItem {
@@ -259,7 +261,9 @@ export default function App() {
     default_mnemosyne_url: '',
     active_workspace_id: '',
     workspaces: [],
-    mcp_servers: []
+    mcp_servers: [],
+    mikrotik_mcp_enabled: true,
+    remote_ssh_mcp_enabled: true
   });
 
   // Hirarki Skills: Parent SKILL.md dengan Child References
@@ -4883,6 +4887,44 @@ export default function App() {
     }
   };
 
+  const handleToggleGlobalRemoteSshMcp = async () => {
+    const nextVal = config.remote_ssh_mcp_enabled === false;
+    const updated: GlobalConfig = { ...config, remote_ssh_mcp_enabled: nextVal };
+    setConfig(updated);
+    try {
+      await invoke('save_system_config', { cfg: updated });
+      showToast(
+        nextVal ? 'success' : 'info',
+        nextVal ? 'MCP Remote SSH Diaktifkan' : 'MCP Remote SSH Dinonaktifkan',
+        nextVal
+          ? 'Seluruh host SSH yang aktif kembali diekspos ke IDE (status per-host tetap terjaga).'
+          : 'MCP remote-ssh dimatikan total (0 tools ke IDE) tanpa mengubah status masing-masing host.'
+      );
+    } catch (err: any) {
+      setConfig(config);
+      showToast('error', 'Gagal Simpan Status Global', err?.toString() || 'Gagal menyimpan konfigurasi.');
+    }
+  };
+
+  const handleToggleGlobalMikrotikMcp = async () => {
+    const nextVal = config.mikrotik_mcp_enabled === false;
+    const updated: GlobalConfig = { ...config, mikrotik_mcp_enabled: nextVal };
+    setConfig(updated);
+    try {
+      await invoke('save_system_config', { cfg: updated });
+      showToast(
+        nextVal ? 'success' : 'info',
+        nextVal ? 'MCP MikroTik Diaktifkan' : 'MCP MikroTik Dinonaktifkan',
+        nextVal
+          ? 'Seluruh router MikroTik yang aktif kembali diekspos ke IDE (status per-router tetap terjaga).'
+          : 'MCP mikrotik dimatikan total (0 tools ke IDE) tanpa mengubah status masing-masing router.'
+      );
+    } catch (err: any) {
+      setConfig(config);
+      showToast('error', 'Gagal Simpan Status Global', err?.toString() || 'Gagal menyimpan konfigurasi.');
+    }
+  };
+
   const loadSshAuditLogsList = async (silent: boolean = false, limitOverride?: number) => {
     if (!silent) setLoadingSshAudit(true);
     try {
@@ -6764,16 +6806,24 @@ export default function App() {
                         "mnemosyne": {
                           command: nodePath,
                           args: [runnerPath, "--server=mnemosyne"]
-                        },
-                        "remote-ssh": {
-                          command: nodePath,
-                          args: [runnerPath, "--server=remote-ssh"]
-                        },
-                        "mikrotik": {
-                          command: nodePath,
-                          args: [runnerPath, "--server=mikrotik"]
                         }
                       };
+
+                      const hasActiveSsh = sshHosts.length === 0 || sshHosts.some(h => h.enabled !== false);
+                      if (config.remote_ssh_mcp_enabled !== false && hasActiveSsh) {
+                        serversObj["remote-ssh"] = {
+                          command: nodePath,
+                          args: [runnerPath, "--server=remote-ssh"]
+                        };
+                      }
+
+                      const hasActiveMikrotik = mikrotikRouters.length === 0 || mikrotikRouters.some(r => r.enabled !== false);
+                      if (config.mikrotik_mcp_enabled !== false && hasActiveMikrotik) {
+                        serversObj["mikrotik"] = {
+                          command: nodePath,
+                          args: [runnerPath, "--server=mikrotik"]
+                        };
+                      }
 
                       (config.mcp_servers || []).filter(s => s.enabled).forEach((s: any) => {
                         const sRaw = (s.name || s.id || "server").toLowerCase();
@@ -6842,6 +6892,11 @@ export default function App() {
                 >
                   <Terminal className="w-3.5 h-3.5 text-indigo-400" />
                   <span>Remote SSH Hosts ({sshHosts.length})</span>
+                  {config.remote_ssh_mcp_enabled === false && (
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border ${
+                      effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/50' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]'
+                    }`}>OFF</span>
+                  )}
                 </button>
                 <button
                   type="button"
@@ -6854,6 +6909,11 @@ export default function App() {
                 >
                   <Router className="w-3.5 h-3.5 text-amber-400" />
                   <span>Router MikroTik ({mikrotikRouters.length})</span>
+                  {config.mikrotik_mcp_enabled === false && (
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border ${
+                      effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/50' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca]'
+                    }`}>OFF</span>
+                  )}
                 </button>
                 <button
                   type="button"
@@ -7118,16 +7178,29 @@ export default function App() {
               <div className="space-y-4">
                 {/* Panel Remote SSH Managed Hosts */}
                 <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-[#0d191c] border-indigo-500/30 shadow-md' : 'bg-white border-slate-200/90 shadow-xs'}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Terminal className="w-4 h-4 text-indigo-400" />
                       <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
                         Remote SSH Hosts Gateway ({sshHosts.length} VM Terhubung)
                       </span>
                       <button
+                        type="button"
+                        onClick={handleToggleGlobalRemoteSshMcp}
+                        className={`ml-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider border transition-all flex items-center gap-1.5 ${
+                          config.remote_ssh_mcp_enabled !== false
+                            ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60 hover:bg-[#154637]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5] hover:bg-[#d1fadf]')
+                            : (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60 hover:bg-[#4c2020]' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca] hover:bg-[#fee4e2]')
+                        }`}
+                        title="Saklar Global MCP Remote SSH: matikan untuk menonaktifkan seluruh panel SSH ke IDE tanpa mengubah status masing-masing host"
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${config.remote_ssh_mcp_enabled !== false ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                        {config.remote_ssh_mcp_enabled !== false ? 'MCP GLOBAL: AKTIF' : 'MCP GLOBAL: NON-AKTIF'}
+                      </button>
+                      <button
                         onClick={handlePingAllHosts}
-                        disabled={isPingingAll || sshHosts.length === 0}
-                        className="ml-2 flex items-center gap-1 px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-500/30 hover:border-indigo-400 disabled:opacity-50 text-indigo-300 rounded-lg text-[10px] font-semibold transition-all shadow-sm"
+                        disabled={isPingingAll || sshHosts.length === 0 || config.remote_ssh_mcp_enabled === false}
+                        className="ml-1 flex items-center gap-1 px-2.5 py-1 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-500/30 hover:border-indigo-400 disabled:opacity-50 text-indigo-300 rounded-lg text-[10px] font-semibold transition-all shadow-sm"
                         title="Ping dan uji koneksi seluruh VM remote secara serentak"
                       >
                         {isPingingAll ? (
@@ -7139,7 +7212,7 @@ export default function App() {
                       </button>
                     </div>
                     <span className="text-[11px] font-mono text-slate-400">
-                      Akses via MCP: <code className="text-indigo-300 font-bold">remote-ssh</code> (Discrete Multi-Host)
+                      Akses via MCP: <code className="text-indigo-300 font-bold">remote-ssh</code> ({config.remote_ssh_mcp_enabled === false ? '0 Tools — Global OFF' : 'Discrete Multi-Host'})
                     </span>
                   </div>
 
@@ -7155,7 +7228,7 @@ export default function App() {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 transition-opacity duration-200 ${config.remote_ssh_mcp_enabled === false ? 'opacity-45 pointer-events-none select-none grayscale-[35%]' : ''}`}>
                       {sshHosts.map((h) => (
                         <div
                           key={h.id}
@@ -7434,16 +7507,29 @@ export default function App() {
 
                 {/* Panel Router MikroTik Managed Grid */}
                 <div className={`p-4 rounded-2xl border transition-all ${effectiveTheme === 'dark' ? 'bg-[#0d191c] border-amber-500/30 shadow-md' : 'bg-white border-slate-200/90 shadow-xs'}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Router className="w-4 h-4 text-amber-400" />
                       <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
                         MikroTik RouterOS Gateway ({mikrotikRouters.length} Router Terhubung)
                       </span>
                       <button
+                        type="button"
+                        onClick={handleToggleGlobalMikrotikMcp}
+                        className={`ml-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider border transition-all flex items-center gap-1.5 ${
+                          config.mikrotik_mcp_enabled !== false
+                            ? (effectiveTheme === 'dark' ? 'bg-[#0f3328] text-[#5dd6a5] border-[#16a25f]/60 hover:bg-[#154637]' : 'bg-[#ecfdf3] text-[#087a4f] border-[#a6f4c5] hover:bg-[#d1fadf]')
+                            : (effectiveTheme === 'dark' ? 'bg-[#3b1919] text-[#ff8f8f] border-[#ef4444]/60 hover:bg-[#4c2020]' : 'bg-[#fef3f2] text-[#bf3636] border-[#fecdca] hover:bg-[#fee4e2]')
+                        }`}
+                        title="Saklar Global MCP MikroTik: matikan untuk menonaktifkan seluruh panel router ke IDE tanpa mengubah status masing-masing router"
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${config.mikrotik_mcp_enabled !== false ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                        {config.mikrotik_mcp_enabled !== false ? 'MCP GLOBAL: AKTIF' : 'MCP GLOBAL: NON-AKTIF'}
+                      </button>
+                      <button
                         onClick={handlePingAllRouters}
-                        disabled={isPingingAllRouters || mikrotikRouters.length === 0}
-                        className="ml-2 flex items-center gap-1 px-2.5 py-1 bg-amber-950/60 hover:bg-amber-900 border border-amber-500/30 hover:border-amber-400 disabled:opacity-50 text-amber-300 rounded-lg text-[10px] font-semibold transition-all shadow-sm"
+                        disabled={isPingingAllRouters || mikrotikRouters.length === 0 || config.mikrotik_mcp_enabled === false}
+                        className="ml-1 flex items-center gap-1 px-2.5 py-1 bg-amber-950/60 hover:bg-amber-900 border border-amber-500/30 hover:border-amber-400 disabled:opacity-50 text-amber-300 rounded-lg text-[10px] font-semibold transition-all shadow-sm"
                         title="Ping dan uji koneksi seluruh router MikroTik secara serentak"
                       >
                         {isPingingAllRouters ? (
@@ -7455,7 +7541,7 @@ export default function App() {
                       </button>
                     </div>
                     <span className="text-[11px] font-mono text-slate-400">
-                      Akses via MCP: <code className="text-amber-300 font-bold">mikrotik</code> (Discrete Multi-Router)
+                      Akses via MCP: <code className="text-amber-300 font-bold">mikrotik</code> ({config.mikrotik_mcp_enabled === false ? '0 Tools — Global OFF' : 'Discrete Multi-Router'})
                     </span>
                   </div>
 
@@ -7471,7 +7557,7 @@ export default function App() {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 transition-opacity duration-200 ${config.mikrotik_mcp_enabled === false ? 'opacity-45 pointer-events-none select-none grayscale-[35%]' : ''}`}>
                       {mikrotikRouters.map((r) => (
                         <div
                           key={r.id}

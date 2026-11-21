@@ -725,6 +725,24 @@ function getBuiltinSkillsTools() {
   ];
 }
 
+function isMikrotikMcpActive(cfg) {
+  if (cfg && cfg.mikrotik_mcp_enabled === false) return false;
+  const routers = loadMikrotikRouters();
+  if (Array.isArray(routers) && routers.length > 0 && routers.every(r => r.enabled === false)) {
+    return false;
+  }
+  return true;
+}
+
+function isRemoteSshMcpActive(cfg) {
+  if (cfg && cfg.remote_ssh_mcp_enabled === false) return false;
+  const hosts = loadSshHosts();
+  if (Array.isArray(hosts) && hosts.length > 0 && hosts.every(h => h.enabled === false)) {
+    return false;
+  }
+  return true;
+}
+
 function computeServerSignature(cfg) {
   try {
     const servers = (cfg.mcp_servers || []).filter(s => s.enabled);
@@ -739,6 +757,8 @@ function computeServerSignature(cfg) {
     const payload = JSON.stringify({
       target: TARGET_SERVER || "all",
       mnemo: cfg.default_mnemosyne_url || "",
+      mikrotik_mcp_enabled: cfg.mikrotik_mcp_enabled !== false,
+      remote_ssh_mcp_enabled: cfg.remote_ssh_mcp_enabled !== false,
       servers: scoped.map(s => {
         const sortedEnv = {};
         for (const k of Object.keys(s.env || {}).sort()) {
@@ -788,6 +808,9 @@ async function buildAndSaveCache() {
     } else if (TARGET_SERVER === "mikrotik" || TARGET_SERVER === "mikrotik-router" || TARGET_SERVER === "mikrotikrouter" || TARGET_SERVER === "routeros") {
       activeServers = [];
       includeHermesBuiltin = false;
+      if (!isMikrotikMcpActive(cfg)) {
+        return { tools: [], routing: {}, disabled: true };
+      }
       const mtkTools = getMikrotikTools();
       const routing = {};
       for (const mt of mtkTools) {
@@ -797,6 +820,9 @@ async function buildAndSaveCache() {
     } else if (TARGET_SERVER === "remote-ssh" || TARGET_SERVER === "ssh" || TARGET_SERVER === "remotessh") {
       activeServers = [];
       includeHermesBuiltin = false;
+      if (!isRemoteSshMcpActive(cfg)) {
+        return { tools: [], routing: {}, disabled: true };
+      }
       const sshTools = getRemoteSshTools();
       const routing = {};
       for (const st of sshTools) {
@@ -877,9 +903,20 @@ async function buildAndSaveCache() {
 function getCachedData() {
   const cfg = loadConfig();
 
+  if (TARGET_SERVER === "mikrotik" || TARGET_SERVER === "mikrotik-router" || TARGET_SERVER === "mikrotikrouter" || TARGET_SERVER === "routeros") {
+    if (!isMikrotikMcpActive(cfg)) {
+      return { tools: [], routing: {}, disabled: true };
+    }
+  }
+  if (TARGET_SERVER === "remote-ssh" || TARGET_SERVER === "ssh" || TARGET_SERVER === "remotessh") {
+    if (!isRemoteSshMcpActive(cfg)) {
+      return { tools: [], routing: {}, disabled: true };
+    }
+  }
+
   // Jika runner ini diskop ke spesifik target server (misal: --server=grafana atau --server=tabularis)
   // dan di HHG server tersebut disetel disabled (enabled === false), maka kembalikan tools kosong seketika!
-  if (TARGET_SERVER && TARGET_SERVER !== "hermes" && TARGET_SERVER !== "core" && TARGET_SERVER !== "hermes-gateway" && TARGET_SERVER !== "remote-ssh" && TARGET_SERVER !== "ssh") {
+  if (TARGET_SERVER && TARGET_SERVER !== "hermes" && TARGET_SERVER !== "core" && TARGET_SERVER !== "hermes-gateway" && TARGET_SERVER !== "remote-ssh" && TARGET_SERVER !== "ssh" && TARGET_SERVER !== "remotessh" && TARGET_SERVER !== "mikrotik" && TARGET_SERVER !== "mikrotik-router" && TARGET_SERVER !== "mikrotikrouter" && TARGET_SERVER !== "routeros") {
     const normTarget = TARGET_SERVER.replace(/[_-]/g, "");
     const matchingServer = (cfg.mcp_servers || []).find(s => {
       const sName = (s.name || s.id || "").toLowerCase().replace(/[_-]/g, "");

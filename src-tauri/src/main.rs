@@ -141,7 +141,9 @@ fn save_system_config(cfg: config::GlobalConfig) -> Result<(), String> {
     }
 
     let old_cfg = config::load_config();
-    let mcp_changed = old_cfg.mcp_servers != cfg.mcp_servers;
+    let mcp_changed = old_cfg.mcp_servers != cfg.mcp_servers
+        || old_cfg.mikrotik_mcp_enabled != cfg.mikrotik_mcp_enabled
+        || old_cfg.remote_ssh_mcp_enabled != cfg.remote_ssh_mcp_enabled;
 
     config::save_config(&cfg);
 
