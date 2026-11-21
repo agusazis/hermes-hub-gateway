@@ -119,7 +119,7 @@ interface SkillHierarchyItem {
   references: string[];
 }
 
-export const APP_VERSION = 'v0.8.81';
+export const APP_VERSION = 'v0.8.82';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workspaces' | 'mcp_hub' | 'logs' | 'releases' | 'settings'>('dashboard');
@@ -813,11 +813,34 @@ export default function App() {
 
   const releaseLogs: ReleaseLog[] = [
     {
+      version: 'v0.8.82',
+      date: '21 November 2026',
+      name: 'Hermes Hub Gateway v0.8.82 (Global MCP Toggles, Auto Cache Invalidation & Tooltip UI)',
+      type: 'FEATURE',
+      status: 'LATEST',
+      highlights: 'Kontrol Token IDE & Otomatisasi Cache MCP: Menambahkan saklar global untuk mematikan total MCP MikroTik dan Remote SSH tanpa mengubah status per-panel, auto-invalidation cache tool saat config berubah, serta penyederhanaan notifikasi sinkronisasi IDE menjadi tooltip info.',
+      features: [
+        'Global MCP Toggles (MikroTik & Remote SSH): Tombol MCP GLOBAL AKTIF/NON-AKTIF di header panel untuk memutus 100% schema tool ke IDE (0 tools) sambil menjaga status aktif/non-aktif masing-masing router dan host SSH.',
+        'Auto MCP Tool Cache Invalidation: Signature SHA-256 pada run_mcp.js dan pembersihan otomatis mcp_tools_cache*.json di save_system_config saat konfigurasi server MCP berubah.',
+        'Tooltip-First IDE Sync Guidance: Mengganti banner peringatan kuning di panel Koneksi IDE dengan ikon Info tooltip ringkas di belakang teks brankas HHG.'
+      ],
+      fixes: [
+        'Mencegah schema tool MikroTik (9 tools) dan Remote SSH (5 tools) tetap terkirim ke IDE saat seluruh router/host di dalamnya berstatus NON-AKTIF.',
+        'Menghilangkan kebutuhan hapus file cache manual setelah mengubah env/args server MCP (seperti GITLAB_TOOLSETS).'
+      ],
+      architecture: [
+        'Global MCP Gatekeeper & State Preservation',
+        'SHA-256 Config Signature Cache Invalidation',
+        'Tooltip-First UI Guidance'
+      ],
+      downloads: []
+    },
+    {
       version: 'v0.8.81',
       date: '19 November 2026',
       name: 'Hermes Hub Gateway v0.8.81 (Eradicate Temporal Dead Zone & Restore MCP Stability)',
       type: 'PATCH',
-      status: 'LATEST',
+      status: 'STABLE',
       highlights: 'Pemulihan Stabilitas Penuh MCP Bridge: Menghilangkan shadowing variabel sendResponse yang memicu Temporal Dead Zone di JavaScript runtime, memulihkan koneksi tools/call pada seluruh 9 server MCP di Antigravity IDE.',
       features: [
         'Single-Origin Response Pipeline: Mengembalikan sendResponse sebagai fungsi global murni tanpa re-deklarasi lokal.',
