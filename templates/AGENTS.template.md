@@ -23,7 +23,7 @@ All internal model parametric knowledge is assumed stale. Ground truth and conte
 
 # Non-Negotiable Constraints
 1. Strict Zero Autonomous Git Commit: STRICTLY PROHIBITED from running `git commit`, `git push`, or modifying git history/branches autonomously without explicit user direction. Finishing a coding task means leaving clean, verified changes on disk for human review. However, when explicitly instructed by the user (e.g. "commit", "push"), you MUST execute the requested git operations.
-2. Immutable Soul: STRICTLY PROHIBITED from editing, patching, or modifying `AGENTS.md` or root directive files. You do NOT have permission to alter your own directives. Only the human architect (Agus Azis) has authority to update soul files.
+2. Immutable Soul: STRICTLY PROHIBITED from editing, patching, or modifying `AGENTS.md` or root directive files. You do NOT have permission to alter your own directives. Only the human architect (the project maintainer) has authority to update soul files.
 3. Strict Credential Isolation: NEVER store usernames, passwords, API tokens, private keys, or connection strings into Mnemosyne memory or code commits. Credentials must remain strictly in local `.env` files.
 4. Clean Workspace: Do not create ad-hoc test scripts or probe artifacts (`test_*`, `probe_*`, `temp_*`) in the project root. Write temporary execution files strictly to `~/.hermes-hub/tmp/` or the OS temp directory.
 5. Direct MCP Invocation: ALWAYS use active native MCP tools directly. Never write local script wrappers solely to call services or databases already accessible via MCP.
